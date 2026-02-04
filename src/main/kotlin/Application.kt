@@ -1,13 +1,14 @@
 package com.connor
 
 import com.connor.core.security.TokenConfig
+import com.connor.data.db.DatabaseConfig
+import com.connor.data.db.DatabaseFactory
 import com.connor.plugins.configureRouting
 import com.connor.plugins.configureSecurity
 import io.ktor.server.application.*
+import io.ktor.server.netty.EngineMain
 
-fun main(args: Array<String>) {
-    io.ktor.server.netty.EngineMain.main(args)
-}
+fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
     // 从 application.yaml 读取 JWT 配置
@@ -18,11 +19,16 @@ fun Application.module() {
         realm = environment.config.property("jwt.realm").getString()
     )
 
+    val dbUrl = environment.config.property("storage.jdbcUrl").getString()
+    val dbUser = environment.config.property("storage.user").getString()
+    val dbPassword = environment.config.property("storage.password").getString()
+
+    DatabaseFactory.init(DatabaseConfig(dbUrl, dbUser, dbPassword))
+
     configureSerialization()
-    configureDatabases()
     configureSecurity(tokenConfig)
     configureMonitoring()
     configureHTTP()
-    configureFrameworks()
+    configureFrameworks(tokenConfig)
     configureRouting()
 }

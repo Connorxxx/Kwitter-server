@@ -33,7 +33,7 @@ fun Route.authRoutes(
                 },
                 ifRight = { user ->
                     // 成功路径：生成 Token -> 返回 201 Created
-                    val token = tokenService.generate(user.id)
+                    val token = tokenService.generate(user.id.value)
                     call.respond(HttpStatusCode.Created, user.toResponse(token))
                 }
             )

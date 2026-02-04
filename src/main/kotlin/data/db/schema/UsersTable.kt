@@ -17,6 +17,9 @@ object UsersTable : Table("users") {
     val displayName = varchar("display_name", 64)
     val bio = text("bio").default("")
 
+    // 头像 URL (可选)
+    val avatarUrl = varchar("avatar_url", 256).nullable()
+
     // 对应 createdAt。使用 datetime 类型
     val createdAt = long("created_at") // 或者用 datetime("created_at")
 

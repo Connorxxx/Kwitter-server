@@ -4,8 +4,15 @@ ktor:
       - com.connor.ApplicationKt.module
   deployment:
     port: 8080
+    host: 0.0.0.0
 jwt:
   domain: "http://localhost/"
   audience: "jwt-audience"
   realm: "ktor sample app"
   secret: "my-super-secret-key-change-me-in-production"
+
+storage:
+  driverClassName: "org.postgresql.Driver"
+  jdbcUrl: "jdbc:postgresql://localhost:5432/twitter_db"
+  user: "myuser"
+  password: "mypassword"
