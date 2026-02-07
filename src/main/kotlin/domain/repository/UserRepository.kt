@@ -6,12 +6,15 @@ import com.connor.domain.model.Email
 import com.connor.domain.model.User
 
 interface UserRepository {
-    // 注册：保存用户，如果邮箱冲突则失败
-    suspend fun save(user: User): Either<AuthError,User>
+    /**
+     * 保存用户
+     * @return Either.Left(AuthError.UserAlreadyExists) 如果邮箱已存在
+     */
+    suspend fun save(user: User): Either<AuthError, User>
 
-    // 登录：根据邮箱查找
+    /**
+     * 根据邮箱查找用户
+     * @return User 如果存在，否则 null
+     */
     suspend fun findByEmail(email: Email): User?
-
-    // 辅助：检查邮箱是否存在
-    suspend fun existsByEmail(email: Email): Boolean
 }
