@@ -10,6 +10,12 @@ data class RegisterRequest(
 )
 
 @Serializable
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+@Serializable
 data class UserResponse(
     val id: String,
     val email: String,

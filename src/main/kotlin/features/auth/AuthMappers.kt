@@ -14,6 +14,11 @@ fun RegisterRequest.toCommand() = RegisterCommand(
     displayName = this.displayName
 )
 
+fun LoginRequest.toCommand() = com.connor.domain.usecase.LoginCommand(
+    email = this.email,
+    password = this.password
+)
+
 /**
  * Domain Model -> HTTP Response DTO
  */
