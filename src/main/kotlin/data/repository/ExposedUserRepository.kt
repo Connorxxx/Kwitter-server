@@ -12,12 +12,18 @@ import com.connor.domain.model.User
 import com.connor.domain.repository.UserRepository
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
 
 class ExposedUserRepository : UserRepository {
+    private val logger = LoggerFactory.getLogger(ExposedUserRepository::class.java)
+
     override suspend fun save(user: User): Either<AuthError, User> = dbQuery {
         try {
-            // Exposed DSL: 插入操作
+            logger.debug("准备插入用户: userId=${user.id.value}, email=${user.email.value}")
+
             UsersTable.insert {
                 it[id] = user.id.value
                 it[email] = user.email.value
@@ -26,28 +32,46 @@ class ExposedUserRepository : UserRepository {
                 it[bio] = user.bio
                 it[createdAt] = user.createdAt
             }
-            // 插入成功，返回 Right(User)
+
+            logger.info("用户插入成功: userId=${user.id.value}, email=${user.email.value}")
             user.right()
 
         } catch (e: SQLException) {
-            // 捕获数据库层面的错误，转换为 Domain层面的错误
-            // 在 PostgreSQL 中，SQLState 23505 代表 Unique Violation (重复键)
-            if (e.sqlState == "23505") {
-                AuthError.UserAlreadyExists(user.email.value).left()
-            } else {
-                throw e // 其他未预料的数据库错误，直接抛出，让 StatusPages 处理成 500
+            // 数据库层面的唯一性约束违反
+            // PostgreSQL: 23505, MySQL: 1062, SQLite: 19 (CONSTRAINT)
+            logger.error("数据库错误: sqlState=${e.sqlState}, message=${e.message}, email=${user.email.value}")
+
+            when (e.sqlState) {
+                "23505" -> {
+                    logger.warn("邮箱已存在（PostgreSQL）: email=${user.email.value}")
+                    AuthError.UserAlreadyExists(user.email.value).left()
+                }
+                "23000" -> {
+                    logger.warn("邮箱已存在（MySQL）: email=${user.email.value}")
+                    AuthError.UserAlreadyExists(user.email.value).left()
+                }
+                else -> {
+                    logger.error("未知数据库错误: sqlState=${e.sqlState}, errorCode=${e.errorCode}", e)
+                    throw e // 其他未预料的数据库错误，抛出让全局异常处理
+                }
             }
         }
     }
 
     override suspend fun findByEmail(email: Email): User? = dbQuery {
-        // Exposed DSL: 查询操作
-        UsersTable.select(UsersTable.email eq email.value)
-            .singleOrNull()?.toDomain() // 期望只有一个结果或没有
-    }
+        logger.debug("查询用户: email=${email.value}")
 
-    override suspend fun existsByEmail(email: Email): Boolean = dbQuery {
-        // 优化查询：只查 Count 而不是取出数据
-        UsersTable.select(UsersTable.email eq email.value).count() > 0
+        val user = UsersTable.selectAll()
+            .where { UsersTable.email eq email.value }
+            .singleOrNull()
+            ?.toDomain()
+
+        if (user != null) {
+            logger.debug("用户查询成功: userId=${user.id.value}, email=${email.value}")
+        } else {
+            logger.debug("用户不存在: email=${email.value}")
+        }
+
+        user
     }
 }
