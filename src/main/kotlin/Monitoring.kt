@@ -17,6 +17,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.util.pipeline.*
 import org.jetbrains.exposed.sql.*
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -26,6 +27,21 @@ import org.slf4j.event.*
 fun Application.configureMonitoring() {
     install(CallLogging) {
         level = Level.INFO
-        filter { call -> call.request.path().startsWith("/") }
+        filter { call -> call.request.uri.startsWith("/") }
+
+        // 格式化日志输出
+        format { call ->
+            val status = call.response.status()
+            val httpMethod = call.request.httpMethod.value
+            val uri = call.request.uri
+            val userAgent = call.request.headers["User-Agent"] ?: "Unknown"
+            val clientIp = call.request.local.remoteAddress
+
+            buildString {
+                append("$httpMethod $uri -> ${status?.value ?: "N/A"}")
+                append(" | Client: $clientIp")
+                append(" | UA: ${userAgent.take(100)}")
+            }
+        }
     }
 }

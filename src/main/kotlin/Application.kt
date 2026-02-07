@@ -5,6 +5,7 @@ import com.connor.data.db.DatabaseConfig
 import com.connor.data.db.DatabaseFactory
 import com.connor.plugins.configureRouting
 import com.connor.plugins.configureSecurity
+import com.connor.plugins.configureStatusPages
 import io.ktor.server.application.*
 import io.ktor.server.netty.EngineMain
 
@@ -25,10 +26,12 @@ fun Application.module() {
 
     DatabaseFactory.init(DatabaseConfig(dbUrl, dbUser, dbPassword))
 
-    configureSerialization()
-    configureSecurity(tokenConfig)
-    configureMonitoring()
-    configureHTTP()
-    configureFrameworks(tokenConfig)
-    configureRouting()
+    // 配置插件（顺序很重要）
+    configureMonitoring()      // 1. 日志记录
+    configureStatusPages()     // 2. 全局异常处理
+    configureSerialization()   // 3. JSON 序列化
+    configureSecurity(tokenConfig)  // 4. JWT 认证
+    configureHTTP()            // 5. HTTP 配置（CORS 等）
+    configureFrameworks(tokenConfig)  // 6. DI 框架
+    configureRouting()         // 7. 路由（最后）
 }
