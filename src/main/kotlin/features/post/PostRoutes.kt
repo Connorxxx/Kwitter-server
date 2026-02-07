@@ -1,0 +1,274 @@
+package com.connor.features.post
+
+import com.connor.core.security.UserPrincipal
+import com.connor.domain.model.PostId
+import com.connor.domain.model.UserId
+import com.connor.domain.usecase.*
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import kotlinx.coroutines.flow.toList
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger("PostRoutes")
+
+fun Route.postRoutes(
+    createPostUseCase: CreatePostUseCase,
+    getPostUseCase: GetPostUseCase,
+    getTimelineUseCase: GetTimelineUseCase,
+    getRepliesUseCase: GetRepliesUseCase,
+    getUserPostsUseCase: GetUserPostsUseCase
+) {
+    route("/v1/posts") {
+
+        // ========== 公开路由（无需认证）==========
+
+        /**
+         * GET /v1/posts/timeline?limit=20&offset=0
+         * 获取时间线（全站最新 Posts）
+         */
+        get("/timeline") {
+            val startTime = System.currentTimeMillis()
+            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+            try {
+                logger.info("查询时间线: limit=$limit, offset=$offset")
+
+                // 调用 Use Case
+                val posts = getTimelineUseCase(limit, offset).toList()
+                val duration = System.currentTimeMillis() - startTime
+
+                logger.info("时间线查询成功: count=${posts.size}, duration=${duration}ms")
+
+                // 返回响应
+                call.respond(
+                    HttpStatusCode.OK,
+                    PostListResponse(
+                        posts = posts.map { it.toResponse() },
+                        hasMore = posts.size == limit
+                    )
+                )
+
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                logger.error("时间线查询异常: duration=${duration}ms, error=${e.message}", e)
+                throw e
+            }
+        }
+
+        /**
+         * GET /v1/posts/{postId}
+         * 获取 Post 详情
+         */
+        get("/{postId}") {
+            val startTime = System.currentTimeMillis()
+            val postId = call.parameters["postId"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                return@get
+            }
+
+            try {
+                logger.info("查询 Post 详情: postId=$postId")
+
+                // 调用 Use Case
+                val result = getPostUseCase(PostId(postId))
+                val duration = System.currentTimeMillis() - startTime
+
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        logger.warn("Post 查询失败: postId=$postId, error=${error.javaClass.simpleName}, duration=${duration}ms")
+                        call.respond(status, body)
+                    },
+                    ifRight = { postDetail ->
+                        logger.info("Post 查询成功: postId=$postId, duration=${duration}ms")
+                        call.respond(HttpStatusCode.OK, postDetail.toResponse())
+                    }
+                )
+
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                logger.error("Post 查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
+                throw e
+            }
+        }
+
+        /**
+         * GET /v1/posts/{postId}/replies?limit=20&offset=0
+         * 获取 Post 的回复列表
+         */
+        get("/{postId}/replies") {
+            val startTime = System.currentTimeMillis()
+            val postId = call.parameters["postId"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                return@get
+            }
+            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+            try {
+                logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
+
+                // 调用 Use Case
+                val replies = getRepliesUseCase(PostId(postId), limit, offset).toList()
+                val duration = System.currentTimeMillis() - startTime
+
+                logger.info("回复查询成功: postId=$postId, count=${replies.size}, duration=${duration}ms")
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    PostListResponse(
+                        posts = replies.map { it.toResponse() },
+                        hasMore = replies.size == limit
+                    )
+                )
+
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                logger.error("回复查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
+                throw e
+            }
+        }
+
+        /**
+         * GET /v1/posts/users/{userId}?limit=20&offset=0
+         * 获取用户的 Posts（不包括回复）
+         */
+        get("/users/{userId}") {
+            val startTime = System.currentTimeMillis()
+            val userId = call.parameters["userId"] ?: run {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
+                return@get
+            }
+            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+            try {
+                logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
+
+                // 调用 Use Case
+                val posts = getUserPostsUseCase(UserId(userId), limit, offset).toList()
+                val duration = System.currentTimeMillis() - startTime
+
+                logger.info("用户 Posts 查询成功: userId=$userId, count=${posts.size}, duration=${duration}ms")
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    PostListResponse(
+                        posts = posts.map { it.toResponse() },
+                        hasMore = posts.size == limit
+                    )
+                )
+
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                logger.error("用户 Posts 查询异常: userId=$userId, duration=${duration}ms, error=${e.message}", e)
+                throw e
+            }
+        }
+
+        // ========== 需要认证的路由 ==========
+
+        authenticate("auth-jwt") {
+
+            /**
+             * POST /v1/posts
+             * 创建新 Post（顶层 Post 或回复）
+             */
+            post {
+                val startTime = System.currentTimeMillis()
+                val principal = call.principal<UserPrincipal>()
+                val userId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@post
+                }
+
+                try {
+                    // 接收请求
+                    val request = call.receive<CreatePostRequest>()
+                    logger.info(
+                        "收到创建 Post 请求: userId=$userId, parentId=${request.parentId}, " +
+                        "mediaCount=${request.mediaUrls.size}"
+                    )
+
+                    // 调用 Use Case
+                    val result = createPostUseCase(request.toCommand(UserId(userId)))
+                    val duration = System.currentTimeMillis() - startTime
+
+                    result.fold(
+                        ifLeft = { error ->
+                            val (status, body) = error.toHttpError()
+                            logger.warn(
+                                "Post 创建失败: userId=$userId, error=${error.javaClass.simpleName}, " +
+                                "duration=${duration}ms"
+                            )
+                            call.respond(status, body)
+                        },
+                        ifRight = { post ->
+                            logger.info(
+                                "Post 创建成功: userId=$userId, postId=${post.id.value}, " +
+                                "duration=${duration}ms"
+                            )
+                            // 返回完整的 PostDetail
+                            val detail = getPostUseCase(post.id).getOrNull()
+                            if (detail != null) {
+                                call.respond(HttpStatusCode.Created, detail.toResponse())
+                            } else {
+                                // Fallback：理论上不应该发生
+                                call.respond(HttpStatusCode.Created, mapOf("postId" to post.id.value))
+                            }
+                        }
+                    )
+
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("Post 创建异常: userId=$userId, duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
+            }
+
+            /**
+             * DELETE /v1/posts/{postId}
+             * 删除 Post（未来可以添加权限检查）
+             */
+            delete("/{postId}") {
+                val startTime = System.currentTimeMillis()
+                val principal = call.principal<UserPrincipal>()
+                val userId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@delete
+                }
+
+                val postId = call.parameters["postId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    return@delete
+                }
+
+                try {
+                    logger.info("删除 Post 请求: userId=$userId, postId=$postId")
+
+                    // TODO: 添加权限检查（只能删除自己的 Post）
+                    // 这里需要先查询 Post 的 authorId，然后比对
+
+                    // 暂时直接删除
+                    // val result = deletePostUseCase(PostId(postId))
+                    // 由于 Use Case 未实现，暂时返回未实现错误
+
+                    call.respond(
+                        HttpStatusCode.NotImplemented,
+                        ErrorResponse("NOT_IMPLEMENTED", "删除功能暂未实现")
+                    )
+
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("Post 删除异常: userId=$userId, postId=$postId, duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
+            }
+        }
+    }
+}

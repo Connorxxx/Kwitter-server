@@ -1,0 +1,84 @@
+package com.connor.features.post
+
+import kotlinx.serialization.Serializable
+
+// ========== Request DTOs ==========
+
+/**
+ * 创建 Post 请求（顶层 Post 或回复）
+ */
+@Serializable
+data class CreatePostRequest(
+    val content: String,
+    val mediaUrls: List<MediaDto> = emptyList(), // 最多 4 个
+    val parentId: String? = null // null = 顶层 Post，非 null = 回复
+)
+
+/**
+ * 媒体 DTO
+ */
+@Serializable
+data class MediaDto(
+    val url: String,
+    val type: String // "IMAGE" 或 "VIDEO"
+)
+
+// ========== Response DTOs ==========
+
+/**
+ * Post 详情响应（包含作者信息、统计数据）
+ */
+@Serializable
+data class PostDetailResponse(
+    val id: String,
+    val content: String,
+    val media: List<MediaDto>,
+    val parentId: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val author: AuthorDto,
+    val stats: StatsDto,
+    val parentPost: PostSummaryResponse? = null // 如果是回复，包含父 Post 摘要
+)
+
+/**
+ * Post 摘要响应（用于嵌套显示父 Post）
+ */
+@Serializable
+data class PostSummaryResponse(
+    val id: String,
+    val content: String,
+    val author: AuthorDto,
+    val createdAt: Long
+)
+
+/**
+ * 作者信息 DTO
+ */
+@Serializable
+data class AuthorDto(
+    val id: String,
+    val displayName: String,
+    val email: String,
+    val avatarUrl: String? = null
+)
+
+/**
+ * 统计信息 DTO
+ */
+@Serializable
+data class StatsDto(
+    val replyCount: Int,
+    val likeCount: Int,
+    val viewCount: Int
+)
+
+/**
+ * 分页响应包装
+ */
+@Serializable
+data class PostListResponse(
+    val posts: List<PostDetailResponse>,
+    val hasMore: Boolean,
+    val total: Int? = null // 可选的总数（某些场景不需要）
+)

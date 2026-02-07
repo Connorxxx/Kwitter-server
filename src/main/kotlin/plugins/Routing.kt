@@ -2,9 +2,9 @@ package com.connor.plugins
 
 import com.connor.core.security.TokenService
 import com.connor.core.security.UserPrincipal
-import com.connor.domain.usecase.LoginUseCase
-import com.connor.domain.usecase.RegisterUseCase
+import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
+import com.connor.features.post.postRoutes
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -14,13 +14,22 @@ import io.ktor.server.routing.routing
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
+    // Auth Use Cases
     val registerUseCase by inject<RegisterUseCase>()
     val loginUseCase by inject<LoginUseCase>()
     val tokenService by inject<TokenService>()
 
+    // Post Use Cases
+    val createPostUseCase by inject<CreatePostUseCase>()
+    val getPostUseCase by inject<GetPostUseCase>()
+    val getTimelineUseCase by inject<GetTimelineUseCase>()
+    val getRepliesUseCase by inject<GetRepliesUseCase>()
+    val getUserPostsUseCase by inject<GetUserPostsUseCase>()
+
     routing {
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
+        postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }
