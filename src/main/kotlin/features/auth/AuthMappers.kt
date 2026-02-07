@@ -5,13 +5,18 @@ import com.connor.domain.model.User
 import com.connor.domain.usecase.RegisterCommand
 import io.ktor.http.HttpStatusCode
 
+/**
+ * HTTP Request DTO -> Domain Command
+ */
 fun RegisterRequest.toCommand() = RegisterCommand(
     email = this.email,
     password = this.password,
     displayName = this.displayName
 )
 
-// Domain Model -> DTO
+/**
+ * Domain Model -> HTTP Response DTO
+ */
 fun User.toResponse(token: String? = null) = UserResponse(
     id = this.id.value,
     email = this.email.value,
@@ -19,12 +24,32 @@ fun User.toResponse(token: String? = null) = UserResponse(
     token = token
 )
 
-// 关键：将业务错误映射为 HTTP 状态码和错误信息
+/**
+ * 将业务错误映射为 HTTP 状态码和错误响应
+ * 这是 Transport 层的职责：协议转换
+ */
 fun AuthError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
     is AuthError.UserAlreadyExists ->
-        HttpStatusCode.Conflict to ErrorResponse("USER_EXISTS", "Email $email is already registered.")
+        HttpStatusCode.Conflict to ErrorResponse(
+            code = "USER_EXISTS",
+            message = "邮箱 $email 已被注册"
+        )
+
     is AuthError.InvalidCredentials ->
-        HttpStatusCode.Unauthorized to ErrorResponse("AUTH_FAILED", "Invalid email or password.")
-    is AuthError.InvalidFormat ->
-        HttpStatusCode.BadRequest to ErrorResponse("INVALID_FORMAT", reason)
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "AUTH_FAILED",
+            message = "邮箱或密码错误"
+        )
+
+    is AuthError.InvalidEmail ->
+        HttpStatusCode.BadRequest to ErrorResponse(
+            code = "INVALID_EMAIL",
+            message = "邮箱格式不正确: $value"
+        )
+
+    is AuthError.WeakPassword ->
+        HttpStatusCode.BadRequest to ErrorResponse(
+            code = "WEAK_PASSWORD",
+            message = reason
+        )
 }
