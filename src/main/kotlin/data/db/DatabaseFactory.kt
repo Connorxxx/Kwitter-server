@@ -1,5 +1,7 @@
 package com.connor.data.db
 
+import com.connor.data.db.schema.MediaTable
+import com.connor.data.db.schema.PostsTable
 import com.connor.data.db.schema.UsersTable
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -35,7 +37,7 @@ object DatabaseFactory {
 
         // 3. 自动建表 (类似 Room 的 auto-migration，生产环境建议用 Flyway)
         transaction {
-            SchemaUtils.create(UsersTable)
+            SchemaUtils.create(UsersTable, PostsTable, MediaTable)
         }
     }
 }

@@ -15,6 +15,7 @@ fun ResultRow.toDomain(): User {
         passwordHash = PasswordHash(this[UsersTable.passwordHash]),
         displayName = this[UsersTable.displayName],
         bio = this[UsersTable.bio],
+        avatarUrl = this[UsersTable.avatarUrl],
         createdAt = this[UsersTable.createdAt]
     )
 }

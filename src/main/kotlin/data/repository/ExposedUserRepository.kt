@@ -10,9 +10,7 @@ import com.connor.domain.failure.AuthError
 import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.repository.UserRepository
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.slf4j.LoggerFactory
 import java.sql.SQLException
@@ -30,6 +28,7 @@ class ExposedUserRepository : UserRepository {
                 it[passwordHash] = user.passwordHash.value
                 it[displayName] = user.displayName
                 it[bio] = user.bio
+                it[avatarUrl] = user.avatarUrl
                 it[createdAt] = user.createdAt
             }
 

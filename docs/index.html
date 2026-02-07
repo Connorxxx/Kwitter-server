@@ -721,6 +721,24 @@
                     <li data-group="Default" data-name="v1PostsCreateGet" class="">
                       <a href="#api-Default-v1PostsCreateGet">v1PostsCreateGet</a>
                     </li>
+                    <li data-group="Default" data-name="v1PostsPost" class="">
+                      <a href="#api-Default-v1PostsPost">v1PostsPost</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdDelete" class="">
+                      <a href="#api-Default-v1PostsPostIdDelete">v1PostsPostIdDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdGet" class="">
+                      <a href="#api-Default-v1PostsPostIdGet">v1PostsPostIdGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdRepliesGet" class="">
+                      <a href="#api-Default-v1PostsPostIdRepliesGet">v1PostsPostIdRepliesGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsTimelineGet" class="">
+                      <a href="#api-Default-v1PostsTimelineGet">v1PostsTimelineGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsUsersUserIdGet" class="">
+                      <a href="#api-Default-v1PostsUsersUserIdGet">v1PostsUsersUserIdGet</a>
+                    </li>
                     <li data-group="Default" data-name="v1ProfileGet" class="">
                       <a href="#api-Default-v1ProfileGet">v1ProfileGet</a>
                     </li>
@@ -1734,6 +1752,1348 @@ except ApiException as e:
 
                           <h2>Parameters</h2>
 
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPost">
+                      <article id="api-Default-v1PostsPost-0" data-group="User" data-name="v1PostsPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/posts</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1PostsPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1PostsPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPost(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1PostsPost();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1PostsPost();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1PostsPost();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_posts_post()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdDelete">
+                      <article id="api-Default-v1PostsPostIdDelete-0" data-group="User" data-name="v1PostsPostIdDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/posts/{postId}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts/{postId}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdDeleteWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdDelete(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdDelete(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdDelete($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdDelete(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_delete(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdDelete_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdGet">
+                      <article id="api-Default-v1PostsPostIdGet-0" data-group="User" data-name="v1PostsPostIdGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/posts/{postId}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/posts/{postId}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdGet(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdGet(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdGetWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdGet(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdGet(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdGet($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdGet(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_get(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdGet_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdRepliesGet">
+                      <article id="api-Default-v1PostsPostIdRepliesGet-0" data-group="User" data-name="v1PostsPostIdRepliesGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdRepliesGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/posts/{postId}/replies</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdRepliesGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdRepliesGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdRepliesGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/posts/{postId}/replies"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdRepliesGet(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdRepliesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdRepliesGet(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdRepliesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdRepliesGetWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdRepliesGet(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdRepliesGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdRepliesGet(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdRepliesGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdRepliesGet($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdRepliesGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdRepliesGet(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdRepliesGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_replies_get(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdRepliesGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdRepliesGet_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsTimelineGet">
+                      <article id="api-Default-v1PostsTimelineGet-0" data-group="User" data-name="v1PostsTimelineGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsTimelineGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/posts/timeline</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsTimelineGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsTimelineGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsTimelineGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsTimelineGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsTimelineGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/posts/timeline"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1PostsTimelineGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsTimelineGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1PostsTimelineGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsTimelineGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsTimelineGetWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsTimelineGet(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsTimelineGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1PostsTimelineGet();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsTimelineGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1PostsTimelineGet();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsTimelineGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1PostsTimelineGet();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsTimelineGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_posts_timeline_get()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsTimelineGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsUsersUserIdGet">
+                      <article id="api-Default-v1PostsUsersUserIdGet-0" data-group="User" data-name="v1PostsUsersUserIdGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsUsersUserIdGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/posts/users/{userId}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsUsersUserIdGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsUsersUserIdGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsUsersUserIdGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/posts/users/{userId}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1PostsUsersUserIdGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsUsersUserIdGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1PostsUsersUserIdGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsUsersUserIdGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsUsersUserIdGetWith:userId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var userId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsUsersUserIdGet(userId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsUsersUserIdGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+            var userId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsUsersUserIdGet(userId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsUsersUserIdGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$userId = ; //  | 
+
+try {
+    $api_instance->v1PostsUsersUserIdGet($userId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsUsersUserIdGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $userId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsUsersUserIdGet(userId => $userId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsUsersUserIdGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+userId =  #  | 
+
+try: 
+    api_instance.v1_posts_users_user_id_get(userId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsUsersUserIdGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">userId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsUsersUserIdGet_userId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
 
 
 

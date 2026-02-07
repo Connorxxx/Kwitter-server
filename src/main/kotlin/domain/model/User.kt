@@ -33,5 +33,6 @@ data class User(
     val passwordHash: PasswordHash, // 领域模型只持有 Hash，不持有明文
     val displayName: String,
     val bio: String = "",
+    val avatarUrl: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
