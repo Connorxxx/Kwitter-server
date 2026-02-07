@@ -37,6 +37,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("io.ktor:ktor-server-request-validation")
     implementation("io.ktor:ktor-server-host-common")
+    implementation("io.ktor:ktor-server-partial-content")
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.ktor:ktor-server-call-logging")
     implementation("io.ktor:ktor-server-openapi")

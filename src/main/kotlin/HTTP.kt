@@ -13,6 +13,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.openapi.*
 import io.ktor.server.plugins.requestvalidation.RequestValidation
 import io.ktor.server.plugins.requestvalidation.ValidationResult
+import io.ktor.server.plugins.partialcontent.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -24,6 +25,7 @@ import org.koin.logger.slf4jLogger
 import org.slf4j.event.*
 
 fun Application.configureHTTP() {
+    install(PartialContent)
     routing {
         openAPI(path = "openapi") {
             info = OpenApiInfo(title = "My API", version = "1.0.0")
