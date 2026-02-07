@@ -4,14 +4,17 @@ import com.connor.core.security.TokenService
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
+import com.connor.features.media.mediaRoutes
 import com.connor.features.post.postRoutes
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.http.content.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import org.koin.ktor.ext.inject
+import java.io.File
 
 fun Application.configureRouting() {
     // Auth Use Cases
@@ -26,10 +29,17 @@ fun Application.configureRouting() {
     val getRepliesUseCase by inject<GetRepliesUseCase>()
     val getUserPostsUseCase by inject<GetUserPostsUseCase>()
 
+    // Media config
+    val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
+
     routing {
+        // Static file serving for uploads
+        staticFiles("/uploads", File(uploadDir))
+
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
         postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase)
+        mediaRoutes(uploadDir)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }

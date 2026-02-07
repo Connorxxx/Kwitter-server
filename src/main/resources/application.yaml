@@ -11,6 +11,9 @@ jwt:
   realm: "ktor sample app"
   secret: "my-super-secret-key-change-me-in-production"
 
+media:
+  uploadDir: "uploads"
+
 storage:
   driverClassName: "org.postgresql.Driver"
   jdbcUrl: "jdbc:postgresql://localhost:5432/twitter_db"
