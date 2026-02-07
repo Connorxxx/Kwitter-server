@@ -1,42 +1,66 @@
 package com.connor.domain.usecase
 
 import arrow.core.Either
-import arrow.core.left
+import arrow.core.raise.either
 import com.connor.domain.failure.AuthError
 import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.UserRepository
 import com.connor.domain.service.PasswordHasher
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 class RegisterUseCase(
     private val userRepository: UserRepository,
     private val passwordHasher: PasswordHasher
 ) {
-    // 输入参数通常是一个简单的 Data Class 或者 DTO
+    private val logger = LoggerFactory.getLogger(RegisterUseCase::class.java)
+
+    /**
+     * 用户注册业务逻辑
+     * Railway-Oriented Programming: 任何步骤失败都会短路返回错误
+     */
     suspend operator fun invoke(cmd: RegisterCommand): Either<AuthError, User> {
-        val email = Email(cmd.email)
+        logger.info("开始注册流程: email=${cmd.email}, displayName=${cmd.displayName}")
 
-        // 1. 校验规则 (这里只是简单示例，实际可能更复杂)
-        if (userRepository.existsByEmail(email)) {
-            return AuthError.UserAlreadyExists(cmd.email).left()
+        return either {
+            // 1. 验证邮箱格式
+            val email = Email(cmd.email).onLeft { error ->
+                logger.warn("邮箱格式验证失败: email=${cmd.email}, error=$error")
+            }.bind()
+            logger.debug("邮箱格式验证通过: ${email.value}")
+
+            // 2. 验证密码强度
+            passwordHasher.validate(cmd.password).onLeft { error ->
+                logger.warn("密码强度验证失败: email=${cmd.email}, error=$error")
+            }.bind()
+            logger.debug("密码强度验证通过")
+
+            // 3. 创建用户实体
+            val userId = UserId(UUID.randomUUID().toString())
+            val newUser = User(
+                id = userId,
+                email = email,
+                passwordHash = passwordHasher.hash(cmd.password),
+                displayName = cmd.displayName
+            )
+            logger.debug("用户实体创建成功: userId=${userId.value}")
+
+            // 4. 持久化（数据库会处理唯一性约束）
+            val savedUser = userRepository.save(newUser).onLeft { error ->
+                logger.error("用户保存失败: email=${cmd.email}, error=$error")
+            }.bind()
+
+            logger.info("注册成功: userId=${savedUser.id.value}, email=${savedUser.email.value}")
+            savedUser
         }
-
-        // 2. 业务逻辑：生成 ID，Hash 密码
-        val newUser = User(
-            id = UserId(UUID.randomUUID().toString()), // 这里可以暂时用 UUID.randomUUID().toString() 占位
-            email = email,
-            passwordHash = passwordHasher.hash(cmd.password), // 核心：加密是业务规则
-            displayName = cmd.displayName
-        )
-
-        // 3. 持久化
-        return userRepository.save(newUser)
     }
 }
 
-// 用简单的 Command 对象传输参数，解耦 HTTP Request
+/**
+ * 注册命令：解耦 HTTP Request 和 Domain 层
+ */
 data class RegisterCommand(
     val email: String,
     val password: String,
