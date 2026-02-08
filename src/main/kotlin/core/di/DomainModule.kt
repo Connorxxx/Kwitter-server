@@ -18,7 +18,6 @@ val domainModule = module {
     // Use Case 层：Post 相关
     single { CreatePostUseCase(get()) }
     single { GetPostUseCase(get()) }
-    single { GetTimelineUseCase(get()) }
     single { GetTimelineWithStatusUseCase(get()) }
     single { GetRepliesUseCase(get()) }
     single { GetUserPostsUseCase(get()) }

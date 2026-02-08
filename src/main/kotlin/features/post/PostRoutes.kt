@@ -21,7 +21,6 @@ private val logger = LoggerFactory.getLogger("PostRoutes")
 fun Route.postRoutes(
     createPostUseCase: CreatePostUseCase,
     getPostUseCase: GetPostUseCase,
-    getTimelineUseCase: GetTimelineUseCase,
     getTimelineWithStatusUseCase: GetTimelineWithStatusUseCase,
     getRepliesUseCase: GetRepliesUseCase,
     getUserPostsUseCase: GetUserPostsUseCase,
@@ -42,8 +41,8 @@ fun Route.postRoutes(
             get("/timeline") {
             val startTime = System.currentTimeMillis()
             val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-            val limit = rawLimit.coerceAtMost(100)  // 上限 100，防止恶意请求
-            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+            val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
+            val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)  // 不允许负数
 
             try {
                 logger.info("查询时间线: limit=$limit, offset=$offset")
@@ -163,8 +162,8 @@ fun Route.postRoutes(
                     return@get
                 }
                 val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-                val limit = rawLimit.coerceAtMost(100)  // 上限 100
-                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+                val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
+                val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
                 try {
                     logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
@@ -202,8 +201,8 @@ fun Route.postRoutes(
                     return@get
                 }
                 val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-                val limit = rawLimit.coerceAtMost(100)  // 上限 100
-                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+                val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
+                val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
                 try {
                     logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
