@@ -11,6 +11,27 @@ import org.slf4j.LoggerFactory
 private val logger = LoggerFactory.getLogger("StatusPages")
 
 /**
+ * 判断是否为生产环境
+ */
+private fun isDevelopment(): Boolean {
+    return System.getenv("ENVIRONMENT")?.lowercase() != "production" &&
+           System.getenv("PROFILE")?.lowercase() != "prod"
+}
+
+/**
+ * 根据环境返回错误详情
+ * - 开发环境：包含详细信息便于调试
+ * - 生产环境：仅返回通用消息
+ */
+private fun getErrorMessage(defaultMessage: String, detailMessage: String? = null): String {
+    return if (isDevelopment()) {
+        detailMessage ?: defaultMessage
+    } else {
+        defaultMessage
+    }
+}
+
+/**
  * 全局异常处理器
  * 捕获所有未处理的异常，记录日志并返回标准错误响应
  */
@@ -51,7 +72,10 @@ fun Application.configureStatusPages() {
                 HttpStatusCode.BadRequest,
                 ErrorResponse(
                     code = "INVALID_JSON",
-                    message = "请求数据格式错误: ${cause.message}"
+                    message = getErrorMessage(
+                        defaultMessage = "请求数据格式错误",
+                        detailMessage = "请求数据格式错误: ${cause.message}"
+                    )
                 )
             )
         }
@@ -69,7 +93,10 @@ fun Application.configureStatusPages() {
                 HttpStatusCode.BadRequest,
                 ErrorResponse(
                     code = "BAD_REQUEST",
-                    message = "请求格式错误: ${cause.message}"
+                    message = getErrorMessage(
+                        defaultMessage = "请求格式错误",
+                        detailMessage = "请求格式错误: ${cause.message}"
+                    )
                 )
             )
         }

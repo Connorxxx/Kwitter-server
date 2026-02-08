@@ -36,9 +36,7 @@ import java.util.UUID
  * - 处理复杂查询（JOIN、分页）
  * - 返回 Either 处理业务错误
  */
-class ExposedPostRepository(
-    private val userRepository: UserRepository
-) : PostRepository {
+class ExposedPostRepository : PostRepository {
     private val logger = LoggerFactory.getLogger(ExposedPostRepository::class.java)
 
     override suspend fun create(post: Post): Either<PostError, Post> = dbQuery {

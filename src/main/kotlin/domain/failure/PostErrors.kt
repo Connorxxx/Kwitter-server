@@ -10,6 +10,7 @@ sealed interface PostError {
     data object EmptyContent : PostError
     data class ContentTooLong(val actual: Int, val max: Int) : PostError
     data class InvalidMediaUrl(val url: String) : PostError
+    data class InvalidMediaType(val received: String) : PostError
     data class TooManyMedia(val count: Int) : PostError // 超过 4 个媒体
 
     // === 业务规则错误 ===
@@ -19,4 +20,5 @@ sealed interface PostError {
 
     // === 基础设施错误（可选，根据需要添加）===
     data class MediaUploadFailed(val reason: String) : PostError
+    data class InteractionStateQueryFailed(val reason: String) : PostError // 点赞/收藏状态查询失败
 }

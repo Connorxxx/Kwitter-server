@@ -5,6 +5,7 @@ ktor:
   deployment:
     port: 8080
     host: 0.0.0.0
+    maxUploadSize: 11534336  # 11MB (稍大于10MB媒体限制，容纳multipart头部)
 jwt:
   domain: "http://localhost/"
   audience: "jwt-audience"

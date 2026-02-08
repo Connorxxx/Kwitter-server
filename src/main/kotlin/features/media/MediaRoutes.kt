@@ -13,6 +13,20 @@ import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
 import org.slf4j.LoggerFactory
 
+// 环境感知的错误消息函数
+private fun isDevelopment(): Boolean {
+    return System.getenv("ENVIRONMENT")?.lowercase() != "production" &&
+           System.getenv("PROFILE")?.lowercase() != "prod"
+}
+
+private fun getErrorMessage(defaultMessage: String, detailMessage: String? = null): String {
+    return if (isDevelopment()) {
+        detailMessage ?: defaultMessage
+    } else {
+        defaultMessage
+    }
+}
+
 private val logger = LoggerFactory.getLogger("MediaRoutes")
 
 /**
@@ -100,15 +114,21 @@ fun Route.mediaRoutes(uploadMediaUseCase: UploadMediaUseCase) {
                     logger.warn("No file provided in upload request, duration=${duration}ms")
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        ErrorResponse(error = "No file provided")
+                        ErrorResponse(
+                            code = "NO_FILE_PROVIDED",
+                            message = "Please provide a file to upload"
+                        )
                     )
                 } catch (e: Exception) {
                     logger.error("Unexpected error during media upload", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,
                         ErrorResponse(
-                            error = "Upload failed",
-                            details = e.message
+                            code = "UPLOAD_ERROR",
+                            message = getErrorMessage(
+                                defaultMessage = "Upload failed. Please try again later.",
+                                detailMessage = "Upload failed: ${e.message}"
+                            )
                         )
                     )
                 }

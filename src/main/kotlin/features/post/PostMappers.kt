@@ -1,5 +1,8 @@
 package com.connor.features.post
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.*
 import com.connor.domain.usecase.CreatePostCommand
@@ -8,19 +11,47 @@ import io.ktor.http.*
 // ========== Request -> Domain Command ==========
 
 /**
+ * 安全解析 MediaType
+ * 若解析失败返回 Either.Left，避免抛出 IllegalArgumentException
+ */
+fun parseMediaType(typeString: String): Either<PostError, MediaType> {
+    return try {
+        MediaType.valueOf(typeString).right()
+    } catch (e: IllegalArgumentException) {
+        PostError.InvalidMediaType(typeString).left()
+    }
+}
+
+/**
  * HTTP Request -> Domain Command
  */
-fun CreatePostRequest.toCommand(authorId: UserId): CreatePostCommand {
-    val mediaUrls = this.mediaUrls.map { media ->
-        media.url to MediaType.valueOf(media.type)
+fun CreatePostRequest.toCommand(authorId: UserId): Either<PostError, CreatePostCommand> {
+    // 先验证所有的 mediaUrls 中的 type 都是有效的
+    val mediaUrlsResult = this.mediaUrls.map { media ->
+        parseMediaType(media.type).map { mediaType ->
+            media.url to mediaType
+        }
     }
+
+    // 检查是否有解析失败的
+    for (result in mediaUrlsResult) {
+        if (result.isLeft()) {
+            return result.fold(
+                ifLeft = { error -> error.left() },
+                ifRight = { it.right() as Either<PostError, CreatePostCommand> }
+            )
+        }
+    }
+
+    // 全部成功，提取值
+    val mediaUrls = mediaUrlsResult.mapNotNull { it.getOrNull() }
 
     return CreatePostCommand(
         authorId = authorId,
         content = this.content,
         mediaUrls = mediaUrls,
         parentId = this.parentId?.let { PostId(it) }
-    )
+    ).right()
 }
 
 // ========== Domain -> Response DTO ==========
@@ -118,6 +149,12 @@ fun PostError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
             message = "无效的媒体 URL: $url"
         )
 
+    is PostError.InvalidMediaType ->
+        HttpStatusCode.BadRequest to ErrorResponse(
+            code = "INVALID_MEDIA_TYPE",
+            message = "无效的媒体类型: $received。允许的类型为: IMAGE、VIDEO"
+        )
+
     is PostError.TooManyMedia ->
         HttpStatusCode.BadRequest to ErrorResponse(
             code = "TOO_MANY_MEDIA",
@@ -146,6 +183,12 @@ fun PostError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
         HttpStatusCode.InternalServerError to ErrorResponse(
             code = "MEDIA_UPLOAD_FAILED",
             message = "媒体上传失败: $reason"
+        )
+
+    is PostError.InteractionStateQueryFailed ->
+        HttpStatusCode.InternalServerError to ErrorResponse(
+            code = "INTERACTION_STATE_QUERY_FAILED",
+            message = "获取交互状态失败，请稍后重试: $reason"
         )
 }
 

@@ -1,6 +1,9 @@
 package com.connor.domain.usecase
 
 import arrow.core.Either
+import arrow.core.flatMap
+import arrow.core.right
+import arrow.core.left
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.PostDetail
 import com.connor.domain.model.PostId
@@ -34,25 +37,45 @@ class GetPostDetailWithStatusUseCase(
         logger.debug("查询Post详情及交互状态: postId=${postId.value}, userId=${currentUserId?.value}")
 
         // 1. 先查询Post详情
-        return postRepository.findDetailById(postId).map { postDetail ->
-            // 2. 如果用户已认证，查询交互状态
-            val isLiked = currentUserId?.let {
-                postRepository.isLikedByUser(it, postId).getOrNull()
+        return postRepository.findDetailById(postId).flatMap { postDetail ->
+            // 2. 如果用户未认证，直接返回详情（不包含交互状态）
+            if (currentUserId == null) {
+                logger.debug("Post详情查询完成: postId=${postId.value}, 用户未认证")
+                PostDetailWithStatus(
+                    postDetail = postDetail,
+                    isLikedByCurrentUser = null,
+                    isBookmarkedByCurrentUser = null
+                ).right()
+            } else {
+                // 3. 用户已认证，查询交互状态（强一致性：失败则整体失败）
+                postRepository.isLikedByUser(currentUserId, postId).fold(
+                    ifLeft = { likeError ->
+                        // 查询失败，返回错误
+                        PostError.InteractionStateQueryFailed("Failed to check like status: $likeError").left()
+                    },
+                    ifRight = { isLiked ->
+                        // Like查询成功，继续查询Bookmark
+                        postRepository.isBookmarkedByUser(currentUserId, postId).fold(
+                            ifLeft = { bookmarkError ->
+                                // Bookmark查询失败，返回错误
+                                PostError.InteractionStateQueryFailed("Failed to check bookmark status: $bookmarkError").left()
+                            },
+                            ifRight = { isBookmarked ->
+                                // 两个查询都成功，构建结果
+                                logger.debug(
+                                    "Post详情查询完成: postId=${postId.value}, " +
+                                    "isLiked=$isLiked, isBookmarked=$isBookmarked"
+                                )
+                                PostDetailWithStatus(
+                                    postDetail = postDetail,
+                                    isLikedByCurrentUser = isLiked,
+                                    isBookmarkedByCurrentUser = isBookmarked
+                                ).right()
+                            }
+                        )
+                    }
+                )
             }
-            val isBookmarked = currentUserId?.let {
-                postRepository.isBookmarkedByUser(it, postId).getOrNull()
-            }
-
-            logger.debug(
-                "Post详情查询完成: postId=${postId.value}, " +
-                "isLiked=$isLiked, isBookmarked=$isBookmarked"
-            )
-
-            PostDetailWithStatus(
-                postDetail = postDetail,
-                isLikedByCurrentUser = isLiked,
-                isBookmarkedByCurrentUser = isBookmarked
-            )
         }
     }
 }

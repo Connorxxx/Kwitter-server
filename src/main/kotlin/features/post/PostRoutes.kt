@@ -23,7 +23,9 @@ fun Route.postRoutes(
     getPostUseCase: GetPostUseCase,
     getTimelineWithStatusUseCase: GetTimelineWithStatusUseCase,
     getRepliesUseCase: GetRepliesUseCase,
+    getRepliesWithStatusUseCase: GetRepliesWithStatusUseCase,
     getUserPostsUseCase: GetUserPostsUseCase,
+    getUserPostsWithStatusUseCase: GetUserPostsWithStatusUseCase,
     getPostDetailWithStatusUseCase: GetPostDetailWithStatusUseCase
 ) {
     route("/v1/posts") {
@@ -154,6 +156,7 @@ fun Route.postRoutes(
             /**
              * GET /v1/posts/{postId}/replies?limit=20&offset=0
              * 获取 Post 的回复列表
+             * 如果用户已认证，返回当前用户的交互状态（点赞/收藏）
              */
             get("/{postId}/replies") {
                 val startTime = System.currentTimeMillis()
@@ -168,18 +171,51 @@ fun Route.postRoutes(
                 try {
                     logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
 
-                    // 调用 Use Case
-                    val replies = getRepliesUseCase(PostId(postId), limit, offset).toList()
+                    // 获取当前用户ID（如果已认证）
+                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+
+                    // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
+                    val replyItems = getRepliesWithStatusUseCase(PostId(postId), limit, offset, currentUserId).toList()
                     val duration = System.currentTimeMillis() - startTime
 
-                    logger.info("回复查询成功: postId=$postId, count=${replies.size}, duration=${duration}ms")
+                    // 检查是否有错误
+                    val failures = replyItems.filterIsInstance<Either.Left<*>>()
+                    if (failures.isNotEmpty()) {
+                        @Suppress("UNCHECKED_CAST")
+                        val error = (failures.first() as Either.Left<GetRepliesWithStatusUseCase.ReplyError>).value
+                        logger.warn("回复查询部分失败: count=${failures.size}, duration=${duration}ms")
+                        val (status, message) = when (error) {
+                            is GetRepliesWithStatusUseCase.ReplyError.LikesCheckFailed -> {
+                                HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                            }
+                            is GetRepliesWithStatusUseCase.ReplyError.BookmarksCheckFailed -> {
+                                HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                            }
+                        }
+                        call.respond(status, ErrorResponse("REPLY_STATE_ERROR", message))
+                        return@get
+                    }
 
-                    // 返回响应（列表接口不返回交互状态，避免N+1查询）
+                    // 提取成功的结果
+                    @Suppress("UNCHECKED_CAST")
+                    val successItems = replyItems.filterIsInstance<Either.Right<*>>()
+                        .map { (it as Either.Right<GetRepliesWithStatusUseCase.ReplyItem>).value }
+
+                    logger.info("回复查询成功: postId=$postId, count=${successItems.size}, duration=${duration}ms")
+
+                    // 映射为响应 DTO
+                    val repliesResponse = successItems.map { item ->
+                        item.postDetail.toResponse(
+                            isLikedByCurrentUser = item.isLikedByCurrentUser,
+                            isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
+                        )
+                    }
+
                     call.respond(
                         HttpStatusCode.OK,
                         PostListResponse(
-                            posts = replies.map { it.toResponse() },
-                            hasMore = replies.size == limit
+                            posts = repliesResponse,
+                            hasMore = repliesResponse.size == limit
                         )
                     )
 
@@ -193,6 +229,7 @@ fun Route.postRoutes(
             /**
              * GET /v1/posts/users/{userId}?limit=20&offset=0
              * 获取用户的 Posts（不包括回复）
+             * 如果用户已认证，返回当前用户的交互状态（点赞/收藏）
              */
             get("/users/{userId}") {
                 val startTime = System.currentTimeMillis()
@@ -207,18 +244,51 @@ fun Route.postRoutes(
                 try {
                     logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
 
-                    // 调用 Use Case
-                    val posts = getUserPostsUseCase(UserId(userId), limit, offset).toList()
+                    // 获取当前用户ID（如果已认证）
+                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+
+                    // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
+                    val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
                     val duration = System.currentTimeMillis() - startTime
 
-                    logger.info("用户 Posts 查询成功: userId=$userId, count=${posts.size}, duration=${duration}ms")
+                    // 检查是否有错误
+                    val failures = postItems.filterIsInstance<Either.Left<*>>()
+                    if (failures.isNotEmpty()) {
+                        @Suppress("UNCHECKED_CAST")
+                        val error = (failures.first() as Either.Left<GetUserPostsWithStatusUseCase.UserPostError>).value
+                        logger.warn("用户Posts查询部分失败: count=${failures.size}, duration=${duration}ms")
+                        val (status, message) = when (error) {
+                            is GetUserPostsWithStatusUseCase.UserPostError.LikesCheckFailed -> {
+                                HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                            }
+                            is GetUserPostsWithStatusUseCase.UserPostError.BookmarksCheckFailed -> {
+                                HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                            }
+                        }
+                        call.respond(status, ErrorResponse("USER_POST_STATE_ERROR", message))
+                        return@get
+                    }
 
-                    // 返回响应（列表接口不返回交互状态，避免N+1查询）
+                    // 提取成功的结果
+                    @Suppress("UNCHECKED_CAST")
+                    val successItems = postItems.filterIsInstance<Either.Right<*>>()
+                        .map { (it as Either.Right<GetUserPostsWithStatusUseCase.UserPostItem>).value }
+
+                    logger.info("用户 Posts 查询成功: userId=$userId, count=${successItems.size}, duration=${duration}ms")
+
+                    // 映射为响应 DTO
+                    val postsResponse = successItems.map { item ->
+                        item.postDetail.toResponse(
+                            isLikedByCurrentUser = item.isLikedByCurrentUser,
+                            isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
+                        )
+                    }
+
                     call.respond(
                         HttpStatusCode.OK,
                         PostListResponse(
-                            posts = posts.map { it.toResponse() },
-                            hasMore = posts.size == limit
+                            posts = postsResponse,
+                            hasMore = postsResponse.size == limit
                         )
                     )
 
@@ -254,12 +324,13 @@ fun Route.postRoutes(
                         "mediaCount=${request.mediaUrls.size}"
                     )
 
-                    // 调用 Use Case
-                    val result = createPostUseCase(request.toCommand(UserId(userId)))
+                    // 先解析请求为命令（检查 MediaType 有效性）
+                    val commandOrError = request.toCommand(UserId(userId))
                     val duration = System.currentTimeMillis() - startTime
 
-                    result.fold(
+                    commandOrError.fold(
                         ifLeft = { error ->
+                            // 命令构建失败（如无效的 MediaType）
                             val (status, body) = error.toHttpError()
                             logger.warn(
                                 "Post 创建失败: userId=$userId, error=${error.javaClass.simpleName}, " +
@@ -267,20 +338,34 @@ fun Route.postRoutes(
                             )
                             call.respond(status, body)
                         },
-                        ifRight = { post ->
-                            logger.info(
-                                "Post 创建成功: userId=$userId, postId=${post.id.value}, " +
-                                "duration=${duration}ms"
+                        ifRight = { command ->
+                            // 命令构建成功，调用 Use Case
+                            val result = createPostUseCase(command)
+                            result.fold(
+                                ifLeft = { error ->
+                                    val (status, body) = error.toHttpError()
+                                    logger.warn(
+                                        "Post 创建失败: userId=$userId, error=${error.javaClass.simpleName}, " +
+                                        "duration=${duration}ms"
+                                    )
+                                    call.respond(status, body)
+                                },
+                                ifRight = { post ->
+                                    logger.info(
+                                        "Post 创建成功: userId=$userId, postId=${post.id.value}, " +
+                                        "duration=${duration}ms"
+                                    )
+                                    // 返回完整的 PostDetail
+                                    val detail = getPostUseCase(post.id).getOrNull()
+                                    if (detail != null) {
+                                        // 创建Post响应中不返回交互状态
+                                        call.respond(HttpStatusCode.Created, detail.toResponse())
+                                    } else {
+                                        // Fallback：理论上不应该发生
+                                        call.respond(HttpStatusCode.Created, mapOf("postId" to post.id.value))
+                                    }
+                                }
                             )
-                            // 返回完整的 PostDetail
-                            val detail = getPostUseCase(post.id).getOrNull()
-                            if (detail != null) {
-                                // 创建Post响应中不返回交互状态
-                                call.respond(HttpStatusCode.Created, detail.toResponse())
-                            } else {
-                                // Fallback：理论上不应该发生
-                                call.respond(HttpStatusCode.Created, mapOf("postId" to post.id.value))
-                            }
                         }
                     )
 

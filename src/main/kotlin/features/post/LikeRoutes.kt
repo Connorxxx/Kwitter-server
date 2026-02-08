@@ -1,12 +1,15 @@
 package com.connor.features.post
 
+import arrow.core.Either
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.failure.LikeError
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.usecase.GetUserLikesUseCase
+import com.connor.domain.usecase.GetUserLikesWithStatusUseCase
 import com.connor.domain.usecase.LikePostUseCase
 import com.connor.domain.usecase.UnlikePostUseCase
+import com.connor.plugins.authenticateOptional
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
@@ -24,7 +27,8 @@ private val logger = LoggerFactory.getLogger("LikeRoutes")
 fun Route.likeRoutes(
     likePostUseCase: LikePostUseCase,
     unlikePostUseCase: UnlikePostUseCase,
-    getUserLikesUseCase: GetUserLikesUseCase
+    getUserLikesUseCase: GetUserLikesUseCase,
+    getUserLikesWithStatusUseCase: GetUserLikesWithStatusUseCase
 ) {
     // 认证路由
     authenticate("auth-jwt") {
@@ -93,30 +97,79 @@ fun Route.likeRoutes(
         }
     }
 
-    // 公开路由（无需认证）
-    get("/v1/users/{userId}/likes") {
-        val userId = call.parameters["userId"] ?: run {
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse(code = "MISSING_USER_ID", message = "缺少 userId 参数")
-            )
-            return@get
+    // 公开路由（支持可选认证）
+    authenticateOptional("auth-jwt") {
+        get("/v1/users/{userId}/likes") {
+            val startTime = System.currentTimeMillis()
+            val userId = call.parameters["userId"] ?: run {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(code = "MISSING_USER_ID", message = "缺少 userId 参数")
+                )
+                return@get
+            }
+
+            val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
+            val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)  // 不允许负数
+
+            try {
+                logger.info("查询用户点赞列表: userId=$userId, limit=$limit, offset=$offset")
+
+                // 获取当前用户ID（如果已认证）
+                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+
+                // 调用 Use Case
+                val likeItems = getUserLikesWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
+                val duration = System.currentTimeMillis() - startTime
+
+                // 检查是否有错误
+                val failures = likeItems.filterIsInstance<Either.Left<*>>()
+                if (failures.isNotEmpty()) {
+                    @Suppress("UNCHECKED_CAST")
+                    val error = (failures.first() as Either.Left<GetUserLikesWithStatusUseCase.UserLikesError>).value
+                    logger.warn("用户点赞列表查询部分失败: count=${failures.size}, duration=${duration}ms")
+                    val (status, message) = when (error) {
+                        is GetUserLikesWithStatusUseCase.UserLikesError.LikesCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                        is GetUserLikesWithStatusUseCase.UserLikesError.BookmarksCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                    }
+                    call.respond(status, ErrorResponse("USER_LIKES_STATE_ERROR", message))
+                    return@get
+                }
+
+                // 提取成功的结果
+                @Suppress("UNCHECKED_CAST")
+                val successItems = likeItems.filterIsInstance<Either.Right<*>>()
+                    .map { (it as Either.Right<GetUserLikesWithStatusUseCase.LikedPostItem>).value }
+
+                logger.info("用户点赞列表查询成功: userId=$userId, count=${successItems.size}, duration=${duration}ms")
+
+                // 映射为响应 DTO
+                val postsResponse = successItems.map { item ->
+                    item.postDetail.toResponse(
+                        isLikedByCurrentUser = item.isLikedByCurrentUser,
+                        isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
+                    )
+                }
+
+                call.respond(
+                    HttpStatusCode.OK,
+                    PostListResponse(
+                        posts = postsResponse,
+                        hasMore = postsResponse.size == limit
+                    )
+                )
+
+            } catch (e: Exception) {
+                val duration = System.currentTimeMillis() - startTime
+                logger.error("用户点赞列表查询异常: userId=$userId, duration=${duration}ms, error=${e.message}", e)
+                throw e
+            }
         }
-
-        val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-        val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
-
-        val posts = getUserLikesUseCase(UserId(userId), limit, offset)
-            .toList()
-            .map { it.toResponse() }
-
-        call.respond(
-            HttpStatusCode.OK,
-            PostListResponse(
-                posts = posts,
-                hasMore = posts.size == limit
-            )
-        )
     }
 }
 

@@ -23,5 +23,5 @@ data class TokenConfig(
     val audience: String,
     val secret: String,
     val realm: String,
-    val expiresIn: Long = 365L * 24 * 60 * 60 * 1000 // 1年过期 (简单的做法)
+    val expiresIn: Long = 14L * 24 * 60 * 60 * 1000 // 14天过期
 )

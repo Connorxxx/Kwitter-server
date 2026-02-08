@@ -29,18 +29,22 @@ fun Application.configureRouting() {
     val getPostUseCase by inject<GetPostUseCase>()
     val getTimelineWithStatusUseCase by inject<GetTimelineWithStatusUseCase>()
     val getRepliesUseCase by inject<GetRepliesUseCase>()
+    val getRepliesWithStatusUseCase by inject<GetRepliesWithStatusUseCase>()
     val getUserPostsUseCase by inject<GetUserPostsUseCase>()
+    val getUserPostsWithStatusUseCase by inject<GetUserPostsWithStatusUseCase>()
     val getPostDetailWithStatusUseCase by inject<GetPostDetailWithStatusUseCase>()
 
     // Like Use Cases
     val likePostUseCase by inject<LikePostUseCase>()
     val unlikePostUseCase by inject<UnlikePostUseCase>()
     val getUserLikesUseCase by inject<GetUserLikesUseCase>()
+    val getUserLikesWithStatusUseCase by inject<GetUserLikesWithStatusUseCase>()
 
     // Bookmark Use Cases
     val bookmarkPostUseCase by inject<BookmarkPostUseCase>()
     val unbookmarkPostUseCase by inject<UnbookmarkPostUseCase>()
     val getUserBookmarksUseCase by inject<GetUserBookmarksUseCase>()
+    val getUserBookmarksWithStatusUseCase by inject<GetUserBookmarksWithStatusUseCase>()
 
     // Media Use Cases
     val uploadMediaUseCase by inject<UploadMediaUseCase>()
@@ -54,9 +58,9 @@ fun Application.configureRouting() {
 
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
-        postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getUserPostsUseCase, getPostDetailWithStatusUseCase)
-        likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase)
-        bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase)
+        postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase)
+        likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase, getUserLikesWithStatusUseCase)
+        bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
 
         // 健康检查

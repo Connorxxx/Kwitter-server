@@ -23,8 +23,10 @@ import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
 import org.slf4j.event.*
+import org.slf4j.LoggerFactory
 
 fun Application.configureHTTP() {
+    // 安装 PartialContent 插件
     install(PartialContent)
     routing {
         openAPI(path = "openapi") {
