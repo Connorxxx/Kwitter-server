@@ -57,4 +57,10 @@ fun AuthError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
             code = "WEAK_PASSWORD",
             message = reason
         )
+
+    is AuthError.InvalidDisplayName ->
+        HttpStatusCode.BadRequest to ErrorResponse(
+            code = "INVALID_DISPLAY_NAME",
+            message = reason
+        )
 }

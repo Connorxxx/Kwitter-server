@@ -12,11 +12,12 @@ value class Email private constructor(val value: String) {
     companion object {
         // 用户输入验证：返回 Either
         operator fun invoke(value: String): Either<AuthError, Email> {
-            val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$".toRegex()
-            return if (value.matches(emailRegex)) {
-                Email(value).right()
+            val normalized = value.trim().lowercase()  // ✅ 规范化：防止 "A@B.com" 和 "a@b.com" 被视为不同账号
+            val emailRegex = "^[a-z0-9+_.-]+@[a-z0-9.-]+\\.[a-z]{2,}$".toRegex()
+            return if (normalized.matches(emailRegex)) {
+                Email(normalized).right()
             } else {
-                AuthError.InvalidEmail(value).left()
+                AuthError.InvalidEmail(value).left()  // 原始值用于错误提示
             }
         }
 

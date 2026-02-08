@@ -3,6 +3,7 @@ package com.connor.domain.usecase
 import arrow.core.Either
 import arrow.core.raise.either
 import com.connor.domain.failure.AuthError
+import com.connor.domain.model.DisplayName
 import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.model.UserId
@@ -31,23 +32,29 @@ class RegisterUseCase(
             }.bind()
             logger.debug("邮箱格式验证通过: ${email.value}")
 
-            // 2. 验证密码强度
+            // 2. 验证昵称格式
+            val displayName = DisplayName(cmd.displayName).onLeft { error ->
+                logger.warn("昵称格式验证失败: displayName=${cmd.displayName}, error=$error")
+            }.bind()
+            logger.debug("昵称格式验证通过: ${displayName.value}")
+
+            // 3. 验证密码强度
             passwordHasher.validate(cmd.password).onLeft { error ->
                 logger.warn("密码强度验证失败: email=${cmd.email}, error=$error")
             }.bind()
             logger.debug("密码强度验证通过")
 
-            // 3. 创建用户实体
+            // 4. 创建用户实体
             val userId = UserId(UUID.randomUUID().toString())
             val newUser = User(
                 id = userId,
                 email = email,
                 passwordHash = passwordHasher.hash(cmd.password),
-                displayName = cmd.displayName
+                displayName = displayName.value
             )
             logger.debug("用户实体创建成功: userId=${userId.value}")
 
-            // 4. 持久化（数据库会处理唯一性约束）
+            // 5. 持久化（数据库会处理唯一性约束）
             val savedUser = userRepository.save(newUser).onLeft { error ->
                 logger.error("用户保存失败: email=${cmd.email}, error=$error")
             }.bind()
