@@ -31,7 +31,7 @@
     <!-- 框架日志（减少噪音） -->
     <logger name="org.eclipse.jetty" level="WARN"/>
     <logger name="io.netty" level="WARN"/>
-    <logger name="org.jetbrains.exposed.sql.statements" level="DEBUG"/>
+    <logger name="org.jetbrains.exposed.v1.jdbc.statements" level="DEBUG"/>
 
     <!-- 根日志级别 -->
     <root level="INFO">

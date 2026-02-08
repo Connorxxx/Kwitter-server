@@ -21,10 +21,11 @@ import com.connor.domain.repository.PostRepository
 import com.connor.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.minus
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.minus
+import org.jetbrains.exposed.v1.core.plus
+import org.jetbrains.exposed.v1.jdbc.*
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -150,7 +151,7 @@ class ExposedPostRepository : PostRepository {
         val details = dbQuery {
             logger.debug("查询用户 Posts: authorId=${authorId.value}, limit=$limit, offset=$offset")
 
-            // 查询顶层 Posts（不包括回复）
+            // 查询顶层 Posts（不包括回复）- 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
                 .where {
@@ -158,9 +159,15 @@ class ExposedPostRepository : PostRepository {
                             (PostsTable.parentId.isNull())
                 }
                 .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                .limit(limit).offset(offset.toLong())
+                .limit(limit + 1).offset(offset.toLong())
 
-            query.map { row -> row.toPostDetailWithMedia() }
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
         }
 
         details.forEach { detail ->
@@ -172,13 +179,20 @@ class ExposedPostRepository : PostRepository {
         val details = dbQuery {
             logger.debug("查询回复: parentId=${parentId.value}, limit=$limit, offset=$offset")
 
+            // 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
                 .where { PostsTable.parentId eq parentId.value }
                 .orderBy(PostsTable.createdAt to SortOrder.ASC) // 回复按时间正序
-                .limit(limit).offset(offset.toLong())
+                .limit(limit + 1).offset(offset.toLong())
 
-            query.map { row -> row.toPostDetailWithMedia() }
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
         }
 
         details.forEach { detail ->
@@ -190,14 +204,20 @@ class ExposedPostRepository : PostRepository {
         val details = dbQuery {
             logger.debug("查询时间线: limit=$limit, offset=$offset")
 
-            // 查询所有顶层 Posts（不包括回复）
+            // 查询所有顶层 Posts（不包括回复）- 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
                 .where { PostsTable.parentId.isNull() }
                 .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                .limit(limit).offset(offset.toLong())
+                .limit(limit + 1).offset(offset.toLong())
 
-            query.map { row -> row.toPostDetailWithMedia() }
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
         }
 
         details.forEach { detail ->
@@ -206,14 +226,30 @@ class ExposedPostRepository : PostRepository {
     }
 
     /**
-     * 将 ResultRow 映射为 PostDetail（包含媒体附件）
+     * 批量查询多个 Post 的媒体附件（解决 N+1 问题）
+     * @return Map<PostId, List<MediaAttachment>>
      */
-    private fun ResultRow.toPostDetailWithMedia(): PostDetail {
-        val postId = PostId(this[PostsTable.id])
-        val media = MediaTable.selectAll()
-            .where { MediaTable.postId eq postId.value }
+    private fun batchLoadMedia(postIds: List<PostId>): Map<PostId, List<MediaAttachment>> {
+        if (postIds.isEmpty()) return emptyMap()
+
+        val postIdValues = postIds.map { it.value }
+        val mediaList = MediaTable.selectAll()
+            .where { MediaTable.postId inList postIdValues }
             .orderBy(MediaTable.order to SortOrder.ASC)
-            .map { it.toMediaAttachment() }
+            .map { row ->
+                val postId = PostId(row[MediaTable.postId])
+                postId to row.toMediaAttachment()
+            }
+
+        return mediaList.groupBy({ it.first }, { it.second })
+    }
+
+    /**
+     * 将 ResultRow 映射为 PostDetail（不包含媒体，需要外部提供）
+     */
+    private fun ResultRow.toPostDetailWithMedia(mediaMap: Map<PostId, List<MediaAttachment>>): PostDetail {
+        val postId = PostId(this[PostsTable.id])
+        val media = mediaMap[postId] ?: emptyList()
 
         val post = this.toPost().copy(media = media)
         val author = this.toDomain()
@@ -405,16 +441,22 @@ class ExposedPostRepository : PostRepository {
         val details = dbQuery {
             logger.debug("查询用户点赞列表: userId=${userId.value}, limit=$limit, offset=$offset")
 
-            // JOIN LikesTable + PostsTable + UsersTable
+            // JOIN LikesTable + PostsTable + UsersTable - 多查询 1 条用于判断 hasMore
             val query = (LikesTable
                 .innerJoin(PostsTable) { LikesTable.postId eq PostsTable.id }
                 .innerJoin(UsersTable) { PostsTable.authorId eq UsersTable.id })
                 .select(PostsTable.columns + UsersTable.columns)
                 .where { LikesTable.userId eq userId.value }
                 .orderBy(LikesTable.createdAt to SortOrder.DESC)
-                .limit(limit).offset(offset.toLong())
+                .limit(limit + 1).offset(offset.toLong())
 
-            query.map { row -> row.toPostDetailWithMedia() }
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
         }
 
         details.forEach { detail ->
@@ -553,16 +595,22 @@ class ExposedPostRepository : PostRepository {
         val details = dbQuery {
             logger.debug("查询用户收藏列表: userId=${userId.value}, limit=$limit, offset=$offset")
 
-            // JOIN BookmarksTable + PostsTable + UsersTable
+            // JOIN BookmarksTable + PostsTable + UsersTable - 多查询 1 条用于判断 hasMore
             val query = (BookmarksTable
                 .innerJoin(PostsTable) { BookmarksTable.postId eq PostsTable.id }
                 .innerJoin(UsersTable) { PostsTable.authorId eq UsersTable.id })
                 .select(PostsTable.columns + UsersTable.columns)
                 .where { BookmarksTable.userId eq userId.value }
                 .orderBy(BookmarksTable.createdAt to SortOrder.DESC)
-                .limit(limit).offset(offset.toLong())
+                .limit(limit + 1).offset(offset.toLong())
 
-            query.map { row -> row.toPostDetailWithMedia() }
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
         }
 
         details.forEach { detail ->

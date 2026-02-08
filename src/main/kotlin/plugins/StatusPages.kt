@@ -1,6 +1,6 @@
 package com.connor.plugins
 
-import com.connor.features.auth.ErrorResponse
+import com.connor.core.http.ApiErrorResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
@@ -51,7 +51,7 @@ fun Application.configureStatusPages() {
 
             call.respond(
                 HttpStatusCode.InternalServerError,
-                ErrorResponse(
+                ApiErrorResponse(
                     code = "INTERNAL_ERROR",
                     message = "服务器内部错误，请稍后重试"
                 )
@@ -70,7 +70,7 @@ fun Application.configureStatusPages() {
 
             call.respond(
                 HttpStatusCode.BadRequest,
-                ErrorResponse(
+                ApiErrorResponse(
                     code = "INVALID_JSON",
                     message = getErrorMessage(
                         defaultMessage = "请求数据格式错误",
@@ -91,7 +91,7 @@ fun Application.configureStatusPages() {
 
             call.respond(
                 HttpStatusCode.BadRequest,
-                ErrorResponse(
+                ApiErrorResponse(
                     code = "BAD_REQUEST",
                     message = getErrorMessage(
                         defaultMessage = "请求格式错误",
@@ -110,7 +110,7 @@ fun Application.configureStatusPages() {
 
             call.respond(
                 status,
-                ErrorResponse(
+                ApiErrorResponse(
                     code = "NOT_FOUND",
                     message = "请求的资源不存在: $path"
                 )
@@ -127,7 +127,7 @@ fun Application.configureStatusPages() {
 
             call.respond(
                 status,
-                ErrorResponse(
+                ApiErrorResponse(
                     code = "METHOD_NOT_ALLOWED",
                     message = "不支持的 HTTP 方法: $method"
                 )

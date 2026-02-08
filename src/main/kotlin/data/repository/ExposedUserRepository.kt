@@ -10,8 +10,9 @@ import com.connor.domain.failure.AuthError
 import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.repository.UserRepository
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.slf4j.LoggerFactory
 import java.sql.SQLException
 
@@ -37,17 +38,24 @@ class ExposedUserRepository : UserRepository {
 
         } catch (e: SQLException) {
             // 数据库层面的唯一性约束违反
-            // PostgreSQL: 23505, MySQL: 1062, SQLite: 19 (CONSTRAINT)
+            // PostgreSQL: 23505, MySQL: 23000
             logger.error("数据库错误: sqlState=${e.sqlState}, message=${e.message}, email=${user.email.value}")
 
-            when (e.sqlState) {
-                "23505" -> {
-                    logger.warn("邮箱已存在（PostgreSQL）: email=${user.email.value}")
-                    AuthError.UserAlreadyExists(user.email.value).left()
-                }
-                "23000" -> {
-                    logger.warn("邮箱已存在（MySQL）: email=${user.email.value}")
-                    AuthError.UserAlreadyExists(user.email.value).left()
+            when {
+                e.sqlState == "23505" || e.sqlState == "23000" -> {
+                    // 检查约束名称，精确映射
+                    // PostgreSQL约束名格式: users_email_key
+                    val constraintName = e.message?.lowercase() ?: ""
+                    when {
+                        constraintName.contains("email") -> {
+                            logger.warn("邮箱已存在: email=${user.email.value}, constraint=$constraintName")
+                            AuthError.UserAlreadyExists(user.email.value).left()
+                        }
+                        else -> {
+                            logger.warn("未预期的唯一约束冲突: constraint=$constraintName", e)
+                            throw e  // 未知约束走500路径
+                        }
+                    }
                 }
                 else -> {
                     logger.error("未知数据库错误: sqlState=${e.sqlState}, errorCode=${e.errorCode}", e)

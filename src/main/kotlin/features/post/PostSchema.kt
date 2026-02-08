@@ -63,7 +63,6 @@ data class PostSummaryResponse(
 data class AuthorDto(
     val id: String,
     val displayName: String,
-    val email: String,
     val avatarUrl: String? = null
 )
 

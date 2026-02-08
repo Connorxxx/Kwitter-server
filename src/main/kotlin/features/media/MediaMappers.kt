@@ -1,6 +1,7 @@
 package com.connor.features.media
 
 import arrow.core.Either
+import com.connor.core.http.ApiErrorResponse
 import com.connor.domain.failure.MediaError
 import com.connor.domain.model.UploadedMedia
 import com.connor.domain.usecase.UploadMediaCommand
@@ -29,15 +30,6 @@ private fun getErrorMessage(defaultMessage: String, detailMessage: String? = nul
 }
 
 /**
- * HTTP 错误响应（统一格式：code + message）
- */
-@Serializable
-data class ErrorResponse(
-    val code: String,
-    val message: String
-)
-
-/**
  * 媒体上传请求映射到 UseCase 命令
  */
 fun createUploadMediaCommand(
@@ -53,33 +45,33 @@ fun createUploadMediaCommand(
 /**
  * Domain 错误映射到 HTTP 响应
  *
- * @return Pair<HttpStatusCode, ErrorResponse>
+ * @return Pair<HttpStatusCode, ApiErrorResponse>
  */
-fun MediaError.toHttpResponse(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
+fun MediaError.toHttpResponse(): Pair<HttpStatusCode, ApiErrorResponse> = when (this) {
     // 验证错误 → 400 Bad Request
     is MediaError.InvalidFileType -> {
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "INVALID_FILE_TYPE",
             message = "Unsupported file type. Allowed: ${this.allowed.joinToString(", ")}"
         )
     }
 
     is MediaError.FileTooLarge -> {
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "FILE_TOO_LARGE",
             message = "File too large. Received: ${formatBytes(this.size)}, Max: ${formatBytes(this.maxSize)}"
         )
     }
 
     is MediaError.InvalidMediaUrl -> {
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "INVALID_MEDIA_URL",
             message = "Invalid media URL: ${this.url}"
         )
     }
 
     is MediaError.InvalidFileName -> {
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "INVALID_FILE_NAME",
             message = "Invalid file name: ${this.fileName}"
         )
@@ -87,21 +79,21 @@ fun MediaError.toHttpResponse(): Pair<HttpStatusCode, ErrorResponse> = when (thi
 
     // 操作错误 → 500 Internal Server Error
     is MediaError.UploadFailed -> {
-        HttpStatusCode.InternalServerError to ErrorResponse(
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "UPLOAD_FAILED",
             message = "Upload failed: ${this.reason}"
         )
     }
 
     is MediaError.DeleteFailed -> {
-        HttpStatusCode.InternalServerError to ErrorResponse(
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "DELETE_FAILED",
             message = "Delete failed: ${this.reason}"
         )
     }
 
     is MediaError.StorageError -> {
-        HttpStatusCode.InternalServerError to ErrorResponse(
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "STORAGE_ERROR",
             message = "Storage error: ${this.message}"
         )
@@ -109,7 +101,7 @@ fun MediaError.toHttpResponse(): Pair<HttpStatusCode, ErrorResponse> = when (thi
 
     // 不支持的操作 → 501 Not Implemented
     MediaError.UnsupportedOperation -> {
-        HttpStatusCode.NotImplemented to ErrorResponse(
+        HttpStatusCode.NotImplemented to ApiErrorResponse(
             code = "UNSUPPORTED_OPERATION",
             message = "Operation not supported"
         )

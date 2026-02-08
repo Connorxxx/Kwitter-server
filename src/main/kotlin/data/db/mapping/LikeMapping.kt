@@ -5,7 +5,7 @@ import com.connor.domain.model.Like
 import com.connor.domain.model.LikeId
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 
 fun ResultRow.toLike(): Like {
     return Like(

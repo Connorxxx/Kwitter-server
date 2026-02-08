@@ -1,6 +1,7 @@
 package com.connor.features.post
 
 import arrow.core.Either
+import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
@@ -70,7 +71,7 @@ fun Route.postRoutes(
                             HttpStatusCode.InternalServerError to "Failed to check interaction state"
                         }
                     }
-                    call.respond(status, ErrorResponse("TIMELINE_STATE_ERROR", message))
+                    call.respond(status, ApiErrorResponse("TIMELINE_STATE_ERROR", message))
                     return@get
                 }
 
@@ -81,8 +82,12 @@ fun Route.postRoutes(
 
                 logger.info("时间线查询成功: count=${successItems.size}, duration=${duration}ms")
 
+                // 计算 hasMore 并裁剪结果
+                val hasMore = successItems.size > limit
+                val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
+
                 // 映射为响应 DTO
-                val postsResponse = successItems.map { item ->
+                val postsResponse = itemsToReturn.map { item ->
                     item.postDetail.toResponse(
                         isLikedByCurrentUser = item.isLikedByCurrentUser,
                         isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
@@ -93,7 +98,7 @@ fun Route.postRoutes(
                     HttpStatusCode.OK,
                     PostListResponse(
                         posts = postsResponse,
-                        hasMore = postsResponse.size == limit
+                        hasMore = hasMore
                     )
                 )
 
@@ -111,7 +116,7 @@ fun Route.postRoutes(
             get("/{postId}") {
                 val startTime = System.currentTimeMillis()
                 val postId = call.parameters["postId"] ?: run {
-                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
                     return@get
                 }
 
@@ -161,7 +166,7 @@ fun Route.postRoutes(
             get("/{postId}/replies") {
                 val startTime = System.currentTimeMillis()
                 val postId = call.parameters["postId"] ?: run {
-                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
                     return@get
                 }
                 val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
@@ -192,7 +197,7 @@ fun Route.postRoutes(
                                 HttpStatusCode.InternalServerError to "Failed to check interaction state"
                             }
                         }
-                        call.respond(status, ErrorResponse("REPLY_STATE_ERROR", message))
+                        call.respond(status, ApiErrorResponse("REPLY_STATE_ERROR", message))
                         return@get
                     }
 
@@ -203,8 +208,12 @@ fun Route.postRoutes(
 
                     logger.info("回复查询成功: postId=$postId, count=${successItems.size}, duration=${duration}ms")
 
+                    // 计算 hasMore 并裁剪结果
+                    val hasMore = successItems.size > limit
+                    val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
+
                     // 映射为响应 DTO
-                    val repliesResponse = successItems.map { item ->
+                    val repliesResponse = itemsToReturn.map { item ->
                         item.postDetail.toResponse(
                             isLikedByCurrentUser = item.isLikedByCurrentUser,
                             isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
@@ -215,7 +224,7 @@ fun Route.postRoutes(
                         HttpStatusCode.OK,
                         PostListResponse(
                             posts = repliesResponse,
-                            hasMore = repliesResponse.size == limit
+                            hasMore = hasMore
                         )
                     )
 
@@ -234,7 +243,7 @@ fun Route.postRoutes(
             get("/users/{userId}") {
                 val startTime = System.currentTimeMillis()
                 val userId = call.parameters["userId"] ?: run {
-                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
                     return@get
                 }
                 val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
@@ -265,7 +274,7 @@ fun Route.postRoutes(
                                 HttpStatusCode.InternalServerError to "Failed to check interaction state"
                             }
                         }
-                        call.respond(status, ErrorResponse("USER_POST_STATE_ERROR", message))
+                        call.respond(status, ApiErrorResponse("USER_POST_STATE_ERROR", message))
                         return@get
                     }
 
@@ -276,8 +285,12 @@ fun Route.postRoutes(
 
                     logger.info("用户 Posts 查询成功: userId=$userId, count=${successItems.size}, duration=${duration}ms")
 
+                    // 计算 hasMore 并裁剪结果
+                    val hasMore = successItems.size > limit
+                    val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
+
                     // 映射为响应 DTO
-                    val postsResponse = successItems.map { item ->
+                    val postsResponse = itemsToReturn.map { item ->
                         item.postDetail.toResponse(
                             isLikedByCurrentUser = item.isLikedByCurrentUser,
                             isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
@@ -288,7 +301,7 @@ fun Route.postRoutes(
                         HttpStatusCode.OK,
                         PostListResponse(
                             posts = postsResponse,
-                            hasMore = postsResponse.size == limit
+                            hasMore = hasMore
                         )
                     )
 
@@ -312,7 +325,7 @@ fun Route.postRoutes(
                 val startTime = System.currentTimeMillis()
                 val principal = call.principal<UserPrincipal>()
                 val userId = principal?.userId ?: run {
-                    call.respond(HttpStatusCode.Unauthorized, ErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
                     return@post
                 }
 
@@ -355,15 +368,16 @@ fun Route.postRoutes(
                                         "Post 创建成功: userId=$userId, postId=${post.id.value}, " +
                                         "duration=${duration}ms"
                                     )
-                                    // 返回完整的 PostDetail
-                                    val detail = getPostUseCase(post.id).getOrNull()
-                                    if (detail != null) {
-                                        // 创建Post响应中不返回交互状态
-                                        call.respond(HttpStatusCode.Created, detail.toResponse())
-                                    } else {
-                                        // Fallback：理论上不应该发生
-                                        call.respond(HttpStatusCode.Created, mapOf("postId" to post.id.value))
-                                    }
+                                    // 返回完整的 PostDetail（如果查询失败让异常传播）
+                                    val detail = getPostUseCase(post.id).fold(
+                                        ifLeft = { error ->
+                                            logger.error("Post 创建成功但查询详情失败: postId=${post.id.value}")
+                                            throw IllegalStateException("Post created but failed to retrieve details: ${error.javaClass.simpleName}")
+                                        },
+                                        ifRight = { it }
+                                    )
+                                    // 创建Post响应中不返回交互状态
+                                    call.respond(HttpStatusCode.Created, detail.toResponse())
                                 }
                             )
                         }
@@ -384,12 +398,12 @@ fun Route.postRoutes(
                 val startTime = System.currentTimeMillis()
                 val principal = call.principal<UserPrincipal>()
                 val userId = principal?.userId ?: run {
-                    call.respond(HttpStatusCode.Unauthorized, ErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
                     return@delete
                 }
 
                 val postId = call.parameters["postId"] ?: run {
-                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
                     return@delete
                 }
 
@@ -405,7 +419,7 @@ fun Route.postRoutes(
 
                     call.respond(
                         HttpStatusCode.NotImplemented,
-                        ErrorResponse("NOT_IMPLEMENTED", "删除功能暂未实现")
+                        ApiErrorResponse("NOT_IMPLEMENTED", "删除功能暂未实现")
                     )
 
                 } catch (e: Exception) {

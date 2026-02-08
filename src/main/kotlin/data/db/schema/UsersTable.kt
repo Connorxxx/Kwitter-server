@@ -1,7 +1,7 @@
 package com.connor.data.db.schema
 
-import org.jetbrains.exposed.sql.Table
-//import org.jetbrains.exposed.sql.javatime.datetime // 需要 exposed-java-time 依赖
+import org.jetbrains.exposed.v1.core.Table
+// 如需 datetime 列类型，可添加 Exposed 的 time 模块依赖
 
 object UsersTable : Table("users") {
     // 对应 Domain 的 UserId。

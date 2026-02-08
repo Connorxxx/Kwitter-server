@@ -3,7 +3,7 @@ package com.connor.data.db.mapping
 import com.connor.data.db.schema.MediaTable
 import com.connor.data.db.schema.PostsTable
 import com.connor.domain.model.*
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 
 /**
  * ResultRow -> Post 领域模型映射

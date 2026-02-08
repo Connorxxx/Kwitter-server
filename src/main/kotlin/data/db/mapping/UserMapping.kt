@@ -5,7 +5,7 @@ import com.connor.domain.model.Email
 import com.connor.domain.model.PasswordHash
 import com.connor.domain.model.User
 import com.connor.domain.model.UserId
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 
 fun ResultRow.toDomain(): User {
     return User(

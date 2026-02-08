@@ -1,6 +1,6 @@
 package com.connor.data.db.schema
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.v1.core.Table
 
 /**
  * Posts 表 - 存储所有 Post（包括顶层 Post 和回复）
@@ -37,6 +37,14 @@ object PostsTable : Table("posts") {
     val viewCount = integer("view_count").default(0)
 
     override val primaryKey = PrimaryKey(id)
+
+    init {
+        // 索引：查询回复列表（按父 Post ID + 创建时间排序）
+        index("idx_posts_parent_created", isUnique = false, parentId, createdAt)
+
+        // 索引：查询用户的顶层 Posts（按作者 ID + 是否为顶层 + 创建时间）
+        index("idx_posts_author_parent", isUnique = false, authorId, parentId)
+    }
 }
 
 /**

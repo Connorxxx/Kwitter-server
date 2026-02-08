@@ -1,5 +1,6 @@
 package com.connor.features.media
 
+import com.connor.core.http.ApiErrorResponse
 import com.connor.domain.usecase.UploadMediaUseCase
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
@@ -114,7 +115,7 @@ fun Route.mediaRoutes(uploadMediaUseCase: UploadMediaUseCase) {
                     logger.warn("No file provided in upload request, duration=${duration}ms")
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        ErrorResponse(
+                        ApiErrorResponse(
                             code = "NO_FILE_PROVIDED",
                             message = "Please provide a file to upload"
                         )
@@ -123,7 +124,7 @@ fun Route.mediaRoutes(uploadMediaUseCase: UploadMediaUseCase) {
                     logger.error("Unexpected error during media upload", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        ErrorResponse(
+                        ApiErrorResponse(
                             code = "UPLOAD_ERROR",
                             message = getErrorMessage(
                                 defaultMessage = "Upload failed. Please try again later.",

@@ -3,6 +3,7 @@ package com.connor.features.post
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.connor.core.http.ApiErrorResponse
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.*
 import com.connor.domain.usecase.CreatePostCommand
@@ -108,7 +109,6 @@ fun User.toAuthorDto(): AuthorDto {
     return AuthorDto(
         id = id.value,
         displayName = displayName,
-        email = email.value,
         avatarUrl = avatarUrl
     )
 }
@@ -130,73 +130,64 @@ fun PostStats.toDto(): StatsDto {
 /**
  * 将 Post 业务错误映射为 HTTP 状态码和错误响应
  */
-fun PostError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
+fun PostError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (this) {
     is PostError.EmptyContent ->
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "EMPTY_CONTENT",
             message = "Post 内容不能为空"
         )
 
     is PostError.ContentTooLong ->
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "CONTENT_TOO_LONG",
             message = "Post 内容过长：最多 $max 字符，当前 $actual 字符"
         )
 
     is PostError.InvalidMediaUrl ->
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "INVALID_MEDIA_URL",
             message = "无效的媒体 URL: $url"
         )
 
     is PostError.InvalidMediaType ->
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "INVALID_MEDIA_TYPE",
             message = "无效的媒体类型: $received。允许的类型为: IMAGE、VIDEO"
         )
 
     is PostError.TooManyMedia ->
-        HttpStatusCode.BadRequest to ErrorResponse(
+        HttpStatusCode.BadRequest to ApiErrorResponse(
             code = "TOO_MANY_MEDIA",
             message = "媒体数量超限：最多 4 个，当前 $count 个"
         )
 
     is PostError.PostNotFound ->
-        HttpStatusCode.NotFound to ErrorResponse(
+        HttpStatusCode.NotFound to ApiErrorResponse(
             code = "POST_NOT_FOUND",
             message = "Post 不存在: ${postId.value}"
         )
 
     is PostError.ParentPostNotFound ->
-        HttpStatusCode.NotFound to ErrorResponse(
+        HttpStatusCode.NotFound to ApiErrorResponse(
             code = "PARENT_POST_NOT_FOUND",
             message = "父 Post 不存在: ${parentId.value}"
         )
 
     is PostError.Unauthorized ->
-        HttpStatusCode.Forbidden to ErrorResponse(
+        HttpStatusCode.Forbidden to ApiErrorResponse(
             code = "UNAUTHORIZED",
             message = "用户 $userId 无权执行操作: $action"
         )
 
     is PostError.MediaUploadFailed ->
-        HttpStatusCode.InternalServerError to ErrorResponse(
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "MEDIA_UPLOAD_FAILED",
             message = "媒体上传失败: $reason"
         )
 
     is PostError.InteractionStateQueryFailed ->
-        HttpStatusCode.InternalServerError to ErrorResponse(
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "INTERACTION_STATE_QUERY_FAILED",
             message = "获取交互状态失败，请稍后重试: $reason"
         )
 }
-
-/**
- * 标准化错误响应（复用 Auth 模块的）
- */
-@kotlinx.serialization.Serializable
-data class ErrorResponse(
-    val code: String,
-    val message: String
-)

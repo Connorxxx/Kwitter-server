@@ -5,7 +5,7 @@ import com.connor.domain.model.Bookmark
 import com.connor.domain.model.BookmarkId
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.v1.core.ResultRow
 
 fun ResultRow.toBookmark(): Bookmark {
     return Bookmark(

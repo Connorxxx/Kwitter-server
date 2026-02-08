@@ -1,6 +1,7 @@
 package com.connor.features.post
 
 import arrow.core.Either
+import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.failure.LikeError
 import com.connor.domain.model.PostId
@@ -37,7 +38,7 @@ fun Route.likeRoutes(
             val principal = call.principal<UserPrincipal>() ?: run {
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    ErrorResponse(code = "UNAUTHORIZED", message = "未授权访问")
+                    ApiErrorResponse(code = "UNAUTHORIZED", message = "未授权访问")
                 )
                 return@post
             }
@@ -45,7 +46,7 @@ fun Route.likeRoutes(
             val postId = call.parameters["postId"] ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = "MISSING_POST_ID", message = "缺少 postId 参数")
+                    ApiErrorResponse(code = "MISSING_POST_ID", message = "缺少 postId 参数")
                 )
                 return@post
             }
@@ -69,7 +70,7 @@ fun Route.likeRoutes(
             val principal = call.principal<UserPrincipal>() ?: run {
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    ErrorResponse(code = "UNAUTHORIZED", message = "未授权访问")
+                    ApiErrorResponse(code = "UNAUTHORIZED", message = "未授权访问")
                 )
                 return@delete
             }
@@ -77,7 +78,7 @@ fun Route.likeRoutes(
             val postId = call.parameters["postId"] ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = "MISSING_POST_ID", message = "缺少 postId 参数")
+                    ApiErrorResponse(code = "MISSING_POST_ID", message = "缺少 postId 参数")
                 )
                 return@delete
             }
@@ -104,7 +105,7 @@ fun Route.likeRoutes(
             val userId = call.parameters["userId"] ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse(code = "MISSING_USER_ID", message = "缺少 userId 参数")
+                    ApiErrorResponse(code = "MISSING_USER_ID", message = "缺少 userId 参数")
                 )
                 return@get
             }
@@ -137,7 +138,7 @@ fun Route.likeRoutes(
                             HttpStatusCode.InternalServerError to "Failed to check interaction state"
                         }
                     }
-                    call.respond(status, ErrorResponse("USER_LIKES_STATE_ERROR", message))
+                    call.respond(status, ApiErrorResponse("USER_LIKES_STATE_ERROR", message))
                     return@get
                 }
 
@@ -148,8 +149,12 @@ fun Route.likeRoutes(
 
                 logger.info("用户点赞列表查询成功: userId=$userId, count=${successItems.size}, duration=${duration}ms")
 
+                // 计算 hasMore 并裁剪结果
+                val hasMore = successItems.size > limit
+                val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
+
                 // 映射为响应 DTO
-                val postsResponse = successItems.map { item ->
+                val postsResponse = itemsToReturn.map { item ->
                     item.postDetail.toResponse(
                         isLikedByCurrentUser = item.isLikedByCurrentUser,
                         isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
@@ -160,7 +165,7 @@ fun Route.likeRoutes(
                     HttpStatusCode.OK,
                     PostListResponse(
                         posts = postsResponse,
-                        hasMore = postsResponse.size == limit
+                        hasMore = hasMore
                     )
                 )
 
@@ -174,23 +179,23 @@ fun Route.likeRoutes(
 }
 
 // 错误映射
-private fun LikeError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
-    is LikeError.PostNotFound -> HttpStatusCode.NotFound to ErrorResponse(
+private fun LikeError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (this) {
+    is LikeError.PostNotFound -> HttpStatusCode.NotFound to ApiErrorResponse(
         code = "POST_NOT_FOUND",
         message = "Post 不存在"
     )
 
-    is LikeError.AlreadyLiked -> HttpStatusCode.Conflict to ErrorResponse(
+    is LikeError.AlreadyLiked -> HttpStatusCode.Conflict to ApiErrorResponse(
         code = "ALREADY_LIKED",
         message = "已经点赞过这个 Post"
     )
 
-    is LikeError.NotLiked -> HttpStatusCode.Conflict to ErrorResponse(
+    is LikeError.NotLiked -> HttpStatusCode.Conflict to ApiErrorResponse(
         code = "NOT_LIKED",
         message = "未曾点赞过这个 Post"
     )
 
-    is LikeError.DatabaseError -> HttpStatusCode.InternalServerError to ErrorResponse(
+    is LikeError.DatabaseError -> HttpStatusCode.InternalServerError to ApiErrorResponse(
         code = "DATABASE_ERROR",
         message = "服务器错误: $reason"
     )
