@@ -1,109 +1,115 @@
 package com.connor.features.media
 
-import io.ktor.http.*
-import io.ktor.http.content.*
-import io.ktor.server.auth.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import com.connor.domain.usecase.UploadMediaUseCase
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.server.auth.authenticate
+import io.ktor.server.request.receiveMultipart
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
+import io.ktor.utils.io.readRemaining
+import kotlinx.io.readByteArray
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.util.UUID
 
 private val logger = LoggerFactory.getLogger("MediaRoutes")
 
-private val ALLOWED_CONTENT_TYPES = setOf(
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "video/mp4"
-)
-
-private const val MAX_FILE_SIZE = 10 * 1024 * 1024L // 10MB
-
-private fun contentTypeToMediaType(contentType: String): String = when {
-    contentType.startsWith("image/") -> "IMAGE"
-    contentType.startsWith("video/") -> "VIDEO"
-    else -> "IMAGE"
-}
-
-private fun contentTypeToExtension(contentType: String): String = when (contentType) {
-    "image/jpeg" -> "jpg"
-    "image/png" -> "png"
-    "image/webp" -> "webp"
-    "video/mp4" -> "mp4"
-    else -> "bin"
-}
-
-fun Route.mediaRoutes(uploadDir: String) {
+/**
+ * 媒体路由 - 处理文件上传
+ *
+ * 架构特点：
+ * - 只负责 HTTP 协议转换，不包含业务逻辑
+ * - 业务逻辑由 UploadMediaUseCase 处理
+ * - 错误映射由 MediaMappers 处理
+ *
+ * @param uploadMediaUseCase 注入的 UseCase，处理验证和存储
+ */
+fun Route.mediaRoutes(uploadMediaUseCase: UploadMediaUseCase) {
     route("/v1/media") {
         authenticate("auth-jwt") {
             post("/upload") {
                 val startTime = System.currentTimeMillis()
 
-                val uploadsDir = File(uploadDir)
-                if (!uploadsDir.exists()) {
-                    uploadsDir.mkdirs()
-                }
+                try {
+                    // 接收 multipart 请求
+                    val multipart = call.receiveMultipart()
 
-                val multipart = call.receiveMultipart()
-                var mediaUploadResponse: MediaUploadResponse? = null
+                    // 遍历 multipart，处理第一个文件
+                    // （单文件上传模式，处理后立即返回，避免多次 respond）
+                    var part: PartData? = multipart.readPart()
+                    while (part != null) {
+                        when (part) {
+                            is PartData.FileItem -> {
+                                val originalFileName = part.originalFileName ?: "unknown"
+                                val contentType = part.contentType?.toString() ?: ""
 
-                multipart.forEachPart { part ->
-                    when (part) {
-                        is PartData.FileItem -> {
-                            val originalFileName = part.originalFileName ?: "unknown"
-                            val contentType = part.contentType?.toString() ?: ""
+                                logger.debug("Processing upload: fileName=$originalFileName, contentType=$contentType")
 
-                            if (contentType !in ALLOWED_CONTENT_TYPES) {
-                                part.dispose()
-                                call.respond(
-                                    HttpStatusCode.BadRequest,
-                                    mapOf("error" to "Unsupported file type: $contentType. Allowed: $ALLOWED_CONTENT_TYPES")
+                                // 读取文件内容
+                                val bytes = part.provider().readRemaining().readByteArray()
+
+                                // 创建 UseCase 命令
+                                val command = createUploadMediaCommand(
+                                    fileName = originalFileName,
+                                    contentType = contentType,
+                                    fileBytes = bytes
                                 )
-                                return@forEachPart
+
+                                // 调用 UseCase
+                                val result = uploadMediaUseCase(command)
+                                val duration = System.currentTimeMillis() - startTime
+
+                                // 处理结果并响应客户端
+                                result.fold(
+                                    ifLeft = { error ->
+                                        val (statusCode, errorResponse) = error.toHttpResponse()
+                                        logger.warn("Upload validation failed: error=$error, duration=${duration}ms")
+                                        call.respond(statusCode, errorResponse)
+                                    },
+                                    ifRight = { uploaded ->
+                                        val response = uploaded.toResponse()
+                                        logger.info(
+                                            "Media uploaded successfully: name=$originalFileName, " +
+                                            "size=${bytes.size}, type=${uploaded.type}, " +
+                                            "url=${uploaded.url.value}, duration=${duration}ms"
+                                        )
+                                        // 响应客户端
+                                        call.respond(HttpStatusCode.Created, response)
+                                    }
+                                )
+
+                                // 处理完第一个文件后立即返回，避免多次 respond
+                                part.dispose()
+                                return@post
                             }
 
-                            val bytes = part.provider().readRemaining().readByteArray()
-
-                            if (bytes.size > MAX_FILE_SIZE) {
-                                part.dispose()
-                                call.respond(
-                                    HttpStatusCode.BadRequest,
-                                    mapOf("error" to "File too large. Maximum size: 10MB")
-                                )
-                                return@forEachPart
+                            else -> {
+                                // 忽略其他 part 类型（如表单字段）
+                                logger.debug("Skipping non-file part: ${part.javaClass.simpleName}")
                             }
-
-                            val extension = contentTypeToExtension(contentType)
-                            val uuid = UUID.randomUUID().toString()
-                            val fileName = "$uuid.$extension"
-                            val file = File(uploadsDir, fileName)
-                            file.writeBytes(bytes)
-
-                            val mediaType = contentTypeToMediaType(contentType)
-                            mediaUploadResponse = MediaUploadResponse(
-                                url = "/uploads/$fileName",
-                                type = mediaType
-                            )
-
-                            val duration = System.currentTimeMillis() - startTime
-                            logger.info(
-                                "Media uploaded: name=$originalFileName, size=${bytes.size}, " +
-                                "type=$mediaType, file=$fileName, duration=${duration}ms"
-                            )
                         }
-                        else -> {}
-                    }
-                    part.dispose()
-                }
 
-                if (mediaUploadResponse != null) {
-                    call.respond(HttpStatusCode.Created, mediaUploadResponse!!)
-                } else {
+                        // 推进到下一个 part
+                        part.dispose()
+                        part = multipart.readPart()
+                    }
+
+                    // 没有找到任何文件
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.warn("No file provided in upload request, duration=${duration}ms")
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        mapOf("error" to "No file provided")
+                        ErrorResponse(error = "No file provided")
+                    )
+                } catch (e: Exception) {
+                    logger.error("Unexpected error during media upload", e)
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        ErrorResponse(
+                            error = "Upload failed",
+                            details = e.message
+                        )
                     )
                 }
             }

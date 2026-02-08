@@ -144,7 +144,7 @@ class ExposedPostRepository(
     }
 
     override fun findByAuthor(authorId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
-        dbQuery {
+        val details = dbQuery {
             logger.debug("查询用户 Posts: authorId=${authorId.value}, limit=$limit, offset=$offset")
 
             // 查询顶层 Posts（不包括回复）
@@ -157,14 +157,16 @@ class ExposedPostRepository(
                 .orderBy(PostsTable.createdAt to SortOrder.DESC)
                 .limit(limit).offset(offset.toLong())
 
-            query.forEach { row ->
-                emit(row.toPostDetailWithMedia())
-            }
+            query.map { row -> row.toPostDetailWithMedia() }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
         }
     }
 
     override fun findReplies(parentId: PostId, limit: Int, offset: Int): Flow<PostDetail> = flow {
-        dbQuery {
+        val details = dbQuery {
             logger.debug("查询回复: parentId=${parentId.value}, limit=$limit, offset=$offset")
 
             val query = (PostsTable innerJoin UsersTable)
@@ -173,14 +175,16 @@ class ExposedPostRepository(
                 .orderBy(PostsTable.createdAt to SortOrder.ASC) // 回复按时间正序
                 .limit(limit).offset(offset.toLong())
 
-            query.forEach { row ->
-                emit(row.toPostDetailWithMedia())
-            }
+            query.map { row -> row.toPostDetailWithMedia() }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
         }
     }
 
     override fun findTimeline(limit: Int, offset: Int): Flow<PostDetail> = flow {
-        dbQuery {
+        val details = dbQuery {
             logger.debug("查询时间线: limit=$limit, offset=$offset")
 
             // 查询所有顶层 Posts（不包括回复）
@@ -190,16 +194,18 @@ class ExposedPostRepository(
                 .orderBy(PostsTable.createdAt to SortOrder.DESC)
                 .limit(limit).offset(offset.toLong())
 
-            query.forEach { row ->
-                emit(row.toPostDetailWithMedia())
-            }
+            query.map { row -> row.toPostDetailWithMedia() }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
         }
     }
 
     /**
      * 将 ResultRow 映射为 PostDetail（包含媒体附件）
      */
-    private suspend fun ResultRow.toPostDetailWithMedia(): PostDetail {
+    private fun ResultRow.toPostDetailWithMedia(): PostDetail {
         val postId = PostId(this[PostsTable.id])
         val media = MediaTable.selectAll()
             .where { MediaTable.postId eq postId.value }

@@ -13,6 +13,9 @@ jwt:
 
 media:
   uploadDir: "uploads"
+  maxFileSize: 10485760  # 10MB in bytes
+  allowedTypes: "image/jpeg,image/png,image/webp,video/mp4"
+  enableDatabase: false  # 暂未实现，保留未来扩展
 
 storage:
   driverClassName: "org.postgresql.Driver"

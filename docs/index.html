@@ -712,11 +712,17 @@
                     <li data-group="Default" data-name="rootGet" class="">
                       <a href="#api-Default-rootGet">rootGet</a>
                     </li>
+                    <li data-group="Default" data-name="uploadsGet" class="">
+                      <a href="#api-Default-uploadsGet">uploadsGet</a>
+                    </li>
                     <li data-group="Default" data-name="v1AuthLoginPost" class="">
                       <a href="#api-Default-v1AuthLoginPost">v1AuthLoginPost</a>
                     </li>
                     <li data-group="Default" data-name="v1AuthRegisterPost" class="">
                       <a href="#api-Default-v1AuthRegisterPost">v1AuthRegisterPost</a>
+                    </li>
+                    <li data-group="Default" data-name="v1MediaUploadPost" class="">
+                      <a href="#api-Default-v1MediaUploadPost">v1MediaUploadPost</a>
                     </li>
                     <li data-group="Default" data-name="v1PostsCreateGet" class="">
                       <a href="#api-Default-v1PostsCreateGet">v1PostsCreateGet</a>
@@ -1160,6 +1166,203 @@ except ApiException as e:
                         </article>
                       </div>
                       <hr>
+                    <div id="api-Default-uploadsGet">
+                      <article id="api-Default-uploadsGet-0" data-group="User" data-name="uploadsGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>uploadsGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/uploads/{**}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-uploadsGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-uploadsGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-uploadsGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-uploadsGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-uploadsGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-uploadsGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-uploadsGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//uploads/{**}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-uploadsGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.uploadsGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#uploadsGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-uploadsGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.uploadsGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#uploadsGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-uploadsGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance uploadsGetWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.uploadsGet(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-uploadsGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class uploadsGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.uploadsGet();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.uploadsGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->uploadsGet();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->uploadsGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->uploadsGet();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->uploadsGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-uploadsGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.uploads_get()
+except ApiException as e:
+    print("Exception when calling DefaultApi->uploadsGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
                     <div id="api-Default-v1AuthLoginPost">
                       <article id="api-Default-v1AuthLoginPost-0" data-group="User" data-name="v1AuthLoginPost" data-version="0">
                         <div class="pull-left">
@@ -1540,6 +1743,213 @@ try:
     api_instance.v1_auth_register_post()
 except ApiException as e:
     print("Exception when calling DefaultApi->v1AuthRegisterPost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1MediaUploadPost">
+                      <article id="api-Default-v1MediaUploadPost-0" data-group="User" data-name="v1MediaUploadPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1MediaUploadPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/media/upload</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1MediaUploadPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MediaUploadPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MediaUploadPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1MediaUploadPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1MediaUploadPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/media/upload"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1MediaUploadPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MediaUploadPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1MediaUploadPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MediaUploadPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1MediaUploadPostWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1MediaUploadPost(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1MediaUploadPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1MediaUploadPost();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1MediaUploadPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1MediaUploadPost();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1MediaUploadPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1MediaUploadPost();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1MediaUploadPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MediaUploadPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_media_upload_post()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1MediaUploadPost: %s\n" % e)</code></pre>
                             </div>
                           </div>
 

@@ -29,7 +29,10 @@ fun Application.configureRouting() {
     val getRepliesUseCase by inject<GetRepliesUseCase>()
     val getUserPostsUseCase by inject<GetUserPostsUseCase>()
 
-    // Media config
+    // Media Use Cases
+    val uploadMediaUseCase by inject<UploadMediaUseCase>()
+
+    // Media config (for serving static files)
     val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
 
     routing {
@@ -39,7 +42,7 @@ fun Application.configureRouting() {
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
         postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase)
-        mediaRoutes(uploadDir)
+        mediaRoutes(uploadMediaUseCase)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }
