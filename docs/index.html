@@ -4986,6 +4986,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdBookmarksGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/bookmarks"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-java">
@@ -5000,7 +5001,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -5035,7 +5038,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -5050,6 +5054,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -5082,6 +5088,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -5103,6 +5110,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -5118,6 +5126,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -5136,6 +5145,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -5218,6 +5228,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdLikesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/likes"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-java">
@@ -5232,7 +5243,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -5267,7 +5280,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -5282,6 +5296,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -5314,6 +5330,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -5335,6 +5352,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -5350,6 +5368,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -5368,6 +5387,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
