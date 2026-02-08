@@ -119,4 +119,27 @@ interface PostRepository {
      * 获取用户已收藏的Posts列表（按收藏时间倒序）
      */
     fun findUserBookmarks(userId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+
+    // ========== 批量查询交互状态（性能优化，避免N+1） ==========
+
+    /**
+     * 批量检查用户是否点赞多个Posts
+     * @return Either<LikeError, Set<PostId>> - 成功返回用户已点赞的PostId集合
+     *
+     * 性能特性：
+     * - 恒定数 SQL（一条查询）
+     * - 批量 IN 查询替代 N+1
+     * - 时间复杂度 O(n + m)，其中 n 是 postIds 数，m 是结果数
+     */
+    suspend fun batchCheckLiked(userId: UserId, postIds: List<PostId>): Either<LikeError, Set<PostId>>
+
+    /**
+     * 批量检查用户是否收藏多个Posts
+     * @return Either<BookmarkError, Set<PostId>> - 成功返回用户已收藏的PostId集合
+     *
+     * 性能特性：
+     * - 恒定数 SQL（一条查询）
+     * - 批量 IN 查询替代 N+1
+     */
+    suspend fun batchCheckBookmarked(userId: UserId, postIds: List<PostId>): Either<BookmarkError, Set<PostId>>
 }

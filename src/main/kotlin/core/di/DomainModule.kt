@@ -19,6 +19,7 @@ val domainModule = module {
     single { CreatePostUseCase(get()) }
     single { GetPostUseCase(get()) }
     single { GetTimelineUseCase(get()) }
+    single { GetTimelineWithStatusUseCase(get()) }
     single { GetRepliesUseCase(get()) }
     single { GetUserPostsUseCase(get()) }
     single { GetPostDetailWithStatusUseCase(get()) }

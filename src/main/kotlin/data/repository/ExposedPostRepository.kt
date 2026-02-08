@@ -571,4 +571,50 @@ class ExposedPostRepository(
             emit(detail)
         }
     }
+
+    // ========== 批量查询交互状态（性能优化） ==========
+
+    override suspend fun batchCheckLiked(userId: UserId, postIds: List<PostId>): Either<LikeError, Set<PostId>> = dbQuery {
+        try {
+            if (postIds.isEmpty()) {
+                return@dbQuery emptySet<PostId>().right()
+            }
+
+            logger.debug("批量检查点赞状态: userId=${userId.value}, postCount=${postIds.size}")
+
+            val postIdValues = postIds.map { it.value }
+            val likedPostIds = LikesTable.selectAll()
+                .where { (LikesTable.userId eq userId.value) and (LikesTable.postId inList postIdValues) }
+                .map { row -> PostId(row[LikesTable.postId]) }
+                .toSet()
+
+            logger.debug("检查完成: liked=${likedPostIds.size}, total=${postIds.size}")
+            likedPostIds.right()
+        } catch (e: Exception) {
+            logger.error("批量检查点赞状态失败: userId=${userId.value}, error=${e.message}", e)
+            LikeError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override suspend fun batchCheckBookmarked(userId: UserId, postIds: List<PostId>): Either<BookmarkError, Set<PostId>> = dbQuery {
+        try {
+            if (postIds.isEmpty()) {
+                return@dbQuery emptySet<PostId>().right()
+            }
+
+            logger.debug("批量检查收藏状态: userId=${userId.value}, postCount=${postIds.size}")
+
+            val postIdValues = postIds.map { it.value }
+            val bookmarkedPostIds = BookmarksTable.selectAll()
+                .where { (BookmarksTable.userId eq userId.value) and (BookmarksTable.postId inList postIdValues) }
+                .map { row -> PostId(row[BookmarksTable.postId]) }
+                .toSet()
+
+            logger.debug("检查完成: bookmarked=${bookmarkedPostIds.size}, total=${postIds.size}")
+            bookmarkedPostIds.right()
+        } catch (e: Exception) {
+            logger.error("批量检查收藏状态失败: userId=${userId.value}, error=${e.message}", e)
+            BookmarkError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
 }

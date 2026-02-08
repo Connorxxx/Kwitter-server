@@ -730,11 +730,23 @@
                     <li data-group="Default" data-name="v1PostsPost" class="">
                       <a href="#api-Default-v1PostsPost">v1PostsPost</a>
                     </li>
+                    <li data-group="Default" data-name="v1PostsPostIdBookmarkDelete" class="">
+                      <a href="#api-Default-v1PostsPostIdBookmarkDelete">v1PostsPostIdBookmarkDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdBookmarkPost" class="">
+                      <a href="#api-Default-v1PostsPostIdBookmarkPost">v1PostsPostIdBookmarkPost</a>
+                    </li>
                     <li data-group="Default" data-name="v1PostsPostIdDelete" class="">
                       <a href="#api-Default-v1PostsPostIdDelete">v1PostsPostIdDelete</a>
                     </li>
                     <li data-group="Default" data-name="v1PostsPostIdGet" class="">
                       <a href="#api-Default-v1PostsPostIdGet">v1PostsPostIdGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdLikeDelete" class="">
+                      <a href="#api-Default-v1PostsPostIdLikeDelete">v1PostsPostIdLikeDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1PostsPostIdLikePost" class="">
+                      <a href="#api-Default-v1PostsPostIdLikePost">v1PostsPostIdLikePost</a>
                     </li>
                     <li data-group="Default" data-name="v1PostsPostIdRepliesGet" class="">
                       <a href="#api-Default-v1PostsPostIdRepliesGet">v1PostsPostIdRepliesGet</a>
@@ -750,6 +762,12 @@
                     </li>
                     <li data-group="Default" data-name="v1UsersMeGet" class="">
                       <a href="#api-Default-v1UsersMeGet">v1UsersMeGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1UsersUserIdBookmarksGet" class="">
+                      <a href="#api-Default-v1UsersUserIdBookmarksGet">v1UsersUserIdBookmarksGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1UsersUserIdLikesGet" class="">
+                      <a href="#api-Default-v1UsersUserIdLikesGet">v1UsersUserIdLikesGet</a>
                     </li>
           </ul>
         </nav>
@@ -2378,6 +2396,490 @@ except ApiException as e:
                         </article>
                       </div>
                       <hr>
+                    <div id="api-Default-v1PostsPostIdBookmarkDelete">
+                      <article id="api-Default-v1PostsPostIdBookmarkDelete-0" data-group="User" data-name="v1PostsPostIdBookmarkDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdBookmarkDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/posts/{postId}/bookmark</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdBookmarkDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts/{postId}/bookmark"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdBookmarkDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdBookmarkDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdBookmarkDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdBookmarkDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdBookmarkDeleteWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdBookmarkDelete(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdBookmarkDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdBookmarkDelete(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdBookmarkDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdBookmarkDelete($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdBookmarkDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdBookmarkDelete(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdBookmarkDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_bookmark_delete(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdBookmarkDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdBookmarkDelete_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdBookmarkPost">
+                      <article id="api-Default-v1PostsPostIdBookmarkPost-0" data-group="User" data-name="v1PostsPostIdBookmarkPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdBookmarkPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/posts/{postId}/bookmark</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdBookmarkPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdBookmarkPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts/{postId}/bookmark"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdBookmarkPost(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdBookmarkPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdBookmarkPost(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdBookmarkPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdBookmarkPostWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdBookmarkPost(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdBookmarkPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdBookmarkPost(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdBookmarkPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdBookmarkPost($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdBookmarkPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdBookmarkPost(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdBookmarkPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdBookmarkPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_bookmark_post(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdBookmarkPost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdBookmarkPost_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
                     <div id="api-Default-v1PostsPostIdDelete">
                       <article id="api-Default-v1PostsPostIdDelete-0" data-group="User" data-name="v1PostsPostIdDelete" data-version="0">
                         <div class="pull-left">
@@ -2653,6 +3155,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsPostIdGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/{postId}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-java">
@@ -2667,7 +3170,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
          postId = ; //  | 
         try {
@@ -2702,7 +3207,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -2717,6 +3223,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var postId = ; // {{}} 
@@ -2749,6 +3257,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
             var postId = new (); //  | 
 
@@ -2770,6 +3279,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $postId = ; //  | 
 
@@ -2785,6 +3295,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $postId = ; #  | 
@@ -2803,6 +3314,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -2828,6 +3340,490 @@ except ApiException as e:
                                   
                                   
                                       <div id="d2e199_v1PostsPostIdGet_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdLikeDelete">
+                      <article id="api-Default-v1PostsPostIdLikeDelete-0" data-group="User" data-name="v1PostsPostIdLikeDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdLikeDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/posts/{postId}/like</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdLikeDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikeDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdLikeDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts/{postId}/like"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdLikeDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdLikeDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdLikeDelete(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdLikeDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdLikeDeleteWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdLikeDelete(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdLikeDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdLikeDelete(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdLikeDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdLikeDelete($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdLikeDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdLikeDelete(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdLikeDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikeDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_like_delete(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdLikeDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdLikeDelete_postId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1PostsPostIdLikePost">
+                      <article id="api-Default-v1PostsPostIdLikePost-0" data-group="User" data-name="v1PostsPostIdLikePost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1PostsPostIdLikePost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/posts/{postId}/like</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1PostsPostIdLikePost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1PostsPostIdLikePost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1PostsPostIdLikePost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/posts/{postId}/like"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdLikePost(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdLikePost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         postId = ; //  | 
+        try {
+            apiInstance.v1PostsPostIdLikePost(postId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1PostsPostIdLikePost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1PostsPostIdLikePostWith:postId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var postId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1PostsPostIdLikePost(postId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1PostsPostIdLikePostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var postId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1PostsPostIdLikePost(postId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1PostsPostIdLikePost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$postId = ; //  | 
+
+try {
+    $api_instance->v1PostsPostIdLikePost($postId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1PostsPostIdLikePost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $postId = ; #  | 
+
+eval { 
+    $api_instance->v1PostsPostIdLikePost(postId => $postId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1PostsPostIdLikePost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1PostsPostIdLikePost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+postId =  #  | 
+
+try: 
+    api_instance.v1_posts_post_id_like_post(postId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1PostsPostIdLikePost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">postId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1PostsPostIdLikePost_postId">
                                           <div class="json-schema-view">
                                               <div class="primitive">
                                                   <span class="type">
@@ -2885,6 +3881,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsPostIdRepliesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/{postId}/replies"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-java">
@@ -2899,7 +3896,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
          postId = ; //  | 
         try {
@@ -2934,7 +3933,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *postId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -2949,6 +3949,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var postId = ; // {{}} 
@@ -2981,6 +3983,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
             var postId = new (); //  | 
 
@@ -3002,6 +4005,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $postId = ; //  | 
 
@@ -3017,6 +4021,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $postId = ; #  | 
@@ -3035,6 +4040,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -3117,6 +4123,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsTimelineGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/timeline"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-java">
@@ -3131,7 +4138,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
         try {
             apiInstance.v1PostsTimelineGet();
@@ -3164,7 +4173,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 [apiInstance v1PostsTimelineGetWithCompletionHandler: 
@@ -3178,6 +4188,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var callback = function(error, data, response) {
@@ -3208,6 +4220,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
 
             try
@@ -3228,6 +4241,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 
 try {
@@ -3242,6 +4256,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 
@@ -3259,6 +4274,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -3314,6 +4330,7 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsUsersUserIdGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/users/{userId}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-java">
@@ -3328,7 +4345,9 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -3363,7 +4382,8 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -3378,6 +4398,8 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -3410,6 +4432,7 @@ namespace Example
         public void main()
         {
 
+
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -3431,6 +4454,7 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
+
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -3446,6 +4470,7 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
+
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -3464,6 +4489,7 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
+
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -3918,6 +4944,470 @@ except ApiException as e:
 
                           <h2>Parameters</h2>
 
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersUserIdBookmarksGet">
+                      <article id="api-Default-v1UsersUserIdBookmarksGet-0" data-group="User" data-name="v1UsersUserIdBookmarksGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersUserIdBookmarksGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/users/{userId}/bookmarks</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBookmarksGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersUserIdBookmarksGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/users/{userId}/bookmarks"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBookmarksGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBookmarksGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBookmarksGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBookmarksGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersUserIdBookmarksGetWith:userId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var userId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersUserIdBookmarksGet(userId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersUserIdBookmarksGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+            var userId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1UsersUserIdBookmarksGet(userId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersUserIdBookmarksGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$userId = ; //  | 
+
+try {
+    $api_instance->v1UsersUserIdBookmarksGet($userId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersUserIdBookmarksGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $userId = ; #  | 
+
+eval { 
+    $api_instance->v1UsersUserIdBookmarksGet(userId => $userId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersUserIdBookmarksGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBookmarksGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+userId =  #  | 
+
+try: 
+    api_instance.v1_users_user_id_bookmarks_get(userId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersUserIdBookmarksGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">userId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1UsersUserIdBookmarksGet_userId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersUserIdLikesGet">
+                      <article id="api-Default-v1UsersUserIdLikesGet-0" data-group="User" data-name="v1UsersUserIdLikesGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersUserIdLikesGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/users/{userId}/likes</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersUserIdLikesGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdLikesGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersUserIdLikesGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+"//v1/users/{userId}/likes"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdLikesGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdLikesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdLikesGet(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdLikesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersUserIdLikesGetWith:userId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+
+var api = new MyApi.DefaultApi()
+var userId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersUserIdLikesGet(userId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersUserIdLikesGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new DefaultApi();
+            var userId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1UsersUserIdLikesGet(userId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersUserIdLikesGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$userId = ; //  | 
+
+try {
+    $api_instance->v1UsersUserIdLikesGet($userId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersUserIdLikesGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $userId = ; #  | 
+
+eval { 
+    $api_instance->v1UsersUserIdLikesGet(userId => $userId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersUserIdLikesGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+userId =  #  | 
+
+try: 
+    api_instance.v1_users_user_id_likes_get(userId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersUserIdLikesGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">userId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1UsersUserIdLikesGet_userId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
 
 
 

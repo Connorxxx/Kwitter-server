@@ -1,5 +1,6 @@
 package com.connor.features.post
 
+import arrow.core.Either
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
@@ -21,6 +22,7 @@ fun Route.postRoutes(
     createPostUseCase: CreatePostUseCase,
     getPostUseCase: GetPostUseCase,
     getTimelineUseCase: GetTimelineUseCase,
+    getTimelineWithStatusUseCase: GetTimelineWithStatusUseCase,
     getRepliesUseCase: GetRepliesUseCase,
     getUserPostsUseCase: GetUserPostsUseCase,
     getPostDetailWithStatusUseCase: GetPostDetailWithStatusUseCase
@@ -35,28 +37,62 @@ fun Route.postRoutes(
             /**
              * GET /v1/posts/timeline?limit=20&offset=0
              * 获取时间线（全站最新 Posts）
+             * 如果用户已认证，返回当前用户的交互状态（点赞/收藏）
              */
             get("/timeline") {
             val startTime = System.currentTimeMillis()
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+            val limit = rawLimit.coerceAtMost(100)  // 上限 100，防止恶意请求
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
 
             try {
                 logger.info("查询时间线: limit=$limit, offset=$offset")
 
-                // 调用 Use Case
-                val posts = getTimelineUseCase(limit, offset).toList()
+                // 获取当前用户ID（如果已认证）
+                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+
+                // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
+                val timelineItems = getTimelineWithStatusUseCase(limit, offset, currentUserId).toList()
                 val duration = System.currentTimeMillis() - startTime
 
-                logger.info("时间线查询成功: count=${posts.size}, duration=${duration}ms")
+                // 检查是否有错误
+                val failures = timelineItems.filterIsInstance<Either.Left<*>>()
+                if (failures.isNotEmpty()) {
+                    @Suppress("UNCHECKED_CAST")
+                    val error = (failures.first() as Either.Left<GetTimelineWithStatusUseCase.TimelineError>).value
+                    logger.warn("时间线查询部分失败: count=${failures.size}, duration=${duration}ms")
+                    val (status, message) = when (error) {
+                        is GetTimelineWithStatusUseCase.TimelineError.LikesCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                        is GetTimelineWithStatusUseCase.TimelineError.BookmarksCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                    }
+                    call.respond(status, ErrorResponse("TIMELINE_STATE_ERROR", message))
+                    return@get
+                }
 
-                // 返回响应（列表接口不返回交互状态，避免N+1查询）
-                // 用户可以调用 GET /v1/posts/{postId} 获取详情和交互状态
+                // 提取成功的结果
+                @Suppress("UNCHECKED_CAST")
+                val successItems = timelineItems.filterIsInstance<Either.Right<*>>()
+                    .map { (it as Either.Right<GetTimelineWithStatusUseCase.TimelineItem>).value }
+
+                logger.info("时间线查询成功: count=${successItems.size}, duration=${duration}ms")
+
+                // 映射为响应 DTO
+                val postsResponse = successItems.map { item ->
+                    item.postDetail.toResponse(
+                        isLikedByCurrentUser = item.isLikedByCurrentUser,
+                        isBookmarkedByCurrentUser = item.isBookmarkedByCurrentUser
+                    )
+                }
+
                 call.respond(
                     HttpStatusCode.OK,
                     PostListResponse(
-                        posts = posts.map { it.toResponse() },
-                        hasMore = posts.size == limit
+                        posts = postsResponse,
+                        hasMore = postsResponse.size == limit
                     )
                 )
 
@@ -126,7 +162,8 @@ fun Route.postRoutes(
                     call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
                     return@get
                 }
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val limit = rawLimit.coerceAtMost(100)  // 上限 100
                 val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
 
                 try {
@@ -164,7 +201,8 @@ fun Route.postRoutes(
                     call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
                     return@get
                 }
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val limit = rawLimit.coerceAtMost(100)  // 上限 100
                 val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
 
                 try {

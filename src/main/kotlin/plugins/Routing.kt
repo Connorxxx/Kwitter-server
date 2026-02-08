@@ -2,7 +2,6 @@ package com.connor.plugins
 
 import com.connor.core.security.TokenService
 import com.connor.core.security.UserPrincipal
-import com.connor.domain.repository.PostRepository
 import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
 import com.connor.features.media.mediaRoutes
@@ -29,6 +28,7 @@ fun Application.configureRouting() {
     val createPostUseCase by inject<CreatePostUseCase>()
     val getPostUseCase by inject<GetPostUseCase>()
     val getTimelineUseCase by inject<GetTimelineUseCase>()
+    val getTimelineWithStatusUseCase by inject<GetTimelineWithStatusUseCase>()
     val getRepliesUseCase by inject<GetRepliesUseCase>()
     val getUserPostsUseCase by inject<GetUserPostsUseCase>()
     val getPostDetailWithStatusUseCase by inject<GetPostDetailWithStatusUseCase>()
@@ -55,7 +55,7 @@ fun Application.configureRouting() {
 
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
-        postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase, getPostDetailWithStatusUseCase)
+        postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getUserPostsUseCase, getPostDetailWithStatusUseCase)
         likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase)
         mediaRoutes(uploadMediaUseCase)

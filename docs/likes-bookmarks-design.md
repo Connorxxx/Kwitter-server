@@ -447,6 +447,21 @@ class GetUserBookmarksUseCase(private val postRepository: PostRepository) {
 
 ## API 路由设计
 
+### 性能优化说明：Timeline 交互状态查询
+
+**设计变更**：Timeline 列表接口现在返回当前用户的交互状态（点赞/收藏），通过批量查询避免 N+1 问题。
+
+**实现方式**：
+- Timeline 查询后，使用 **2 条额外 SQL 查询**（恒定数，不是 N）
+- 第一条：批量检查点赞状态 `SELECT post_id FROM likes WHERE user_id = ? AND post_id IN (...)`
+- 第二条：批量检查收藏状态 `SELECT post_id FROM bookmarks WHERE user_id = ? AND post_id IN (...)`
+- 未认证用户返回 `null`（保证向后兼容）
+
+**效果**：
+- ✅ 时间线列表直接展示用户的点赞/收藏状态（UI 正确）
+- ✅ 避免 N+1 查询（性能最优）
+- ✅ 恒定 SQL 数（与列表长度无关）
+
 ### 认证路由（需要 JWT Token）
 
 #### 1. 点赞 Post
@@ -675,6 +690,52 @@ AuthRoutes.kt
 Client Response
 ```
 
+### Timeline 查询流程（已优化，返回交互状态）
+
+```
+Client Request (可选认证)
+    ↓
+GET /v1/posts/timeline?limit=20&offset=0
+Authorization: (可选) Bearer <token>
+    ↓
+PostRoutes.kt (Transport Layer)
+    - 可选认证（提取 currentUserId）
+    - 调用 GetTimelineUseCase(limit, offset)
+    ↓
+GetTimelineUseCase (Application Service)
+    - 调用 PostRepository.findTimeline(limit, offset)
+    ↓
+ExposedPostRepository (Infrastructure)
+    - 查询 Posts（JOIN PostsTable + UsersTable + MediaTable）
+      SELECT posts.*, users.*, media.*
+      FROM posts
+      JOIN users ON posts.author_id = users.id
+      LEFT JOIN media ON posts.id = media.post_id
+      WHERE posts.parent_id IS NULL
+      ORDER BY posts.created_at DESC
+      LIMIT ? OFFSET ?
+    - 返回 Flow<PostDetail>
+    ↓
+PostRoutes.kt
+    - 收集 Flow 为 List<PostDetail>
+    - **【新增】如果当前用户已认证，批量查询交互状态（2 条额外 SQL）：**
+      1. SELECT post_id FROM likes
+         WHERE user_id = ? AND post_id IN (post1, post2, ..., postN)
+      2. SELECT post_id FROM bookmarks
+         WHERE user_id = ? AND post_id IN (post1, post2, ..., postN)
+    - 构建 Map 映射 PostId → isLiked 和 PostId → isBookmarked
+    - 映射 PostDetail → PostDetailResponse，注入交互状态
+    - 返回 PostListResponse
+    ↓
+Client Response (包含 isLikedByCurrentUser 和 isBookmarkedByCurrentUser)
+```
+
+**性能分析**：
+- 总 SQL 数：1（posts）+ N（media，但通常与 posts 一起 JOIN）+ 2（if authenticated）= 恒定 3 条
+- 时间复杂度：O(n)，其中 n 是 timeline 长度
+- 无 N+1 查询问题
+- 批量 IN 查询性能最优
+
 ---
 
 ## Post 与 Like/Bookmark 的关系
@@ -862,18 +923,20 @@ class LikePostUseCase(
 - [ ] GetUserBookmarksUseCase
 
 ### Infrastructure Layer
-- [ ] LikesTable (Exposed schema)
-- [ ] BookmarksTable (Exposed schema)
-- [ ] ExposedPostRepository 扩展实现
-- [ ] Like/Bookmark Mapping 逻辑
-- [ ] 更新 PostsTable 添加 bookmarkCount 字段
+- [x] LikesTable (Exposed schema)
+- [x] BookmarksTable (Exposed schema)
+- [x] ExposedPostRepository 扩展实现（包含批量查询方法）
+- [x] Like/Bookmark Mapping 逻辑
+- [x] 更新 PostsTable 添加 bookmarkCount 字段
+- [x] **批量查询方法**：`batchCheckLiked()`、`batchCheckBookmarked()`（性能优化）
 
 ### Transport Layer
-- [ ] 扩展 PostSchema.kt (新增 DTO 字段)
-- [ ] 创建 LikeRoutes.kt 或在 PostRoutes.kt 中添加
-- [ ] 创建 BookmarkRoutes.kt 或在 PostRoutes.kt 中添加
-- [ ] Like/Bookmark 错误映射逻辑
-- [ ] Mapper 函数更新
+- [x] 扩展 PostSchema.kt（DTO 已包含 isLikedByCurrentUser/isBookmarkedByCurrentUser 字段）
+- [x] 创建 LikeRoutes.kt
+- [x] 创建 BookmarkRoutes.kt
+- [x] Like/Bookmark 错误映射逻辑
+- [x] Mapper 函数更新
+- [x] **Timeline 端点优化**：返回当前用户的交互状态（批量查询）
 
 ### DI Configuration
 - [ ] DomainModule.kt 注册 6 个新 Use Cases
@@ -946,12 +1009,12 @@ class LikePostUseCase(
 
 ## 预留接口确认
 
-### 已有接口（无需修改）
+### 已有接口（已优化）
 
-- ✅ GET `/v1/posts/{postId}` - 获取 Post 详情（可扩展返回 isLikedByCurrentUser）
-- ✅ GET `/v1/posts/timeline` - 时间线（可选认证检查互动状态）
-- ✅ GET `/v1/posts/{postId}/replies` - 回复列表（可扩展认证检查）
-- ✅ GET `/v1/posts/users/{userId}` - 用户的 Posts（未来可用）
+- ✅ GET `/v1/posts/{postId}` - 获取 Post 详情（返回 isLikedByCurrentUser/isBookmarkedByCurrentUser）
+- ✅ GET `/v1/posts/timeline` - **已优化**：返回当前用户的交互状态（通过批量查询，2 条额外 SQL）
+- ⏳ GET `/v1/posts/{postId}/replies` - 回复列表（可扩展认证检查）
+- ⏳ GET `/v1/posts/users/{userId}` - 用户的 Posts（可扩展认证检查）
 
 ### 新增接口
 
