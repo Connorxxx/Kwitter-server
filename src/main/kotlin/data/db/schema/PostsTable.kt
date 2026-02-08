@@ -33,6 +33,7 @@ object PostsTable : Table("posts") {
     // 统计信息（冗余字段，优化查询性能）
     val replyCount = integer("reply_count").default(0)
     val likeCount = integer("like_count").default(0)
+    val bookmarkCount = integer("bookmark_count").default(0)
     val viewCount = integer("view_count").default(0)
 
     override val primaryKey = PrimaryKey(id)
@@ -63,4 +64,64 @@ object MediaTable : Table("media") {
     val order = integer("order")
 
     override val primaryKey = PrimaryKey(id)
+}
+
+/**
+ * 点赞表 - 存储用户对 Post 的点赞记录
+ *
+ * 设计要点：
+ * - 一个用户只能对一个 Post 点赞一次（复合唯一约束）
+ * - 通过 UK_USER_POST_LIKE 索引避免重复
+ */
+object LikesTable : Table("likes") {
+    // 点赞 ID
+    val id = varchar("id", 36)
+
+    // 用户 ID（外键）
+    val userId = varchar("user_id", 36)
+        .references(UsersTable.id)
+
+    // Post ID（外键）
+    val postId = varchar("post_id", 36)
+        .references(PostsTable.id)
+
+    // 创建时间
+    val createdAt = long("created_at")
+
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        // 复合唯一约束：同一用户不能对同一Post重复点赞
+        uniqueIndex("uk_user_post_like", userId, postId)
+    }
+}
+
+/**
+ * 收藏表 - 存储用户对 Post 的收藏记录
+ *
+ * 设计要点：
+ * - 一个用户只能收藏一个 Post 一次（复合唯一约束）
+ * - 通过 UK_USER_POST_BOOKMARK 索引避免重复
+ */
+object BookmarksTable : Table("bookmarks") {
+    // 收藏 ID
+    val id = varchar("id", 36)
+
+    // 用户 ID（外键）
+    val userId = varchar("user_id", 36)
+        .references(UsersTable.id)
+
+    // Post ID（外键）
+    val postId = varchar("post_id", 36)
+        .references(PostsTable.id)
+
+    // 创建时间
+    val createdAt = long("created_at")
+
+    override val primaryKey = PrimaryKey(id)
+
+    init {
+        // 复合唯一约束：同一用户不能重复收藏同一Post
+        uniqueIndex("uk_user_post_bookmark", userId, postId)
+    }
 }

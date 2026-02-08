@@ -34,11 +34,15 @@ data class PostDetailResponse(
     val content: String,
     val media: List<MediaDto>,
     val parentId: String?,
+    val isTopLevelPost: Boolean, // 明确标记是否为顶层 Post
     val createdAt: Long,
     val updatedAt: Long,
     val author: AuthorDto,
     val stats: StatsDto,
-    val parentPost: PostSummaryResponse? = null // 如果是回复，包含父 Post 摘要
+    val parentPost: PostSummaryResponse? = null, // 如果是回复，包含父 Post 摘要
+    // 当前用户的交互状态（认证用户可见）
+    val isLikedByCurrentUser: Boolean? = null,
+    val isBookmarkedByCurrentUser: Boolean? = null
 )
 
 /**
@@ -70,6 +74,7 @@ data class AuthorDto(
 data class StatsDto(
     val replyCount: Int,
     val likeCount: Int,
+    val bookmarkCount: Int,
     val viewCount: Int
 )
 

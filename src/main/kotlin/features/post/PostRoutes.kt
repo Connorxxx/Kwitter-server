@@ -4,9 +4,11 @@ import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.usecase.*
+import com.connor.plugins.authenticateOptional
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -20,17 +22,21 @@ fun Route.postRoutes(
     getPostUseCase: GetPostUseCase,
     getTimelineUseCase: GetTimelineUseCase,
     getRepliesUseCase: GetRepliesUseCase,
-    getUserPostsUseCase: GetUserPostsUseCase
+    getUserPostsUseCase: GetUserPostsUseCase,
+    getPostDetailWithStatusUseCase: GetPostDetailWithStatusUseCase
 ) {
     route("/v1/posts") {
+        // ========== 公开路由（可选认证）==========
+        // 这些路由使用 authenticateOptional 包裹，支持认证用户和未认证用户
+        // 认证用户可以在 call.principal<UserPrincipal>() 中获取用户信息
+        // 未认证用户 call.principal<UserPrincipal>() 返回 null
+        authenticateOptional("auth-jwt") {
 
-        // ========== 公开路由（无需认证）==========
-
-        /**
-         * GET /v1/posts/timeline?limit=20&offset=0
-         * 获取时间线（全站最新 Posts）
-         */
-        get("/timeline") {
+            /**
+             * GET /v1/posts/timeline?limit=20&offset=0
+             * 获取时间线（全站最新 Posts）
+             */
+            get("/timeline") {
             val startTime = System.currentTimeMillis()
             val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
             val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
@@ -44,7 +50,8 @@ fun Route.postRoutes(
 
                 logger.info("时间线查询成功: count=${posts.size}, duration=${duration}ms")
 
-                // 返回响应
+                // 返回响应（列表接口不返回交互状态，避免N+1查询）
+                // 用户可以调用 GET /v1/posts/{postId} 获取详情和交互状态
                 call.respond(
                     HttpStatusCode.OK,
                     PostListResponse(
@@ -53,123 +60,138 @@ fun Route.postRoutes(
                     )
                 )
 
-            } catch (e: Exception) {
-                val duration = System.currentTimeMillis() - startTime
-                logger.error("时间线查询异常: duration=${duration}ms, error=${e.message}", e)
-                throw e
-            }
-        }
-
-        /**
-         * GET /v1/posts/{postId}
-         * 获取 Post 详情
-         */
-        get("/{postId}") {
-            val startTime = System.currentTimeMillis()
-            val postId = call.parameters["postId"] ?: run {
-                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
-                return@get
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("时间线查询异常: duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
             }
 
-            try {
-                logger.info("查询 Post 详情: postId=$postId")
+            /**
+             * GET /v1/posts/{postId}
+             * 获取 Post 详情及当前用户的交互状态
+             */
+            get("/{postId}") {
+                val startTime = System.currentTimeMillis()
+                val postId = call.parameters["postId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    return@get
+                }
 
-                // 调用 Use Case
-                val result = getPostUseCase(PostId(postId))
-                val duration = System.currentTimeMillis() - startTime
+                try {
+                    logger.info("查询 Post 详情: postId=$postId")
 
-                result.fold(
-                    ifLeft = { error ->
-                        val (status, body) = error.toHttpError()
-                        logger.warn("Post 查询失败: postId=$postId, error=${error.javaClass.simpleName}, duration=${duration}ms")
-                        call.respond(status, body)
-                    },
-                    ifRight = { postDetail ->
-                        logger.info("Post 查询成功: postId=$postId, duration=${duration}ms")
-                        call.respond(HttpStatusCode.OK, postDetail.toResponse())
-                    }
-                )
+                    // 获取当前用户ID（如果已认证）- authenticateOptional 保证这可以工作
+                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
 
-            } catch (e: Exception) {
-                val duration = System.currentTimeMillis() - startTime
-                logger.error("Post 查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
-                throw e
-            }
-        }
-
-        /**
-         * GET /v1/posts/{postId}/replies?limit=20&offset=0
-         * 获取 Post 的回复列表
-         */
-        get("/{postId}/replies") {
-            val startTime = System.currentTimeMillis()
-            val postId = call.parameters["postId"] ?: run {
-                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
-                return@get
-            }
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
-
-            try {
-                logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
-
-                // 调用 Use Case
-                val replies = getRepliesUseCase(PostId(postId), limit, offset).toList()
-                val duration = System.currentTimeMillis() - startTime
-
-                logger.info("回复查询成功: postId=$postId, count=${replies.size}, duration=${duration}ms")
-
-                call.respond(
-                    HttpStatusCode.OK,
-                    PostListResponse(
-                        posts = replies.map { it.toResponse() },
-                        hasMore = replies.size == limit
+                    // 调用 UseCase（包含详情+交互状态的完整查询，遵循Hex架构）
+                    val result = getPostDetailWithStatusUseCase(
+                        postId = PostId(postId),
+                        currentUserId = currentUserId
                     )
-                )
+                    val duration = System.currentTimeMillis() - startTime
 
-            } catch (e: Exception) {
-                val duration = System.currentTimeMillis() - startTime
-                logger.error("回复查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
-                throw e
-            }
-        }
-
-        /**
-         * GET /v1/posts/users/{userId}?limit=20&offset=0
-         * 获取用户的 Posts（不包括回复）
-         */
-        get("/users/{userId}") {
-            val startTime = System.currentTimeMillis()
-            val userId = call.parameters["userId"] ?: run {
-                call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
-                return@get
-            }
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-            val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
-
-            try {
-                logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
-
-                // 调用 Use Case
-                val posts = getUserPostsUseCase(UserId(userId), limit, offset).toList()
-                val duration = System.currentTimeMillis() - startTime
-
-                logger.info("用户 Posts 查询成功: userId=$userId, count=${posts.size}, duration=${duration}ms")
-
-                call.respond(
-                    HttpStatusCode.OK,
-                    PostListResponse(
-                        posts = posts.map { it.toResponse() },
-                        hasMore = posts.size == limit
+                    result.fold(
+                        ifLeft = { error ->
+                            val (status, body) = error.toHttpError()
+                            logger.warn("Post 查询失败: postId=$postId, error=${error.javaClass.simpleName}, duration=${duration}ms")
+                            call.respond(status, body)
+                        },
+                        ifRight = { detailWithStatus ->
+                            logger.info("Post 查询成功: postId=$postId, duration=${duration}ms")
+                            call.respond(
+                                HttpStatusCode.OK,
+                                detailWithStatus.postDetail.toResponse(
+                                    isLikedByCurrentUser = detailWithStatus.isLikedByCurrentUser,
+                                    isBookmarkedByCurrentUser = detailWithStatus.isBookmarkedByCurrentUser
+                                )
+                            )
+                        }
                     )
-                )
 
-            } catch (e: Exception) {
-                val duration = System.currentTimeMillis() - startTime
-                logger.error("用户 Posts 查询异常: userId=$userId, duration=${duration}ms, error=${e.message}", e)
-                throw e
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("Post 查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
             }
-        }
+
+            /**
+             * GET /v1/posts/{postId}/replies?limit=20&offset=0
+             * 获取 Post 的回复列表
+             */
+            get("/{postId}/replies") {
+                val startTime = System.currentTimeMillis()
+                val postId = call.parameters["postId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 postId 参数"))
+                    return@get
+                }
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+                try {
+                    logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
+
+                    // 调用 Use Case
+                    val replies = getRepliesUseCase(PostId(postId), limit, offset).toList()
+                    val duration = System.currentTimeMillis() - startTime
+
+                    logger.info("回复查询成功: postId=$postId, count=${replies.size}, duration=${duration}ms")
+
+                    // 返回响应（列表接口不返回交互状态，避免N+1查询）
+                    call.respond(
+                        HttpStatusCode.OK,
+                        PostListResponse(
+                            posts = replies.map { it.toResponse() },
+                            hasMore = replies.size == limit
+                        )
+                    )
+
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("回复查询异常: postId=$postId, duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
+            }
+
+            /**
+             * GET /v1/posts/users/{userId}?limit=20&offset=0
+             * 获取用户的 Posts（不包括回复）
+             */
+            get("/users/{userId}") {
+                val startTime = System.currentTimeMillis()
+                val userId = call.parameters["userId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
+                    return@get
+                }
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
+                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+                try {
+                    logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
+
+                    // 调用 Use Case
+                    val posts = getUserPostsUseCase(UserId(userId), limit, offset).toList()
+                    val duration = System.currentTimeMillis() - startTime
+
+                    logger.info("用户 Posts 查询成功: userId=$userId, count=${posts.size}, duration=${duration}ms")
+
+                    // 返回响应（列表接口不返回交互状态，避免N+1查询）
+                    call.respond(
+                        HttpStatusCode.OK,
+                        PostListResponse(
+                            posts = posts.map { it.toResponse() },
+                            hasMore = posts.size == limit
+                        )
+                    )
+
+                } catch (e: Exception) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.error("用户 Posts 查询异常: userId=$userId, duration=${duration}ms, error=${e.message}", e)
+                    throw e
+                }
+            }
+        }  // 关闭 authenticateOptional 块
 
         // ========== 需要认证的路由 ==========
 
@@ -216,6 +238,7 @@ fun Route.postRoutes(
                             // 返回完整的 PostDetail
                             val detail = getPostUseCase(post.id).getOrNull()
                             if (detail != null) {
+                                // 创建Post响应中不返回交互状态
                                 call.respond(HttpStatusCode.Created, detail.toResponse())
                             } else {
                                 // Fallback：理论上不应该发生

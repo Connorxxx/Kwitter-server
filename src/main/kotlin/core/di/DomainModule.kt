@@ -21,6 +21,17 @@ val domainModule = module {
     single { GetTimelineUseCase(get()) }
     single { GetRepliesUseCase(get()) }
     single { GetUserPostsUseCase(get()) }
+    single { GetPostDetailWithStatusUseCase(get()) }
+
+    // Use Case 层：Like 相关
+    single { LikePostUseCase(get()) }
+    single { UnlikePostUseCase(get()) }
+    single { GetUserLikesUseCase(get()) }
+
+    // Use Case 层：Bookmark 相关
+    single { BookmarkPostUseCase(get()) }
+    single { UnbookmarkPostUseCase(get()) }
+    single { GetUserBookmarksUseCase(get()) }
 }
 
 // Security 模块：JWT 相关配置

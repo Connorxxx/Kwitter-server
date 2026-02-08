@@ -7,6 +7,7 @@ import com.connor.core.security.UserPrincipal
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.routing.*
 
 fun Application.configureSecurity(tokenConfig: TokenConfig) {
     install(Authentication) {
@@ -25,5 +26,20 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
                 userId?.let { UserPrincipal(userId) }
             }
         }
+    }
+}
+
+/**
+ * 可选认证路由块
+ * 允许认证用户和未认证用户访问
+ * 认证用户可以通过 call.principal<UserPrincipal>() 获取用户信息
+ * 未认证用户 call.principal<UserPrincipal>() 返回 null
+ */
+inline fun Route.authenticateOptional(
+    name: String,
+    crossinline build: Route.() -> Unit
+) {
+    authenticate(name, optional = true) {
+        build()
     }
 }

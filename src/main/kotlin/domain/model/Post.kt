@@ -100,6 +100,7 @@ data class PostStats(
     val postId: PostId,
     val replyCount: Int = 0,
     val likeCount: Int = 0,
+    val bookmarkCount: Int = 0,
     val viewCount: Int = 0
 )
 

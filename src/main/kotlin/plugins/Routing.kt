@@ -2,9 +2,12 @@ package com.connor.plugins
 
 import com.connor.core.security.TokenService
 import com.connor.core.security.UserPrincipal
+import com.connor.domain.repository.PostRepository
 import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
 import com.connor.features.media.mediaRoutes
+import com.connor.features.post.bookmarkRoutes
+import com.connor.features.post.likeRoutes
 import com.connor.features.post.postRoutes
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -28,6 +31,17 @@ fun Application.configureRouting() {
     val getTimelineUseCase by inject<GetTimelineUseCase>()
     val getRepliesUseCase by inject<GetRepliesUseCase>()
     val getUserPostsUseCase by inject<GetUserPostsUseCase>()
+    val getPostDetailWithStatusUseCase by inject<GetPostDetailWithStatusUseCase>()
+
+    // Like Use Cases
+    val likePostUseCase by inject<LikePostUseCase>()
+    val unlikePostUseCase by inject<UnlikePostUseCase>()
+    val getUserLikesUseCase by inject<GetUserLikesUseCase>()
+
+    // Bookmark Use Cases
+    val bookmarkPostUseCase by inject<BookmarkPostUseCase>()
+    val unbookmarkPostUseCase by inject<UnbookmarkPostUseCase>()
+    val getUserBookmarksUseCase by inject<GetUserBookmarksUseCase>()
 
     // Media Use Cases
     val uploadMediaUseCase by inject<UploadMediaUseCase>()
@@ -41,7 +55,9 @@ fun Application.configureRouting() {
 
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
-        postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase)
+        postRoutes(createPostUseCase, getPostUseCase, getTimelineUseCase, getRepliesUseCase, getUserPostsUseCase, getPostDetailWithStatusUseCase)
+        likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase)
+        bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase)
         mediaRoutes(uploadMediaUseCase)
 
         // 健康检查

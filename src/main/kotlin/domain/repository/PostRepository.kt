@@ -1,6 +1,8 @@
 package com.connor.domain.repository
 
 import arrow.core.Either
+import com.connor.domain.failure.BookmarkError
+import com.connor.domain.failure.LikeError
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.Post
 import com.connor.domain.model.PostDetail
@@ -73,4 +75,48 @@ interface PostRepository {
      * 这个方法可能由其他聚合根（如 Like、Reply）触发
      */
     suspend fun updateStats(postId: PostId, stats: PostStats): Either<PostError, Unit>
+
+    // ========== Like 相关方法 ==========
+
+    /**
+     * 用户点赞Post
+     */
+    suspend fun likePost(userId: UserId, postId: PostId): Either<LikeError, PostStats>
+
+    /**
+     * 用户取消点赞
+     */
+    suspend fun unlikePost(userId: UserId, postId: PostId): Either<LikeError, PostStats>
+
+    /**
+     * 检查用户是否已点赞某Post
+     */
+    suspend fun isLikedByUser(userId: UserId, postId: PostId): Either<LikeError, Boolean>
+
+    /**
+     * 获取用户已点赞的Posts列表（按点赞时间倒序）
+     */
+    fun findUserLikes(userId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+
+    // ========== Bookmark 相关方法 ==========
+
+    /**
+     * 用户收藏Post
+     */
+    suspend fun bookmarkPost(userId: UserId, postId: PostId): Either<BookmarkError, Unit>
+
+    /**
+     * 用户取消收藏
+     */
+    suspend fun unbookmarkPost(userId: UserId, postId: PostId): Either<BookmarkError, Unit>
+
+    /**
+     * 检查用户是否已收藏某Post
+     */
+    suspend fun isBookmarkedByUser(userId: UserId, postId: PostId): Either<BookmarkError, Boolean>
+
+    /**
+     * 获取用户已收藏的Posts列表（按收藏时间倒序）
+     */
+    fun findUserBookmarks(userId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
 }

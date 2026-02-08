@@ -28,17 +28,23 @@ fun CreatePostRequest.toCommand(authorId: UserId): CreatePostCommand {
 /**
  * PostDetail -> PostDetailResponse
  */
-fun PostDetail.toResponse(): PostDetailResponse {
+fun PostDetail.toResponse(
+    isLikedByCurrentUser: Boolean? = null,
+    isBookmarkedByCurrentUser: Boolean? = null
+): PostDetailResponse {
     return PostDetailResponse(
         id = post.id.value,
         content = post.content.value,
         media = post.media.map { it.toDto() },
         parentId = post.parentId?.value,
+        isTopLevelPost = post.parentId == null,
         createdAt = post.createdAt,
         updatedAt = post.updatedAt,
         author = author.toAuthorDto(),
         stats = stats.toDto(),
-        parentPost = null // 客户端通过 parentId 单独查询
+        parentPost = null, // 客户端通过 parentId 单独查询
+        isLikedByCurrentUser = isLikedByCurrentUser,
+        isBookmarkedByCurrentUser = isBookmarkedByCurrentUser
     )
 }
 
@@ -83,6 +89,7 @@ fun PostStats.toDto(): StatsDto {
     return StatsDto(
         replyCount = replyCount,
         likeCount = likeCount,
+        bookmarkCount = bookmarkCount,
         viewCount = viewCount
     )
 }

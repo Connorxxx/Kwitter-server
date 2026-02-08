@@ -8,9 +8,13 @@ import com.connor.data.db.mapping.toDomain
 import com.connor.data.db.mapping.toMediaAttachment
 import com.connor.data.db.mapping.toPost
 import com.connor.data.db.mapping.toPostStats
+import com.connor.data.db.schema.BookmarksTable
+import com.connor.data.db.schema.LikesTable
 import com.connor.data.db.schema.MediaTable
 import com.connor.data.db.schema.PostsTable
 import com.connor.data.db.schema.UsersTable
+import com.connor.domain.failure.BookmarkError
+import com.connor.domain.failure.LikeError
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.*
 import com.connor.domain.repository.PostRepository
@@ -20,6 +24,7 @@ import kotlinx.coroutines.flow.flow
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.minus
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -248,6 +253,7 @@ class ExposedPostRepository(
         val updated = PostsTable.update({ PostsTable.id eq postId.value }) {
             it[replyCount] = stats.replyCount
             it[likeCount] = stats.likeCount
+            it[bookmarkCount] = stats.bookmarkCount
             it[viewCount] = stats.viewCount
         }
 
@@ -258,5 +264,311 @@ class ExposedPostRepository(
 
         logger.info("Post 统计更新成功: postId=${postId.value}")
         Unit.right()
+    }
+
+    // ========== Like 相关实现 ==========
+
+    override suspend fun likePost(userId: UserId, postId: PostId): Either<LikeError, PostStats> = dbQuery {
+        try {
+            logger.debug("用户点赞 Post: userId=${userId.value}, postId=${postId.value}")
+
+            // 1. 检查 Post 是否存在
+            val postExists = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .count() > 0
+            if (!postExists) {
+                logger.debug("Post 不存在: postId=${postId.value}")
+                return@dbQuery LikeError.PostNotFound(postId).left()
+            }
+
+            // 2. 检查是否已点赞
+            val alreadyLiked = LikesTable.selectAll()
+                .where { (LikesTable.userId eq userId.value) and (LikesTable.postId eq postId.value) }
+                .count() > 0
+
+            if (alreadyLiked) {
+                logger.debug("用户已点赞: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery LikeError.AlreadyLiked(userId, postId).left()
+            }
+
+            // 3. 插入 Like 记录
+            LikesTable.insert {
+                it[id] = UUID.randomUUID().toString()
+                it[LikesTable.userId] = userId.value
+                it[LikesTable.postId] = postId.value
+                it[createdAt] = System.currentTimeMillis()
+            }
+
+            // 4. 更新 PostsTable 的 likeCount
+            PostsTable.update({ PostsTable.id eq postId.value }) {
+                it[likeCount] = likeCount + 1
+            }
+
+            // 5. 返回更新后的统计信息
+            val updatedRow = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .single()
+            val stats = updatedRow.toPostStats()
+            logger.info("点赞成功: userId=${userId.value}, postId=${postId.value}")
+            stats.right()
+
+        } catch (e: Exception) {
+            // 检查是否是UNIQUE约束违反（并发重复点赞）
+            val isSqlException = e is java.sql.SQLException
+            val sqlState = (e as? java.sql.SQLException)?.sqlState
+            val isUniqueViolation = when {
+                sqlState == "23505" -> true  // PostgreSQL UNIQUE_VIOLATION
+                sqlState == "1062" -> true   // MySQL DUPLICATE_ENTRY
+                else -> false
+            }
+
+            if (isSqlException && isUniqueViolation) {
+                logger.debug("用户已点赞（并发检测）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery LikeError.AlreadyLiked(userId, postId).left()
+            }
+
+            // 检查异常消息中是否包含"duplicate"或"unique"关键词
+            if (e.message?.contains("duplicate", ignoreCase = true) == true ||
+                e.message?.contains("unique", ignoreCase = true) == true) {
+                logger.debug("用户已点赞（异常消息检测）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery LikeError.AlreadyLiked(userId, postId).left()
+            }
+
+            logger.error("点赞失败: userId=${userId.value}, postId=${postId.value}", e)
+            LikeError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override suspend fun unlikePost(userId: UserId, postId: PostId): Either<LikeError, PostStats> = dbQuery {
+        try {
+            logger.debug("用户取消点赞 Post: userId=${userId.value}, postId=${postId.value}")
+
+            // 1. 检查 Post 是否存在
+            val postExists = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .count() > 0
+            if (!postExists) {
+                logger.debug("Post 不存在: postId=${postId.value}")
+                return@dbQuery LikeError.PostNotFound(postId).left()
+            }
+
+            // 2. 检查是否已点赞
+            val isLiked = LikesTable.selectAll()
+                .where { (LikesTable.userId eq userId.value) and (LikesTable.postId eq postId.value) }
+                .count() > 0
+
+            if (!isLiked) {
+                logger.debug("用户未点赞: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery LikeError.NotLiked(userId, postId).left()
+            }
+
+            // 3. 删除 Like 记录，并检查是否真的删除了
+            val deletedCount = LikesTable.deleteWhere {
+                (LikesTable.userId eq userId.value) and (LikesTable.postId eq postId.value)
+            }
+
+            if (deletedCount == 0) {
+                logger.debug("用户未点赞（已被并发操作删除）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery LikeError.NotLiked(userId, postId).left()
+            }
+
+            // 4. 只有真的删除了，才减计数
+            PostsTable.update({ PostsTable.id eq postId.value }) {
+                it[likeCount] = likeCount - 1
+            }
+
+            // 5. 返回更新后的统计信息
+            val updatedRow = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .single()
+            val stats = updatedRow.toPostStats()
+            logger.info("取消点赞成功: userId=${userId.value}, postId=${postId.value}")
+            stats.right()
+
+        } catch (e: Exception) {
+            logger.error("取消点赞失败: userId=${userId.value}, postId=${postId.value}", e)
+            LikeError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override suspend fun isLikedByUser(userId: UserId, postId: PostId): Either<LikeError, Boolean> = dbQuery {
+        try {
+            val liked = LikesTable.selectAll()
+                .where { (LikesTable.userId eq userId.value) and (LikesTable.postId eq postId.value) }
+                .count() > 0
+            liked.right()
+        } catch (e: Exception) {
+            logger.error("检查点赞状态失败: userId=${userId.value}, postId=${postId.value}", e)
+            LikeError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override fun findUserLikes(userId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+        val details = dbQuery {
+            logger.debug("查询用户点赞列表: userId=${userId.value}, limit=$limit, offset=$offset")
+
+            // JOIN LikesTable + PostsTable + UsersTable
+            val query = (LikesTable
+                .innerJoin(PostsTable) { LikesTable.postId eq PostsTable.id }
+                .innerJoin(UsersTable) { PostsTable.authorId eq UsersTable.id })
+                .select(PostsTable.columns + UsersTable.columns)
+                .where { LikesTable.userId eq userId.value }
+                .orderBy(LikesTable.createdAt to SortOrder.DESC)
+                .limit(limit).offset(offset.toLong())
+
+            query.map { row -> row.toPostDetailWithMedia() }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
+        }
+    }
+
+    // ========== Bookmark 相关实现 ==========
+
+    override suspend fun bookmarkPost(userId: UserId, postId: PostId): Either<BookmarkError, Unit> = dbQuery {
+        try {
+            logger.debug("用户收藏 Post: userId=${userId.value}, postId=${postId.value}")
+
+            // 1. 检查 Post 是否存在
+            val postExists = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .count() > 0
+            if (!postExists) {
+                logger.debug("Post 不存在: postId=${postId.value}")
+                return@dbQuery BookmarkError.PostNotFound(postId).left()
+            }
+
+            // 2. 检查是否已收藏
+            val alreadyBookmarked = BookmarksTable.selectAll()
+                .where { (BookmarksTable.userId eq userId.value) and (BookmarksTable.postId eq postId.value) }
+                .count() > 0
+
+            if (alreadyBookmarked) {
+                logger.debug("用户已收藏: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery BookmarkError.AlreadyBookmarked(userId, postId).left()
+            }
+
+            // 3. 插入 Bookmark 记录
+            BookmarksTable.insert {
+                it[id] = UUID.randomUUID().toString()
+                it[BookmarksTable.userId] = userId.value
+                it[BookmarksTable.postId] = postId.value
+                it[createdAt] = System.currentTimeMillis()
+            }
+
+            // 4. 更新 PostsTable 的 bookmarkCount
+            PostsTable.update({ PostsTable.id eq postId.value }) {
+                it[bookmarkCount] = bookmarkCount + 1
+            }
+
+            logger.info("收藏成功: userId=${userId.value}, postId=${postId.value}")
+            Unit.right()
+
+        } catch (e: Exception) {
+            // 检查是否是UNIQUE约束违反（并发重复收藏）
+            val isSqlException = e is java.sql.SQLException
+            val sqlState = (e as? java.sql.SQLException)?.sqlState
+            val isUniqueViolation = when {
+                sqlState == "23505" -> true  // PostgreSQL UNIQUE_VIOLATION
+                sqlState == "1062" -> true   // MySQL DUPLICATE_ENTRY
+                else -> false
+            }
+
+            if (isSqlException && isUniqueViolation) {
+                logger.debug("用户已收藏（并发检测）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery BookmarkError.AlreadyBookmarked(userId, postId).left()
+            }
+
+            // 检查异常消息中是否包含"duplicate"或"unique"关键词
+            if (e.message?.contains("duplicate", ignoreCase = true) == true ||
+                e.message?.contains("unique", ignoreCase = true) == true) {
+                logger.debug("用户已收藏（异常消息检测）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery BookmarkError.AlreadyBookmarked(userId, postId).left()
+            }
+
+            logger.error("收藏失败: userId=${userId.value}, postId=${postId.value}", e)
+            BookmarkError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override suspend fun unbookmarkPost(userId: UserId, postId: PostId): Either<BookmarkError, Unit> = dbQuery {
+        try {
+            logger.debug("用户取消收藏 Post: userId=${userId.value}, postId=${postId.value}")
+
+            // 1. 检查 Post 是否存在
+            val postExists = PostsTable.selectAll()
+                .where { PostsTable.id eq postId.value }
+                .count() > 0
+            if (!postExists) {
+                logger.debug("Post 不存在: postId=${postId.value}")
+                return@dbQuery BookmarkError.PostNotFound(postId).left()
+            }
+
+            // 2. 检查是否已收藏
+            val isBookmarked = BookmarksTable.selectAll()
+                .where { (BookmarksTable.userId eq userId.value) and (BookmarksTable.postId eq postId.value) }
+                .count() > 0
+
+            if (!isBookmarked) {
+                logger.debug("用户未收藏: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery BookmarkError.NotBookmarked(userId, postId).left()
+            }
+
+            // 3. 删除 Bookmark 记录，并检查是否真的删除了
+            val deletedCount = BookmarksTable.deleteWhere {
+                (BookmarksTable.userId eq userId.value) and (BookmarksTable.postId eq postId.value)
+            }
+
+            if (deletedCount == 0) {
+                logger.debug("用户未收藏（已被并发操作删除）: userId=${userId.value}, postId=${postId.value}")
+                return@dbQuery BookmarkError.NotBookmarked(userId, postId).left()
+            }
+
+            // 4. 只有真的删除了，才减计数
+            PostsTable.update({ PostsTable.id eq postId.value }) {
+                it[bookmarkCount] = bookmarkCount - 1
+            }
+
+            logger.info("取消收藏成功: userId=${userId.value}, postId=${postId.value}")
+            Unit.right()
+
+        } catch (e: Exception) {
+            logger.error("取消收藏失败: userId=${userId.value}, postId=${postId.value}", e)
+            BookmarkError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override suspend fun isBookmarkedByUser(userId: UserId, postId: PostId): Either<BookmarkError, Boolean> = dbQuery {
+        try {
+            val bookmarked = BookmarksTable.selectAll()
+                .where { (BookmarksTable.userId eq userId.value) and (BookmarksTable.postId eq postId.value) }
+                .count() > 0
+            bookmarked.right()
+        } catch (e: Exception) {
+            logger.error("检查收藏状态失败: userId=${userId.value}, postId=${postId.value}", e)
+            BookmarkError.DatabaseError(e.message ?: "Unknown error").left()
+        }
+    }
+
+    override fun findUserBookmarks(userId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+        val details = dbQuery {
+            logger.debug("查询用户收藏列表: userId=${userId.value}, limit=$limit, offset=$offset")
+
+            // JOIN BookmarksTable + PostsTable + UsersTable
+            val query = (BookmarksTable
+                .innerJoin(PostsTable) { BookmarksTable.postId eq PostsTable.id }
+                .innerJoin(UsersTable) { PostsTable.authorId eq UsersTable.id })
+                .select(PostsTable.columns + UsersTable.columns)
+                .where { BookmarksTable.userId eq userId.value }
+                .orderBy(BookmarksTable.createdAt to SortOrder.DESC)
+                .limit(limit).offset(offset.toLong())
+
+            query.map { row -> row.toPostDetailWithMedia() }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
+        }
     }
 }

@@ -29,6 +29,7 @@ fun ResultRow.toPostStats(): PostStats {
         postId = PostId(this[PostsTable.id]),
         replyCount = this[PostsTable.replyCount],
         likeCount = this[PostsTable.likeCount],
+        bookmarkCount = this[PostsTable.bookmarkCount],
         viewCount = this[PostsTable.viewCount]
     )
 }
