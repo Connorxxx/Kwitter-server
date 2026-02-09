@@ -25,7 +25,11 @@ fun LoginRequest.toCommand() = com.connor.domain.usecase.LoginCommand(
 fun User.toResponse(token: String? = null) = UserResponse(
     id = this.id.value,
     email = this.email.value,
-    displayName = this.displayName,
+    username = this.username.value,
+    displayName = this.displayName.value,
+    bio = this.bio.value,
+    avatarUrl = this.avatarUrl,
+    createdAt = this.createdAt,
     token = token
 )
 

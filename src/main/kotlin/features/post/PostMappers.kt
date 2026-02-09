@@ -108,7 +108,7 @@ fun MediaAttachment.toDto(): MediaDto {
 fun User.toAuthorDto(): AuthorDto {
     return AuthorDto(
         id = id.value,
-        displayName = displayName,
+        displayName = displayName.value,
         avatarUrl = avatarUrl
     )
 }

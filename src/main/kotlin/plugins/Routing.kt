@@ -8,6 +8,7 @@ import com.connor.features.media.mediaRoutes
 import com.connor.features.post.bookmarkRoutes
 import com.connor.features.post.likeRoutes
 import com.connor.features.post.postRoutes
+import com.connor.features.user.userRoutes
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -49,6 +50,15 @@ fun Application.configureRouting() {
     // Media Use Cases
     val uploadMediaUseCase by inject<UploadMediaUseCase>()
 
+    // User Profile Use Cases
+    val getUserProfileUseCase by inject<GetUserProfileUseCase>()
+    val updateUserProfileUseCase by inject<UpdateUserProfileUseCase>()
+    val followUserUseCase by inject<FollowUserUseCase>()
+    val unfollowUserUseCase by inject<UnfollowUserUseCase>()
+    val getUserFollowingUseCase by inject<GetUserFollowingUseCase>()
+    val getUserFollowersUseCase by inject<GetUserFollowersUseCase>()
+    val getUserRepliesWithStatusUseCase by inject<GetUserRepliesWithStatusUseCase>()
+
     // Media config (for serving static files)
     val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
 
@@ -62,6 +72,7 @@ fun Application.configureRouting() {
         likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase, getUserLikesWithStatusUseCase)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
+        userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }
