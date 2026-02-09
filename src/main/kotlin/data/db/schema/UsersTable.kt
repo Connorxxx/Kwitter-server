@@ -14,6 +14,9 @@ object UsersTable : Table("users") {
     // 对应 Domain 的 PasswordHash。存字符串。
     val passwordHash = varchar("password_hash", 128)
 
+    // 对应 Domain 的 Username。加 uniqueIndex 确保唯一性
+    val username = varchar("username", 20).uniqueIndex()
+
     val displayName = varchar("display_name", 64)
     val bio = text("bio").default("")
 

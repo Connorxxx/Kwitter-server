@@ -175,6 +175,34 @@ class ExposedPostRepository : PostRepository {
         }
     }
 
+    override fun findRepliesByAuthor(authorId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+        val details = dbQuery {
+            logger.debug("查询用户回复: authorId=${authorId.value}, limit=$limit, offset=$offset")
+
+            // 查询回复（只包括有 parentId 的 Posts）- 多查询 1 条用于判断 hasMore
+            val query = (PostsTable innerJoin UsersTable)
+                .select(PostsTable.columns + UsersTable.columns)
+                .where {
+                    (PostsTable.authorId eq authorId.value) and
+                            (PostsTable.parentId.isNotNull())
+                }
+                .orderBy(PostsTable.createdAt to SortOrder.DESC)
+                .limit(limit + 1).offset(offset.toLong())
+
+            val rows = query.toList()
+
+            // 批量查询媒体附件
+            val postIds = rows.map { PostId(it[PostsTable.id]) }
+            val mediaMap = batchLoadMedia(postIds)
+
+            rows.map { row -> row.toPostDetailWithMedia(mediaMap) }
+        }
+
+        details.forEach { detail ->
+            emit(detail)
+        }
+    }
+
     override fun findReplies(parentId: PostId, limit: Int, offset: Int): Flow<PostDetail> = flow {
         val details = dbQuery {
             logger.debug("查询回复: parentId=${parentId.value}, limit=$limit, offset=$offset")

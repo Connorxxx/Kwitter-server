@@ -36,6 +36,15 @@ val domainModule = module {
     single { UnbookmarkPostUseCase(get()) }
     single { GetUserBookmarksUseCase(get()) }
     single { GetUserBookmarksWithStatusUseCase(get()) }
+
+    // Use Case 层：User Profile 相关
+    single { GetUserProfileUseCase(get()) }
+    single { UpdateUserProfileUseCase(get()) }
+    single { FollowUserUseCase(get()) }
+    single { UnfollowUserUseCase(get()) }
+    single { GetUserFollowingUseCase(get()) }
+    single { GetUserFollowersUseCase(get()) }
+    single { GetUserRepliesWithStatusUseCase(get()) }
 }
 
 // Security 模块：JWT 相关配置

@@ -32,8 +32,9 @@ data class User(
     val id: UserId,
     val email: Email,
     val passwordHash: PasswordHash, // 领域模型只持有 Hash，不持有明文
-    val displayName: String,
-    val bio: String = "",
+    val username: Username, // 唯一标识符，用于 @ 和显示
+    val displayName: DisplayName,
+    val bio: Bio = Bio.unsafe(""),
     val avatarUrl: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

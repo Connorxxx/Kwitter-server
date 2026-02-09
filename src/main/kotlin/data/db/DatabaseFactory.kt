@@ -1,6 +1,7 @@
 package com.connor.data.db
 
 import com.connor.data.db.schema.BookmarksTable
+import com.connor.data.db.schema.FollowsTable
 import com.connor.data.db.schema.LikesTable
 import com.connor.data.db.schema.MediaTable
 import com.connor.data.db.schema.PostsTable
@@ -94,7 +95,7 @@ object DatabaseFactory {
         // 注意：SchemaUtils.create() 只创建不存在的表，不会为现有表添加新列
         // 所以我们需要分三步：创建表 + 添加缺失的列 + 创建索引
         transaction {
-            val tables = listOf(UsersTable, PostsTable, MediaTable, LikesTable, BookmarksTable)
+            val tables = listOf(UsersTable, PostsTable, MediaTable, LikesTable, BookmarksTable, FollowsTable)
 
             // 先创建不存在的表
             SchemaUtils.create(*tables.toTypedArray())

@@ -47,6 +47,14 @@ interface PostRepository {
     fun findByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
 
     /**
+     * 获取用户的所有回复（只包括回复，不包括顶层 Posts）
+     * @param limit 分页大小
+     * @param offset 偏移量
+     * @return Flow<PostDetail> 流式返回，方便分页和性能优化
+     */
+    fun findRepliesByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+
+    /**
      * 获取某个 Post 的所有回复
      * @param limit 分页大小
      * @param offset 偏移量

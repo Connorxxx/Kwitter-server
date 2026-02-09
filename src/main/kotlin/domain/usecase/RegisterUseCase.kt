@@ -3,10 +3,12 @@ package com.connor.domain.usecase
 import arrow.core.Either
 import arrow.core.raise.either
 import com.connor.domain.failure.AuthError
+import com.connor.domain.model.Bio
 import com.connor.domain.model.DisplayName
 import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.model.UserId
+import com.connor.domain.model.Username
 import com.connor.domain.repository.UserRepository
 import com.connor.domain.service.PasswordHasher
 import org.slf4j.LoggerFactory
@@ -44,17 +46,26 @@ class RegisterUseCase(
             }.bind()
             logger.debug("密码强度验证通过")
 
-            // 4. 创建用户实体
+            // 4. 生成默认 username（使用 userId 前 8 位，确保唯一）
             val userId = UserId(UUID.randomUUID().toString())
+            val defaultUsername = "user_${userId.value.substring(0, 8)}"
+            val username = Username.unsafe(defaultUsername)
+            logger.debug("生成默认 username: ${username.value}")
+
+            // 5. 创建用户实体
             val newUser = User(
                 id = userId,
                 email = email,
                 passwordHash = passwordHasher.hash(cmd.password),
-                displayName = displayName.value
+                username = username,
+                displayName = displayName,
+                bio = Bio.unsafe(""),  // 默认空简介
+                avatarUrl = null,
+                createdAt = System.currentTimeMillis()
             )
-            logger.debug("用户实体创建成功: userId=${userId.value}")
+            logger.debug("用户实体创建成功: userId=${userId.value}, username=${username.value}")
 
-            // 5. 持久化（数据库会处理唯一性约束）
+            // 6. 持久化（数据库会处理唯一性约束）
             val savedUser = userRepository.save(newUser).onLeft { error ->
                 logger.error("用户保存失败: email=${cmd.email}, error=$error")
             }.bind()
