@@ -7,14 +7,23 @@ import java.util.Date
 class TokenService(
     private val config: TokenConfig // 将配置封装成 data class 注入进来
 ) {
-    // 1. 生成 Token (发房卡)
-    fun generate(userId: String): String {
+    /**
+     * 生成 JWT Token
+     *
+     * @param userId 用户ID
+     * @param displayName 显示名称
+     * @param username 用户名
+     * @return JWT Token 字符串
+     */
+    fun generate(userId: String, displayName: String, username: String): String {
         return JWT.create()
             .withAudience(config.audience)
             .withIssuer(config.domain)
-            .withClaim("id", userId) // 把 userId 藏在 Token 里
+            .withClaim("id", userId) // 用户ID
+            .withClaim("displayName", displayName) // 显示名称
+            .withClaim("username", username) // 用户名
             .withExpiresAt(Date(System.currentTimeMillis() + config.expiresIn))
-            .sign(Algorithm.HMAC256(config.secret)) // 盖章签字
+            .sign(Algorithm.HMAC256(config.secret))
     }
 }
 

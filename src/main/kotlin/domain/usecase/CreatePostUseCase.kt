@@ -15,6 +15,8 @@ import java.util.UUID
  * - 验证业务规则（内容、媒体数量、父 Post 存在性）
  * - 编排领域对象
  * - 调用 Repository 持久化
+ *
+ * 注意：实时通知由 Route 层负责，避免在 Use Case 中额外查询数据库
  */
 class CreatePostUseCase(
     private val postRepository: PostRepository

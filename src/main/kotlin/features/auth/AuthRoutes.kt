@@ -55,7 +55,11 @@ fun Route.authRoutes(
                 },
                 ifRight = { user ->
                     // 成功路径：生成 Token 并返回
-                    val token = tokenService.generate(user.id.value)
+                    val token = tokenService.generate(
+                        userId = user.id.value,
+                        displayName = user.displayName.value,
+                        username = user.username.value
+                    )
                     val duration = System.currentTimeMillis() - startTime
 
                     logger.info(
@@ -102,7 +106,11 @@ fun Route.authRoutes(
                 },
                 ifRight = { user ->
                     // 成功路径：生成 Token 并返回
-                    val token = tokenService.generate(user.id.value)
+                    val token = tokenService.generate(
+                        userId = user.id.value,
+                        displayName = user.displayName.value,
+                        username = user.username.value
+                    )
                     val duration = System.currentTimeMillis() - startTime
 
                     logger.info(

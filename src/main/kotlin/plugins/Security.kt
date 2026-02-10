@@ -23,11 +23,14 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
                     .build()
             }
             validate { credential ->
-                // 从 JWT 中提取 userId，返回自定义的 UserPrincipal
+                // 从 JWT 中提取用户信息
                 val userId = credential.payload.getClaim("id").asString()
-                // 确保 userId 不为空且有效
-                if (!userId.isNullOrBlank()) {
-                    UserPrincipal(userId)
+                val displayName = credential.payload.getClaim("displayName").asString()
+                val username = credential.payload.getClaim("username").asString()
+
+                // 确保所有字段都不为空
+                if (!userId.isNullOrBlank() && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
+                    UserPrincipal(userId, displayName, username)
                 } else {
                     null
                 }

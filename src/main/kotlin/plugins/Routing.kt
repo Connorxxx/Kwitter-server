@@ -7,8 +7,11 @@ import com.connor.features.auth.authRoutes
 import com.connor.features.media.mediaRoutes
 import com.connor.features.post.bookmarkRoutes
 import com.connor.features.post.likeRoutes
+import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.features.post.postRoutes
 import com.connor.features.user.userRoutes
+import com.connor.features.notification.notificationWebSocket
+import com.connor.infrastructure.websocket.WebSocketConnectionManager
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -35,6 +38,13 @@ fun Application.configureRouting() {
     val getUserPostsWithStatusUseCase by inject<GetUserPostsWithStatusUseCase>()
     val getPostDetailWithStatusUseCase by inject<GetPostDetailWithStatusUseCase>()
 
+    // Notification Use Cases
+    val broadcastPostCreatedUseCase by inject<BroadcastPostCreatedUseCase>()
+    val broadcastPostLikedUseCase by inject<BroadcastPostLikedUseCase>()
+
+    // Application Coroutine Scope
+    val appScope by inject<ApplicationCoroutineScope>()
+
     // Like Use Cases
     val likePostUseCase by inject<LikePostUseCase>()
     val unlikePostUseCase by inject<UnlikePostUseCase>()
@@ -58,6 +68,9 @@ fun Application.configureRouting() {
     val getUserFollowersUseCase by inject<GetUserFollowersUseCase>()
     val getUserRepliesWithStatusUseCase by inject<GetUserRepliesWithStatusUseCase>()
 
+    // WebSocket Connection Manager
+    val connectionManager by inject<WebSocketConnectionManager>()
+
     // Media config (for serving static files)
     val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
 
@@ -67,11 +80,14 @@ fun Application.configureRouting() {
 
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
-        postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase)
-        likeRoutes(likePostUseCase, unlikePostUseCase)
+        postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase, broadcastPostCreatedUseCase, appScope)
+        likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, appScope)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
+
+        // WebSocket 实时通知路由
+        notificationWebSocket(connectionManager)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }

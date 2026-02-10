@@ -42,6 +42,7 @@ dependencies {
     implementation("io.ktor:ktor-server-call-logging")
     implementation("io.ktor:ktor-server-openapi")
     implementation("io.ktor:ktor-server-routing-openapi")
+    implementation("io.ktor:ktor-server-websockets")
     implementation("io.insert-koin:koin-ktor:$koin_version")
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
     implementation("io.ktor:ktor-server-netty")
