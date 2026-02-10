@@ -181,6 +181,7 @@ single { GetUserRepliesWithStatusUseCase(get(), get()) }
 | **Flow 流式处理** | ✅ | 所有列表查询使用 Flow |
 | **薄 Transport 层** | ✅ | Routes 只做协议转换 |
 | **DI 配置** | ✅ | Koin 管理所有依赖 |
+| **语义一致性** | ✅ | 用户不存在返回 404，而非 200 + 空列表 |
 
 ---
 
@@ -294,6 +295,34 @@ curl "http://localhost:8080/v1/users/{userId}/replies?limit=20&offset=0"
 
 **预期响应**: PostListResponse，只包含回复（parentId 不为 null 的 Posts）
 
+### 7. 测试错误响应（用户不存在）⚠️ **重要更新**
+
+**背景**: 之前非法 userId 会返回 `200 OK + []`（空列表），导致客户端无法区分"用户不存在"和"用户存在但列表为空"。现已修复为返回 `404 Not Found`。
+
+```bash
+# 测试不存在的用户
+curl "http://localhost:8080/v1/users/invalid-user-id/following"
+```
+
+**预期响应**:
+```json
+{
+  "code": "USER_NOT_FOUND",
+  "message": "用户不存在"
+}
+```
+
+**HTTP 状态码**: `404 Not Found`
+
+**受影响的端点**:
+- `GET /v1/users/{userId}/following` - 关注列表
+- `GET /v1/users/{userId}/followers` - 粉丝列表
+- `GET /v1/users/{userId}/posts` - 用户 Posts
+- `GET /v1/users/{userId}/replies` - 用户回复
+- `GET /v1/users/{userId}/likes` - 用户点赞
+- `GET /v1/users/{userId}/bookmarks` - 用户收藏（BookmarkRoutes）
+- `GET /v1/posts/users/{userId}` - 用户 Posts（PostRoutes）
+
 ---
 
 ## 🎯 性能验证
@@ -388,6 +417,30 @@ if (followerId == followingId) {
 ```sql
 SELECT * FROM posts WHERE author_id = 'xxx' AND parent_id IS NOT NULL;
 ```
+
+### 问题 5: 用户列表端点返回 404（升级后）
+
+**原因**: 2024 年升级修复了语义不一致问题
+
+**变更说明**:
+- **之前**: 非法 userId → `200 OK + []`（空列表）
+- **现在**: 非法 userId → `404 Not Found + {"code": "USER_NOT_FOUND", "message": "用户不存在"}`
+
+**客户端适配**:
+```kotlin
+// 之前：无法区分两种情况
+if (response.users.isEmpty()) {
+    // 用户不存在？还是列表为空？
+}
+
+// 现在：明确区分
+when (response.statusCode) {
+    200 -> // 用户存在，处理列表（可能为空）
+    404 -> // 用户不存在，显示错误提示
+}
+```
+
+**受影响端点**: following, followers, posts, replies, likes, bookmarks
 
 ---
 

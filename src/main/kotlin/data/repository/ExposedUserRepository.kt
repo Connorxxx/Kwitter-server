@@ -220,7 +220,7 @@ class ExposedUserRepository : UserRepository {
                 .selectAll()
                 .where { FollowsTable.followerId eq userId.value }
                 .orderBy(FollowsTable.createdAt to SortOrder.DESC)
-                .limit(limit)
+                .limit(limit + 1)
                 .offset(offset.toLong())
                 .map { it.toDomain() }
 
@@ -236,7 +236,7 @@ class ExposedUserRepository : UserRepository {
                 .selectAll()
                 .where { FollowsTable.followingId eq userId.value }
                 .orderBy(FollowsTable.createdAt to SortOrder.DESC)
-                .limit(limit)
+                .limit(limit + 1)
                 .offset(offset.toLong())
                 .map { it.toDomain() }
 

@@ -267,6 +267,9 @@ fun Route.postRoutes(
                         val error = (failures.first() as Either.Left<GetUserPostsWithStatusUseCase.UserPostError>).value
                         logger.warn("用户Posts查询部分失败: count=${failures.size}, duration=${duration}ms")
                         val (status, message) = when (error) {
+                            is GetUserPostsWithStatusUseCase.UserPostError.UserNotFound -> {
+                                HttpStatusCode.NotFound to "用户不存在"
+                            }
                             is GetUserPostsWithStatusUseCase.UserPostError.LikesCheckFailed -> {
                                 HttpStatusCode.InternalServerError to "Failed to check interaction state"
                             }
@@ -274,7 +277,7 @@ fun Route.postRoutes(
                                 HttpStatusCode.InternalServerError to "Failed to check interaction state"
                             }
                         }
-                        call.respond(status, ApiErrorResponse("USER_POST_STATE_ERROR", message))
+                        call.respond(status, ApiErrorResponse("USER_POST_ERROR", message))
                         return@get
                     }
 

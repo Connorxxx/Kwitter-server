@@ -147,6 +147,9 @@ fun Route.bookmarkRoutes(
                     val error = (failures.first() as Either.Left<GetUserBookmarksWithStatusUseCase.UserBookmarksError>).value
                     logger.warn("用户收藏列表查询部分失败: count=${failures.size}, duration=${duration}ms")
                     val (status, message) = when (error) {
+                        is GetUserBookmarksWithStatusUseCase.UserBookmarksError.UserNotFound -> {
+                            HttpStatusCode.NotFound to "用户不存在"
+                        }
                         is GetUserBookmarksWithStatusUseCase.UserBookmarksError.LikesCheckFailed -> {
                             HttpStatusCode.InternalServerError to "Failed to check interaction state"
                         }
@@ -154,7 +157,7 @@ fun Route.bookmarkRoutes(
                             HttpStatusCode.InternalServerError to "Failed to check interaction state"
                         }
                     }
-                    call.respond(status, ApiErrorResponse("USER_BOOKMARKS_STATE_ERROR", message))
+                    call.respond(status, ApiErrorResponse("USER_BOOKMARKS_ERROR", message))
                     return@get
                 }
 

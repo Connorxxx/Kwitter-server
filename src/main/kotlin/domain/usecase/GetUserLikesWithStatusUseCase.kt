@@ -7,6 +7,7 @@ import com.connor.domain.model.PostDetail
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.PostRepository
+import com.connor.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.slf4j.LoggerFactory
@@ -23,9 +24,11 @@ import org.slf4j.LoggerFactory
  * - 参考 GetTimelineWithStatusUseCase 的实现
  * - 交互状态查询失败时，整体返回错误（强一致性）
  * - 使用 Either 处理所有失败场景
+ * - 先校验目标用户是否存在，避免返回空列表的语义混淆
  */
 class GetUserLikesWithStatusUseCase(
-    private val postRepository: PostRepository
+    private val postRepository: PostRepository,
+    private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(GetUserLikesWithStatusUseCase::class.java)
 
@@ -42,6 +45,7 @@ class GetUserLikesWithStatusUseCase(
      * 返回错误类型的包装
      */
     sealed interface UserLikesError {
+        data class UserNotFound(val userId: UserId) : UserLikesError
         data class LikesCheckFailed(val error: LikeError) : UserLikesError
         data class BookmarksCheckFailed(val error: BookmarkError) : UserLikesError
     }
@@ -54,7 +58,15 @@ class GetUserLikesWithStatusUseCase(
     ): Flow<Either<UserLikesError, LikedPostItem>> = flow {
         logger.info("查询用户点赞列表及交互状态: userId=${userId.value}, limit=$limit, offset=$offset, currentUserId=${currentUserId?.value}")
 
-        // 1. 收集所有点赞的Posts（必须在 flow 块中用 collect）
+        // 1. 先验证目标用户是否存在
+        val userExistsResult = userRepository.findById(userId)
+        if (userExistsResult.isLeft()) {
+            logger.warn("目标用户不存在: userId=${userId.value}")
+            emit(Either.Left(UserLikesError.UserNotFound(userId)))
+            return@flow
+        }
+
+        // 2. 收集所有点赞的Posts（必须在 flow 块中用 collect）
         val posts = mutableListOf<PostDetail>()
         postRepository.findUserLikes(userId, limit, offset).collect { post ->
             posts.add(post)

@@ -7,6 +7,7 @@ import com.connor.domain.model.PostDetail
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.PostRepository
+import com.connor.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.slf4j.LoggerFactory
@@ -23,9 +24,11 @@ import org.slf4j.LoggerFactory
  * - 参考 GetUserPostsWithStatusUseCase 的实现
  * - 交互状态查询失败时，整体返回错误（强一致性）
  * - 使用 Either 处理所有失败场景
+ * - 先校验目标用户是否存在，避免返回空列表的语义混淆
  */
 class GetUserRepliesWithStatusUseCase(
-    private val postRepository: PostRepository
+    private val postRepository: PostRepository,
+    private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(GetUserRepliesWithStatusUseCase::class.java)
 
@@ -42,6 +45,7 @@ class GetUserRepliesWithStatusUseCase(
      * 返回错误类型的包装
      */
     sealed interface UserReplyError {
+        data class UserNotFound(val userId: UserId) : UserReplyError
         data class LikesCheckFailed(val error: LikeError) : UserReplyError
         data class BookmarksCheckFailed(val error: BookmarkError) : UserReplyError
     }
@@ -54,7 +58,15 @@ class GetUserRepliesWithStatusUseCase(
     ): Flow<Either<UserReplyError, UserReplyItem>> = flow {
         logger.info("查询用户回复及交互状态: authorId=${authorId.value}, limit=$limit, offset=$offset, currentUserId=${currentUserId?.value}")
 
-        // 1. 收集所有用户回复（必须在 flow 块中用 collect）
+        // 1. 先验证目标用户是否存在
+        val userExistsResult = userRepository.findById(authorId)
+        if (userExistsResult.isLeft()) {
+            logger.warn("目标用户不存在: authorId=${authorId.value}")
+            emit(Either.Left(UserReplyError.UserNotFound(authorId)))
+            return@flow
+        }
+
+        // 2. 收集所有用户回复（必须在 flow 块中用 collect）
         val replies = mutableListOf<PostDetail>()
         postRepository.findRepliesByAuthor(authorId, limit, offset).collect { reply ->
             replies.add(reply)

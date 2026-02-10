@@ -108,10 +108,24 @@ fun Route.userRoutes(
 
                 val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
 
-                val items = getUserFollowingUseCase(UserId(userId), limit + 1, offset, currentUserId).toList()
+                val items = getUserFollowingUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
-                val hasMore = items.size > limit
-                val itemsToReturn = if (hasMore) items.take(limit) else items
+                // 检查是否有 UserNotFound 错误
+                val userNotFoundError = items.firstOrNull {
+                    it.isLeft() && (it as arrow.core.Either.Left).value is com.connor.domain.failure.UserError.UserNotFound
+                }
+                if (userNotFoundError != null) {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        ApiErrorResponse("USER_NOT_FOUND", "用户不存在")
+                    )
+                    return@get
+                }
+
+                // 提取成功的结果
+                val successItems = items.mapNotNull { it.getOrNull() }
+                val hasMore = successItems.size > limit
+                val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -137,10 +151,24 @@ fun Route.userRoutes(
 
                 val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
 
-                val items = getUserFollowersUseCase(UserId(userId), limit + 1, offset, currentUserId).toList()
+                val items = getUserFollowersUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
-                val hasMore = items.size > limit
-                val itemsToReturn = if (hasMore) items.take(limit) else items
+                // 检查是否有 UserNotFound 错误
+                val userNotFoundError = items.firstOrNull {
+                    it.isLeft() && (it as arrow.core.Either.Left).value is com.connor.domain.failure.UserError.UserNotFound
+                }
+                if (userNotFoundError != null) {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        ApiErrorResponse("USER_NOT_FOUND", "用户不存在")
+                    )
+                    return@get
+                }
+
+                // 提取成功的结果
+                val successItems = items.mapNotNull { it.getOrNull() }
+                val hasMore = successItems.size > limit
+                val itemsToReturn = if (hasMore) successItems.take(limit) else successItems
 
                 call.respond(
                     HttpStatusCode.OK,
@@ -166,15 +194,25 @@ fun Route.userRoutes(
 
                 val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
 
-                val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit + 1, offset, currentUserId).toList()
+                val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
                 // 检查错误
                 val failures = postItems.filterIsInstance<arrow.core.Either.Left<*>>()
                 if (failures.isNotEmpty()) {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        ApiErrorResponse("STATE_ERROR", "Failed to check interaction state")
-                    )
+                    @Suppress("UNCHECKED_CAST")
+                    val error = (failures.first() as arrow.core.Either.Left<GetUserPostsWithStatusUseCase.UserPostError>).value
+                    val (status, message) = when (error) {
+                        is GetUserPostsWithStatusUseCase.UserPostError.UserNotFound -> {
+                            HttpStatusCode.NotFound to "用户不存在"
+                        }
+                        is GetUserPostsWithStatusUseCase.UserPostError.LikesCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                        is GetUserPostsWithStatusUseCase.UserPostError.BookmarksCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                    }
+                    call.respond(status, ApiErrorResponse("USER_POST_ERROR", message))
                     return@get
                 }
 
@@ -211,15 +249,25 @@ fun Route.userRoutes(
 
                 val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
 
-                val replyItems = getUserRepliesWithStatusUseCase(UserId(userId), limit + 1, offset, currentUserId).toList()
+                val replyItems = getUserRepliesWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
                 // 检查错误
                 val failures = replyItems.filterIsInstance<arrow.core.Either.Left<*>>()
                 if (failures.isNotEmpty()) {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        ApiErrorResponse("STATE_ERROR", "Failed to check interaction state")
-                    )
+                    @Suppress("UNCHECKED_CAST")
+                    val error = (failures.first() as arrow.core.Either.Left<GetUserRepliesWithStatusUseCase.UserReplyError>).value
+                    val (status, message) = when (error) {
+                        is GetUserRepliesWithStatusUseCase.UserReplyError.UserNotFound -> {
+                            HttpStatusCode.NotFound to "用户不存在"
+                        }
+                        is GetUserRepliesWithStatusUseCase.UserReplyError.LikesCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                        is GetUserRepliesWithStatusUseCase.UserReplyError.BookmarksCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                    }
+                    call.respond(status, ApiErrorResponse("USER_REPLY_ERROR", message))
                     return@get
                 }
 
@@ -262,15 +310,25 @@ fun Route.userRoutes(
                 //     return forbidden
                 // }
 
-                val likeItems = getUserLikesWithStatusUseCase(UserId(userId), limit + 1, offset, currentUserId).toList()
+                val likeItems = getUserLikesWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
                 // 检查错误
                 val failures = likeItems.filterIsInstance<arrow.core.Either.Left<*>>()
                 if (failures.isNotEmpty()) {
-                    call.respond(
-                        HttpStatusCode.InternalServerError,
-                        ApiErrorResponse("STATE_ERROR", "Failed to check interaction state")
-                    )
+                    @Suppress("UNCHECKED_CAST")
+                    val error = (failures.first() as arrow.core.Either.Left<GetUserLikesWithStatusUseCase.UserLikesError>).value
+                    val (status, message) = when (error) {
+                        is GetUserLikesWithStatusUseCase.UserLikesError.UserNotFound -> {
+                            HttpStatusCode.NotFound to "用户不存在"
+                        }
+                        is GetUserLikesWithStatusUseCase.UserLikesError.LikesCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                        is GetUserLikesWithStatusUseCase.UserLikesError.BookmarksCheckFailed -> {
+                            HttpStatusCode.InternalServerError to "Failed to check interaction state"
+                        }
+                    }
+                    call.respond(status, ApiErrorResponse("USER_LIKES_ERROR", message))
                     return@get
                 }
 

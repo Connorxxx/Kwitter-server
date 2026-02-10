@@ -38,7 +38,6 @@ fun Application.configureRouting() {
     // Like Use Cases
     val likePostUseCase by inject<LikePostUseCase>()
     val unlikePostUseCase by inject<UnlikePostUseCase>()
-    val getUserLikesUseCase by inject<GetUserLikesUseCase>()
     val getUserLikesWithStatusUseCase by inject<GetUserLikesWithStatusUseCase>()
 
     // Bookmark Use Cases
@@ -69,7 +68,7 @@ fun Application.configureRouting() {
         // 公开路由 - 不需要认证
         authRoutes(registerUseCase, loginUseCase, tokenService)
         postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase)
-        likeRoutes(likePostUseCase, unlikePostUseCase, getUserLikesUseCase, getUserLikesWithStatusUseCase)
+        likeRoutes(likePostUseCase, unlikePostUseCase)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
