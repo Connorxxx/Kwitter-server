@@ -1,6 +1,7 @@
 package com.connor.features.post
 
 import arrow.core.Either
+import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostId
@@ -14,7 +15,9 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("PostRoutes")
@@ -27,7 +30,9 @@ fun Route.postRoutes(
     getRepliesWithStatusUseCase: GetRepliesWithStatusUseCase,
     getUserPostsUseCase: GetUserPostsUseCase,
     getUserPostsWithStatusUseCase: GetUserPostsWithStatusUseCase,
-    getPostDetailWithStatusUseCase: GetPostDetailWithStatusUseCase
+    getPostDetailWithStatusUseCase: GetPostDetailWithStatusUseCase,
+    broadcastPostCreatedUseCase: BroadcastPostCreatedUseCase,
+    appScope: ApplicationCoroutineScope
 ) {
     route("/v1/posts") {
         // ========== 公开路由（可选认证）==========
@@ -371,6 +376,28 @@ fun Route.postRoutes(
                                         "Post 创建成功: userId=$userId, postId=${post.id.value}, " +
                                         "duration=${duration}ms"
                                     )
+
+                                    // 如果是顶层 Post，异步触发实时通知（使用应用级协程作用域）
+                                    if (post.parentId == null && principal != null) {
+                                        appScope.launch {
+                                            try {
+                                                broadcastPostCreatedUseCase.execute(
+                                                    postId = post.id,
+                                                    authorId = post.authorId,
+                                                    authorDisplayName = principal.displayName,
+                                                    authorUsername = principal.username,
+                                                    content = post.content.value,
+                                                    createdAt = post.createdAt
+                                                )
+                                            } catch (e: CancellationException) {
+                                                throw e
+                                            } catch (e: Exception) {
+                                                // 通知失败不影响响应
+                                                logger.error("Failed to broadcast post created", e)
+                                            }
+                                        }
+                                    }
+
                                     // 返回完整的 PostDetail（如果查询失败让异常传播）
                                     val detail = getPostUseCase(post.id).fold(
                                         ifLeft = { error ->

@@ -1,10 +1,12 @@
 package com.connor.features.post
 
+import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.failure.LikeError
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
+import com.connor.domain.usecase.BroadcastPostLikedUseCase
 import com.connor.domain.usecase.LikePostUseCase
 import com.connor.domain.usecase.UnlikePostUseCase
 import io.ktor.http.HttpStatusCode
@@ -14,13 +16,17 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.delete
 import io.ktor.server.routing.post
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("LikeRoutes")
 
 fun Route.likeRoutes(
     likePostUseCase: LikePostUseCase,
-    unlikePostUseCase: UnlikePostUseCase
+    unlikePostUseCase: UnlikePostUseCase,
+    broadcastPostLikedUseCase: BroadcastPostLikedUseCase,
+    appScope: ApplicationCoroutineScope
 ) {
     // 认证路由
     authenticate("auth-jwt") {
@@ -51,6 +57,25 @@ fun Route.likeRoutes(
                 },
                 ifRight = { stats ->
                     logger.info("用户 ${principal.userId} 点赞 Post $postId")
+
+                    // 异步触发实时通知（使用应用级协程作用域）
+                    appScope.launch {
+                        try {
+                            broadcastPostLikedUseCase.execute(
+                                postId = PostId(postId),
+                                likedByUserId = UserId(principal.userId),
+                                likedByDisplayName = principal.displayName,
+                                likedByUsername = principal.username,
+                                newLikeCount = stats.likeCount
+                            )
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            // 通知失败不影响响应
+                            logger.error("Failed to broadcast post liked", e)
+                        }
+                    }
+
                     call.respond(HttpStatusCode.OK, mapOf("stats" to stats.toDto()))
                 }
             )
