@@ -1,10 +1,12 @@
 package com.connor.features.auth
 
 import com.connor.core.security.TokenService
+import com.connor.core.security.UserPrincipal
 import com.connor.domain.usecase.LoginUseCase
 import com.connor.domain.usecase.RegisterUseCase
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -111,6 +113,48 @@ fun Route.authRoutes(
                     call.respond(HttpStatusCode.OK, user.toResponse(token))
                 }
             )
+        }
+
+        // Token 验证端点（需要认证）
+        authenticate("auth-jwt") {
+            get("/validate") {
+                val startTime = System.currentTimeMillis()
+                val clientIp = call.request.local.remoteAddress
+
+                // 如果能走到这里，说明 JWT 已经通过验证
+                val principal = call.principal<UserPrincipal>()
+
+                if (principal != null) {
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.info(
+                        "Token验证成功: userId=${principal.userId}, " +
+                        "duration=${duration}ms, clientIp=$clientIp"
+                    )
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        mapOf(
+                            "valid" to true,
+                            "userId" to principal.userId
+                        )
+                    )
+                } else {
+                    // 理论上不会走到这里，因为 JWT 验证失败会在 validate 阶段被拦截
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.warn(
+                        "Token验证失败: principal为null, " +
+                        "duration=${duration}ms, clientIp=$clientIp"
+                    )
+
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        ErrorResponse(
+                            code = "INVALID_TOKEN",
+                            message = "Token is invalid or has expired"
+                        )
+                    )
+                }
+            }
         }
     }
 }

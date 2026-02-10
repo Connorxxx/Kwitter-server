@@ -4,9 +4,11 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.connor.core.security.TokenConfig
 import com.connor.core.security.UserPrincipal
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Application.configureSecurity(tokenConfig: TokenConfig) {
@@ -23,7 +25,22 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
             validate { credential ->
                 // 从 JWT 中提取 userId，返回自定义的 UserPrincipal
                 val userId = credential.payload.getClaim("id").asString()
-                userId?.let { UserPrincipal(userId) }
+                // 确保 userId 不为空且有效
+                if (!userId.isNullOrBlank()) {
+                    UserPrincipal(userId)
+                } else {
+                    null
+                }
+            }
+            challenge { _, _ ->
+                // 自定义认证失败响应
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    mapOf(
+                        "code" to "INVALID_TOKEN",
+                        "message" to "Token is invalid or has expired"
+                    )
+                )
             }
         }
     }
