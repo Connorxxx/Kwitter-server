@@ -3,6 +3,7 @@ package com.connor
 import com.connor.core.di.dataModule
 import com.connor.core.di.domainModule
 import com.connor.core.di.mediaModule
+import com.connor.core.di.messagingModule
 import com.connor.core.di.notificationModule
 import com.connor.core.di.searchModule
 import com.connor.core.di.securityModule
@@ -20,7 +21,8 @@ fun Application.configureFrameworks(tokenConfig: TokenConfig) {
             mediaModule(this@configureFrameworks),
             securityModule(tokenConfig),
             notificationModule,
-            searchModule
+            searchModule,
+            messagingModule
         )
     }
 }

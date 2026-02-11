@@ -12,6 +12,7 @@ import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.features.post.postRoutes
 import com.connor.features.search.searchRoutes
 import com.connor.features.user.userRoutes
+import com.connor.features.messaging.messagingRoutes
 import com.connor.features.notification.notificationWebSocket
 import com.connor.infrastructure.websocket.WebSocketConnectionManager
 import io.ktor.http.*
@@ -75,6 +76,13 @@ fun Application.configureRouting() {
     val getUserFollowersUseCase by inject<GetUserFollowersUseCase>()
     val getUserRepliesWithStatusUseCase by inject<GetUserRepliesWithStatusUseCase>()
 
+    // Messaging Use Cases
+    val sendMessageUseCase by inject<SendMessageUseCase>()
+    val getConversationsUseCase by inject<GetConversationsUseCase>()
+    val getMessagesUseCase by inject<GetMessagesUseCase>()
+    val markConversationReadUseCase by inject<MarkConversationReadUseCase>()
+    val notifyNewMessageUseCase by inject<NotifyNewMessageUseCase>()
+
     // WebSocket Connection Manager
     val connectionManager by inject<WebSocketConnectionManager>()
 
@@ -96,6 +104,7 @@ fun Application.configureRouting() {
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
         searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
+        messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, appScope)
 
         // WebSocket 实时通知路由
         notificationWebSocket(connectionManager)

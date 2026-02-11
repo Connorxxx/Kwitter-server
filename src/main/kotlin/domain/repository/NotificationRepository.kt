@@ -1,6 +1,7 @@
 package com.connor.domain.repository
 
 import com.connor.domain.model.NotificationEvent
+import com.connor.domain.model.UserId
 
 /**
  * 通知推送 Repository 接口
@@ -47,4 +48,26 @@ interface NotificationRepository {
      * @param event Post 评论事件
      */
     suspend fun notifyPostCommented(event: NotificationEvent.PostCommented)
+
+    /**
+     * 通知用户收到新私信
+     *
+     * 推送对象：消息接收者
+     * 失败处理：记录日志但不阻塞主流程
+     *
+     * @param recipientId 消息接收者 ID
+     * @param event 新私信事件
+     */
+    suspend fun notifyNewMessage(recipientId: UserId, event: NotificationEvent.NewMessageReceived)
+
+    /**
+     * 通知消息发送者对方已读
+     *
+     * 推送对象：消息发送者
+     * 失败处理：记录日志但不阻塞主流程
+     *
+     * @param recipientId 通知接收者 ID（消息发送者）
+     * @param event 已读事件
+     */
+    suspend fun notifyMessagesRead(recipientId: UserId, event: NotificationEvent.MessagesRead)
 }

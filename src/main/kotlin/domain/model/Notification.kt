@@ -56,6 +56,35 @@ sealed interface NotificationEvent {
         val commentPreview: String,
         val timestamp: Long
     ) : NotificationEvent
+
+    /**
+     * 新私信接收事件
+     *
+     * 触发条件：用户收到私信
+     * 推送对象：消息接收者
+     */
+    @Serializable
+    data class NewMessageReceived(
+        val messageId: String,
+        val conversationId: String,
+        val senderDisplayName: String,
+        val senderUsername: String,
+        val contentPreview: String,
+        val timestamp: Long
+    ) : NotificationEvent
+
+    /**
+     * 私信已读事件
+     *
+     * 触发条件：用户标记对话已读
+     * 推送对象：消息发送者（通知对方消息已被阅读）
+     */
+    @Serializable
+    data class MessagesRead(
+        val conversationId: String,
+        val readByUserId: String,
+        val timestamp: Long
+    ) : NotificationEvent
 }
 
 /**

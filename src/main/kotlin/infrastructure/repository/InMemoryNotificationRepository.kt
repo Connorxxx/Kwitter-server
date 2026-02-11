@@ -2,6 +2,7 @@ package com.connor.infrastructure.repository
 
 import com.connor.domain.model.NotificationEvent
 import com.connor.domain.model.PostId
+import com.connor.domain.model.UserId
 import com.connor.domain.repository.NotificationRepository
 import com.connor.infrastructure.websocket.WebSocketConnectionManager
 import kotlinx.serialization.Serializable
@@ -87,6 +88,44 @@ class InMemoryNotificationRepository(
             logger.info("Notified post commented: postId={}, commentId={}", event.postId, event.commentId)
         } catch (e: Exception) {
             logger.error("Failed to notify post commented: postId={}", event.postId, e)
+        }
+    }
+
+    override suspend fun notifyNewMessage(recipientId: UserId, event: NotificationEvent.NewMessageReceived) {
+        try {
+            val message = NotificationMessage(
+                type = "new_message",
+                data = event
+            )
+
+            val jsonMessage = json.encodeToString(message)
+            connectionManager.sendToUser(recipientId, jsonMessage)
+
+            logger.info(
+                "Notified new message: recipientId={}, messageId={}, conversationId={}",
+                recipientId.value, event.messageId, event.conversationId
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to notify new message: recipientId={}, messageId={}", recipientId.value, event.messageId, e)
+        }
+    }
+
+    override suspend fun notifyMessagesRead(recipientId: UserId, event: NotificationEvent.MessagesRead) {
+        try {
+            val message = NotificationMessage(
+                type = "messages_read",
+                data = event
+            )
+
+            val jsonMessage = json.encodeToString(message)
+            connectionManager.sendToUser(recipientId, jsonMessage)
+
+            logger.info(
+                "Notified messages read: recipientId={}, conversationId={}",
+                recipientId.value, event.conversationId
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to notify messages read: recipientId={}, conversationId={}", recipientId.value, event.conversationId, e)
         }
     }
 }
