@@ -4,6 +4,7 @@ import com.connor.core.di.dataModule
 import com.connor.core.di.domainModule
 import com.connor.core.di.mediaModule
 import com.connor.core.di.notificationModule
+import com.connor.core.di.searchModule
 import com.connor.core.di.securityModule
 import com.connor.core.security.TokenConfig
 import io.ktor.server.application.*
@@ -18,7 +19,8 @@ fun Application.configureFrameworks(tokenConfig: TokenConfig) {
             domainModule,
             mediaModule(this@configureFrameworks),
             securityModule(tokenConfig),
-            notificationModule
+            notificationModule,
+            searchModule
         )
     }
 }

@@ -9,6 +9,7 @@ import com.connor.features.post.bookmarkRoutes
 import com.connor.features.post.likeRoutes
 import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.features.post.postRoutes
+import com.connor.features.search.searchRoutes
 import com.connor.features.user.userRoutes
 import com.connor.features.notification.notificationWebSocket
 import com.connor.infrastructure.websocket.WebSocketConnectionManager
@@ -41,6 +42,11 @@ fun Application.configureRouting() {
     // Notification Use Cases
     val broadcastPostCreatedUseCase by inject<BroadcastPostCreatedUseCase>()
     val broadcastPostLikedUseCase by inject<BroadcastPostLikedUseCase>()
+
+    // Search Use Cases
+    val searchPostsUseCase by inject<SearchPostsUseCase>()
+    val searchRepliesUseCase by inject<SearchRepliesUseCase>()
+    val searchUsersUseCase by inject<SearchUsersUseCase>()
 
     // Application Coroutine Scope
     val appScope by inject<ApplicationCoroutineScope>()
@@ -85,6 +91,7 @@ fun Application.configureRouting() {
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
+        searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
 
         // WebSocket 实时通知路由
         notificationWebSocket(connectionManager)

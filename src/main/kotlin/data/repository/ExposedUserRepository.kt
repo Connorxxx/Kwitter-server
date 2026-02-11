@@ -258,7 +258,12 @@ class ExposedUserRepository : UserRepository {
 
     // ========== Helper Functions ==========
 
-    private suspend fun calculateUserStats(userId: UserId): UserStats = dbQuery {
+    /**
+     * 计算用户统计信息（Following、Followers、Posts 数量）
+     *
+     * internal 可见性：允许 ExposedSearchRepository 复用此方法
+     */
+    internal suspend fun calculateUserStats(userId: UserId): UserStats = dbQuery {
         // 统计 Following 数量
         val followingCount = FollowsTable.selectAll()
             .where { FollowsTable.followerId eq userId.value }

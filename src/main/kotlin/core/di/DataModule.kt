@@ -7,8 +7,10 @@ import com.connor.domain.repository.UserRepository
 import org.koin.dsl.module
 
 val dataModule = module {
-    // 绑定接口到实现
-    single<UserRepository> { ExposedUserRepository() }
+    // 先注册具体实现，供需要 concrete type 的模块复用（如 SearchModule）
+    single { ExposedUserRepository() }
+    // 接口绑定到同一个 singleton 实例，避免创建多个仓储实例
+    single<UserRepository> { get<ExposedUserRepository>() }
     single<PostRepository> { ExposedPostRepository() }
 
     // 如果有 DatabaseConfig 之类的也可以在这里 bind
