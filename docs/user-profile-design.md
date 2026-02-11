@@ -309,8 +309,367 @@ CREATE INDEX idx_follows_following ON follows(following_id);
 | 端点 | 方法 | 认证 | Body | 响应 |
 |------|------|------|------|------|
 | `/v1/users/me` | PATCH | ✅ | `UpdateProfileRequest` | `UserDto` |
+| `/v1/users/me/avatar` | POST | ✅ | `multipart/form-data` | `AvatarUploadResponse` |
+| `/v1/users/me/avatar` | DELETE | ✅ | - | `{"message": "头像已删除"}` |
 | `/v1/users/{userId}/follow` | POST | ✅ | - | `{"message": "关注成功"}` |
 | `/v1/users/{userId}/follow` | DELETE | ✅ | - | `{"message": "取消关注成功"}` |
+
+---
+
+## 头像上传/下载设计
+
+### 设计概述
+
+头像上传复用已有的 Media 模块基础设施（`MediaStorageRepository`、本地文件存储），但有独立的业务约束：
+- 仅限图片（不支持视频）
+- 更小的文件大小限制（2MB vs Media 的 10MB）
+- 上传后自动更新 `user.avatarUrl`
+- 删除旧头像文件（替换时自动清理）
+
+### API 端点
+
+#### POST `/v1/users/me/avatar` — 上传头像
+
+**请求**：`multipart/form-data`，字段名 `avatar`
+
+```bash
+curl -X POST http://localhost:8080/v1/users/me/avatar \
+  -H "Authorization: Bearer <token>" \
+  -F "avatar=@profile.jpg"
+```
+
+**成功响应**（201 Created）：
+```json
+{
+  "avatarUrl": "/uploads/avatars/a1b2c3d4e5f6...32chars.jpg"
+}
+```
+
+**错误响应**：
+
+| 场景 | HTTP 状态码 | code | message |
+|------|-----------|------|---------|
+| 未提供文件 | 400 | `NO_FILE_PROVIDED` | 请提供头像文件 |
+| 文件类型不支持 | 400 | `INVALID_FILE_TYPE` | 仅支持 image/jpeg, image/png, image/webp |
+| 文件过大 | 400 | `FILE_TOO_LARGE` | 文件过大，最大 2MB |
+| 上传失败 | 500 | `UPLOAD_FAILED` | 上传失败，请稍后重试 |
+
+#### DELETE `/v1/users/me/avatar` — 删除头像
+
+```bash
+curl -X DELETE http://localhost:8080/v1/users/me/avatar \
+  -H "Authorization: Bearer <token>"
+```
+
+**成功响应**（200 OK）：
+```json
+{
+  "message": "头像已删除"
+}
+```
+
+**行为**：
+- 删除存储的头像文件
+- 将 `user.avatarUrl` 设为 `null`
+- 如果用户没有头像，仍返回 200（幂等）
+
+#### 头像访问（静态文件服务）
+
+头像通过已有的静态文件服务访问，无需认证：
+
+```
+GET /uploads/avatars/{filename}
+```
+
+与 Media 模块共用 Ktor 的 `staticFiles` 配置，只是子目录不同。
+
+### 架构设计
+
+```
+POST /v1/users/me/avatar (multipart)
+    ↓
+UserRoutes (Transport 层)
+    ↓ 解析 multipart，提取文件字节
+UploadAvatarUseCase (Domain 层)
+    ↓ 验证文件类型（仅图片）、大小（≤ 2MB）
+    ↓ 生成安全文件名（MD5 hash）
+    ↓ 委托存储
+MediaStorageRepository.upload() (Infrastructure 层)
+    ↓ 写入 uploads/avatars/ 目录
+    ↓ 返回 UploadedMedia
+UploadAvatarUseCase
+    ↓ 删除旧头像文件（如果存在）
+    ↓ 更新 user.avatarUrl
+    ↓ 返回 Either<UserError, AvatarUrl>
+UserRoutes
+    ↓ 映射为 HTTP 响应
+201 Created { "avatarUrl": "/uploads/avatars/..." }
+```
+
+### Domain 层设计
+
+#### UploadAvatarUseCase
+
+```kotlin
+data class UploadAvatarCommand(
+    val userId: UserId,
+    val fileName: String,
+    val contentType: String,
+    val fileBytes: ByteArray
+)
+
+class UploadAvatarUseCase(
+    private val userRepository: UserRepository,
+    private val storageRepository: MediaStorageRepository,
+    private val avatarConfig: AvatarConfig
+) {
+    suspend operator fun invoke(command: UploadAvatarCommand): Either<UserError, String> = either {
+        // 1. 验证文件类型（仅图片）
+        if (command.contentType !in avatarConfig.allowedTypes) {
+            raise(UserError.InvalidAvatarType(
+                received = command.contentType,
+                allowed = avatarConfig.allowedTypes
+            ))
+        }
+
+        // 2. 验证文件大小
+        val fileSize = command.fileBytes.size.toLong()
+        if (fileSize > avatarConfig.maxFileSize) {
+            raise(UserError.AvatarTooLarge(
+                size = fileSize,
+                maxSize = avatarConfig.maxFileSize
+            ))
+        }
+
+        // 3. 获取当前用户（验证存在 + 获取旧头像 URL）
+        val currentUser = userRepository.findById(command.userId).bind()
+        val oldAvatarUrl = currentUser.avatarUrl
+
+        // 4. 生成安全文件名并上传
+        val safeFileName = generateSafeFileName(command.fileBytes, command.contentType)
+        val uploaded = storageRepository.upload(command.fileBytes, safeFileName)
+            .mapLeft { mediaError -> UserError.AvatarUploadFailed(mediaError.toString()) }
+            .bind()
+
+        // 5. 更新 user.avatarUrl
+        val avatarUrl = uploaded.url.value
+        userRepository.updateProfile(
+            userId = command.userId,
+            avatarUrl = avatarUrl
+        ).bind()
+
+        // 6. 删除旧头像文件（忽略错误，best-effort）
+        if (oldAvatarUrl != null && oldAvatarUrl != avatarUrl) {
+            val oldFileName = oldAvatarUrl.substringAfterLast("/")
+            storageRepository.delete(MediaId(oldFileName)) // fire-and-forget
+        }
+
+        avatarUrl
+    }
+}
+```
+
+#### DeleteAvatarUseCase
+
+```kotlin
+class DeleteAvatarUseCase(
+    private val userRepository: UserRepository,
+    private val storageRepository: MediaStorageRepository
+) {
+    suspend operator fun invoke(userId: UserId): Either<UserError, Unit> = either {
+        val currentUser = userRepository.findById(userId).bind()
+        val avatarUrl = currentUser.avatarUrl
+
+        // 清除 avatarUrl
+        userRepository.updateProfile(userId = userId, avatarUrl = "").bind()
+
+        // 删除文件（best-effort）
+        if (avatarUrl != null) {
+            val fileName = avatarUrl.substringAfterLast("/")
+            storageRepository.delete(MediaId(fileName))
+        }
+    }
+}
+```
+
+#### AvatarConfig
+
+```kotlin
+data class AvatarConfig(
+    val uploadDir: String = "uploads/avatars",
+    val maxFileSize: Long = 2 * 1024 * 1024,  // 2MB
+    val allowedTypes: Set<String> = setOf("image/jpeg", "image/png", "image/webp")
+)
+```
+
+#### UserError 扩展
+
+```kotlin
+sealed interface UserError {
+    // ... 现有错误类型 ...
+
+    // 头像相关错误
+    data class InvalidAvatarType(val received: String, val allowed: Set<String>) : UserError
+    data class AvatarTooLarge(val size: Long, val maxSize: Long) : UserError
+    data class AvatarUploadFailed(val reason: String) : UserError
+}
+```
+
+### Transport 层设计
+
+#### Route Handler
+
+```kotlin
+// 在 userRoutes 的 authenticate("auth-jwt") 块内
+
+post("/me/avatar") {
+    val userId = call.principal<UserPrincipal>()?.userId ?: run {
+        call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+        return@post
+    }
+
+    val multipart = call.receiveMultipart()
+    var fileProcessed = false
+
+    var part = multipart.readPart()
+    while (part != null) {
+        if (part is PartData.FileItem && part.name == "avatar") {
+            val command = UploadAvatarCommand(
+                userId = UserId(userId),
+                fileName = part.originalFileName ?: "avatar",
+                contentType = part.contentType?.toString() ?: "",
+                fileBytes = part.provider().readRemaining().readByteArray()
+            )
+
+            uploadAvatarUseCase(command).fold(
+                ifLeft = { error ->
+                    val (status, body) = error.toHttpError()
+                    call.respond(status, body)
+                },
+                ifRight = { avatarUrl ->
+                    call.respond(HttpStatusCode.Created, AvatarUploadResponse(avatarUrl))
+                }
+            )
+            part.dispose()
+            fileProcessed = true
+            return@post
+        }
+        part.dispose()
+        part = multipart.readPart()
+    }
+
+    if (!fileProcessed) {
+        call.respond(
+            HttpStatusCode.BadRequest,
+            ApiErrorResponse("NO_FILE_PROVIDED", "请提供头像文件")
+        )
+    }
+}
+
+delete("/me/avatar") {
+    val userId = call.principal<UserPrincipal>()?.userId ?: run {
+        call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+        return@delete
+    }
+
+    deleteAvatarUseCase(UserId(userId)).fold(
+        ifLeft = { error ->
+            val (status, body) = error.toHttpError()
+            call.respond(status, body)
+        },
+        ifRight = {
+            call.respond(HttpStatusCode.OK, mapOf("message" to "头像已删除"))
+        }
+    )
+}
+```
+
+#### Response DTO
+
+```kotlin
+@Serializable
+data class AvatarUploadResponse(
+    val avatarUrl: String
+)
+```
+
+### 存储设计
+
+#### 目录结构
+
+```
+uploads/
+├── avatars/           ← 头像专用目录
+│   ├── a1b2c3d4...32chars.jpg
+│   └── e5f6a7b8...32chars.png
+├── ...                ← 其他 media 文件（Posts 附件等）
+```
+
+#### 文件命名
+
+复用 Media 模块的 MD5 命名策略：
+- 文件名 = `MD5(fileBytes) + "." + extension`
+- 天然去重：相同图片内容 → 相同文件名 → 跳过写入
+
+#### 静态文件服务
+
+```kotlin
+// 在已有的 staticFiles 配置中追加 avatars 目录
+routing {
+    staticFiles("/uploads/avatars", File("uploads/avatars"))
+}
+```
+
+### DI 配置
+
+```kotlin
+// 在 userModule 或 mediaModule 中注册
+
+single {
+    AvatarConfig(
+        uploadDir = app.environment.config.propertyOrNull("avatar.uploadDir")?.getString()
+            ?: "uploads/avatars",
+        maxFileSize = app.environment.config.propertyOrNull("avatar.maxFileSize")?.getString()
+            ?.toLongOrNull() ?: (2 * 1024 * 1024),
+        allowedTypes = app.environment.config.propertyOrNull("avatar.allowedTypes")?.getString()
+            ?.split(",")?.map { it.trim() }?.toSet()
+            ?: setOf("image/jpeg", "image/png", "image/webp")
+    )
+}
+
+// 头像使用独立的 MediaStorageRepository 实例（不同 uploadDir）
+single(named("avatarStorage")) {
+    FileSystemMediaStorageRepository(get<AvatarConfig>().uploadDir)
+}
+
+single { UploadAvatarUseCase(get(), get(named("avatarStorage")), get()) }
+single { DeleteAvatarUseCase(get(), get(named("avatarStorage"))) }
+```
+
+### application.yaml 配置
+
+```yaml
+avatar:
+  uploadDir: "uploads/avatars"
+  maxFileSize: "2097152"  # 2MB
+  allowedTypes: "image/jpeg,image/png,image/webp"
+```
+
+### 与 PATCH /users/me 的关系
+
+**分离设计**：头像上传使用独立端点，不混入 `PATCH /users/me`。
+
+| 操作 | 端点 | Content-Type |
+|------|------|-------------|
+| 修改 username/displayName/bio | `PATCH /v1/users/me` | `application/json` |
+| 上传头像 | `POST /v1/users/me/avatar` | `multipart/form-data` |
+| 删除头像 | `DELETE /v1/users/me/avatar` | 无 |
+
+**原因**：
+1. **协议清晰**：JSON body 和 multipart/form-data 不应混在同一端点
+2. **职责单一**：文本字段更新和文件上传是不同的操作
+3. **客户端简单**：Android/iOS 可以分别处理 JSON 请求和文件上传请求
+4. **`PATCH /users/me` 的 `avatarUrl` 字段**：保留但由服务端内部使用，客户端不应直接设置此字段
 
 ---
 

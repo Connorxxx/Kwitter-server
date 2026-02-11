@@ -12,6 +12,11 @@ jwt:
   realm: "ktor sample app"
   secret: "my-super-secret-key-change-me-in-production"
 
+avatar:
+  uploadDir: "uploads/avatars"
+  maxFileSize: 2097152  # 2MB
+  allowedTypes: "image/jpeg,image/png,image/webp"
+
 media:
   uploadDir: "uploads"
   maxFileSize: 10485760  # 10MB in bytes

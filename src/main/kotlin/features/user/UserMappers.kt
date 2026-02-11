@@ -134,4 +134,22 @@ fun UserError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (this
             code = "FOLLOW_TARGET_NOT_FOUND",
             message = "目标用户不存在: ${userId.value}"
         )
+
+    is UserError.InvalidAvatarType ->
+        HttpStatusCode.BadRequest to ApiErrorResponse(
+            code = "INVALID_AVATAR_TYPE",
+            message = "不支持的头像格式: $received，允许: ${allowed.joinToString(", ")}"
+        )
+
+    is UserError.AvatarTooLarge ->
+        HttpStatusCode.BadRequest to ApiErrorResponse(
+            code = "AVATAR_TOO_LARGE",
+            message = "头像文件过大: ${size / 1024}KB，最大: ${maxSize / 1024}KB"
+        )
+
+    is UserError.AvatarUploadFailed ->
+        HttpStatusCode.InternalServerError to ApiErrorResponse(
+            code = "AVATAR_UPLOAD_FAILED",
+            message = "头像上传失败: $reason"
+        )
 }

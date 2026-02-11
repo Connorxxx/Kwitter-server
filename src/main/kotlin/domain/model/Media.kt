@@ -19,6 +19,15 @@ data class UploadedMedia(
 )
 
 /**
+ * 头像配置 - 独立于媒体的约束（仅图片, 2MB）
+ */
+data class AvatarConfig(
+    val uploadDir: String = "uploads/avatars",
+    val maxFileSize: Long = 2 * 1024 * 1024,
+    val allowedTypes: Set<String> = setOf("image/jpeg", "image/png", "image/webp")
+)
+
+/**
  * 媒体配置 - 从应用配置读取的常量
  */
 data class MediaConfig(

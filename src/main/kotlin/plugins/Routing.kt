@@ -67,6 +67,10 @@ fun Application.configureRouting() {
     // Media Use Cases
     val uploadMediaUseCase by inject<UploadMediaUseCase>()
 
+    // Avatar Use Cases
+    val uploadAvatarUseCase by inject<UploadAvatarUseCase>()
+    val deleteAvatarUseCase by inject<DeleteAvatarUseCase>()
+
     // User Profile Use Cases
     val getUserProfileUseCase by inject<GetUserProfileUseCase>()
     val updateUserProfileUseCase by inject<UpdateUserProfileUseCase>()
@@ -102,7 +106,7 @@ fun Application.configureRouting() {
         likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, appScope)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
-        userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase)
+        userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase)
         searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
         messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, appScope)
 

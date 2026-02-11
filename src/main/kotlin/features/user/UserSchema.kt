@@ -15,6 +15,12 @@ data class UpdateProfileRequest(
     val avatarUrl: String? = null
 )
 
+/**
+ * 头像上传响应
+ */
+@Serializable
+data class AvatarUploadResponse(val avatarUrl: String)
+
 // ========== Response DTOs ==========
 
 /**

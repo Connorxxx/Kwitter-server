@@ -63,7 +63,7 @@ class FileSystemMediaStorageRepository(
             if (filePath.exists()) {
                 logger.info("Media file already exists (deduplication): fileName=$fileName, path=${filePath.absolutePath}")
                 // 构建返回信息并返回
-                val publicUrl = "/uploads/$fileName"
+                val publicUrl = "/${uploadDir.replace('\\', '/')}/$fileName"
                 val mediaUrl = MediaUrl.unsafe(publicUrl)
                 val mediaType = inferMediaType(fileName)
                 val uploaded = UploadedMedia(
@@ -81,7 +81,7 @@ class FileSystemMediaStorageRepository(
             filePath.writeBytes(file)
 
             // 生成公开 URL（客户端可通过这个 URL 访问）
-            val publicUrl = "/uploads/$fileName"
+            val publicUrl = "/${uploadDir.replace('\\', '/')}/$fileName"
             val mediaUrl = MediaUrl.unsafe(publicUrl)
 
             // 从文件名推断媒体类型

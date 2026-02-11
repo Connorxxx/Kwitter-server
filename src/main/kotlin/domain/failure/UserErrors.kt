@@ -15,6 +15,11 @@ sealed interface UserError {
     data class UserNotFound(val userId: UserId) : UserError
     data class UserNotFoundByUsername(val username: Username) : UserError
 
+    // 头像相关错误
+    data class InvalidAvatarType(val received: String, val allowed: Set<String>) : UserError
+    data class AvatarTooLarge(val size: Long, val maxSize: Long) : UserError
+    data class AvatarUploadFailed(val reason: String) : UserError
+
     // 关注相关错误
     data object CannotFollowSelf : UserError
     data object AlreadyFollowing : UserError

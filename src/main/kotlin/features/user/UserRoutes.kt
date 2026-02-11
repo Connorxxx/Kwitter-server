@@ -9,13 +9,16 @@ import com.connor.features.post.PostListResponse
 import com.connor.features.post.toResponse
 import com.connor.plugins.authenticateOptional
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.toList
+import kotlinx.io.readByteArray
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("UserRoutes")
@@ -29,7 +32,9 @@ fun Route.userRoutes(
     getUserFollowersUseCase: GetUserFollowersUseCase,
     getUserPostsWithStatusUseCase: GetUserPostsWithStatusUseCase,
     getUserRepliesWithStatusUseCase: GetUserRepliesWithStatusUseCase,
-    getUserLikesWithStatusUseCase: GetUserLikesWithStatusUseCase
+    getUserLikesWithStatusUseCase: GetUserLikesWithStatusUseCase,
+    uploadAvatarUseCase: UploadAvatarUseCase,
+    deleteAvatarUseCase: DeleteAvatarUseCase
 ) {
     route("/v1/users") {
         // ========== 公开路由（可选认证）==========
@@ -383,6 +388,82 @@ fun Route.userRoutes(
                     },
                     ifRight = { user ->
                         call.respond(HttpStatusCode.OK, user.toDto())
+                    }
+                )
+            }
+
+            /**
+             * POST /v1/users/me/avatar
+             * 上传/更换头像（multipart form data）
+             */
+            post("/me/avatar") {
+                val principal = call.principal<UserPrincipal>()
+                val userId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@post
+                }
+
+                try {
+                    val multipart = call.receiveMultipart()
+                    var part: PartData? = multipart.readPart()
+                    while (part != null) {
+                        when (part) {
+                            is PartData.FileItem -> {
+                                val contentType = part.contentType?.toString() ?: ""
+                                val bytes = part.provider().readRemaining().readByteArray()
+
+                                val result = uploadAvatarUseCase(UserId(userId), contentType, bytes)
+                                result.fold(
+                                    ifLeft = { error ->
+                                        val (status, body) = error.toHttpError()
+                                        call.respond(status, body)
+                                    },
+                                    ifRight = { avatarUrl ->
+                                        call.respond(HttpStatusCode.Created, AvatarUploadResponse(avatarUrl))
+                                    }
+                                )
+
+                                part.dispose()
+                                return@post
+                            }
+                            else -> { /* skip non-file parts */ }
+                        }
+                        part.dispose()
+                        part = multipart.readPart()
+                    }
+
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ApiErrorResponse("NO_FILE_PROVIDED", "请提供头像文件")
+                    )
+                } catch (e: Exception) {
+                    logger.error("Unexpected error during avatar upload", e)
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        ApiErrorResponse("AVATAR_UPLOAD_ERROR", "头像上传失败，请稍后重试")
+                    )
+                }
+            }
+
+            /**
+             * DELETE /v1/users/me/avatar
+             * 删除头像
+             */
+            delete("/me/avatar") {
+                val principal = call.principal<UserPrincipal>()
+                val userId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@delete
+                }
+
+                val result = deleteAvatarUseCase(UserId(userId))
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        call.respond(status, body)
+                    },
+                    ifRight = {
+                        call.respond(HttpStatusCode.OK, mapOf("message" to "头像已删除"))
                     }
                 )
             }

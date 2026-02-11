@@ -1,14 +1,15 @@
 package com.connor.core.di
 
 import com.connor.data.repository.FileSystemMediaStorageRepository
+import com.connor.domain.model.AvatarConfig
 import com.connor.domain.model.MediaConfig
 import com.connor.domain.repository.MediaStorageRepository
+import com.connor.domain.usecase.DeleteAvatarUseCase
+import com.connor.domain.usecase.UploadAvatarUseCase
 import com.connor.domain.usecase.UploadMediaUseCase
 import io.ktor.server.application.Application
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.bind
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
-import org.koin.ktor.ext.get
 
 /**
  * 媒体功能的 Koin DI 模块
@@ -48,4 +49,33 @@ fun mediaModule(app: Application) = module {
 
     // 3. 注册 UploadMediaUseCase
     single { UploadMediaUseCase(get(), get()) }
+
+    // ========== Avatar 配置 ==========
+
+    // 4. 读取 Avatar 配置
+    single {
+        val uploadDir = app.environment.config.propertyOrNull("avatar.uploadDir")?.getString() ?: "uploads/avatars"
+        val maxFileSizeStr = app.environment.config.propertyOrNull("avatar.maxFileSize")?.getString() ?: "2097152"
+        val maxFileSize = maxFileSizeStr.toLongOrNull() ?: (2 * 1024 * 1024).toLong()
+
+        val allowedTypesStr = app.environment.config.propertyOrNull("avatar.allowedTypes")?.getString()
+            ?: "image/jpeg,image/png,image/webp"
+        val allowedTypes = allowedTypesStr.split(",").map { it.trim() }.toSet()
+
+        AvatarConfig(
+            uploadDir = uploadDir,
+            maxFileSize = maxFileSize,
+            allowedTypes = allowedTypes
+        )
+    }
+
+    // 5. Avatar 专用 MediaStorageRepository
+    single<MediaStorageRepository>(named("avatarStorage")) {
+        val config = get<AvatarConfig>()
+        FileSystemMediaStorageRepository(config.uploadDir)
+    }
+
+    // 6. Avatar Use Cases
+    single { UploadAvatarUseCase(get(), get(named("avatarStorage")), get()) }
+    single { DeleteAvatarUseCase(get(), get(named("avatarStorage"))) }
 }

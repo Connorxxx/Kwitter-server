@@ -107,7 +107,7 @@ class ExposedUserRepository : UserRepository {
             username?.let { updates[UsersTable.username] = it.value }
             displayName?.let { updates[UsersTable.displayName] = it.value }
             bio?.let { updates[UsersTable.bio] = it.value }
-            avatarUrl?.let { updates[UsersTable.avatarUrl] = it }
+            avatarUrl?.let { updates[UsersTable.avatarUrl] = it.ifEmpty { null } }
 
             if (updates.isEmpty()) {
                 // 没有更新，直接返回当前用户
