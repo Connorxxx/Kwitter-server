@@ -1,5 +1,6 @@
 package com.connor.core.di
 
+import com.connor.core.security.RefreshTokenService
 import com.connor.core.security.TokenConfig
 import com.connor.core.security.TokenService
 import com.connor.domain.service.PasswordHasher
@@ -14,6 +15,7 @@ val domainModule = module {
     // Use Case 层：认证相关
     single { RegisterUseCase(get(), get()) }
     single { LoginUseCase(get(), get()) }
+    single { RefreshTokenUseCase(get(), get(), get(), get(), get(), get()) }
 
     // Use Case 层：Post 相关
     single { CreatePostUseCase(get()) }
@@ -51,4 +53,5 @@ val domainModule = module {
 fun securityModule(tokenConfig: TokenConfig) = module {
     single { tokenConfig }
     single { TokenService(get()) }
+    single { RefreshTokenService() }
 }

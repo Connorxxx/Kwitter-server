@@ -37,6 +37,7 @@ class ExposedUserRepository : UserRepository {
                 it[displayName] = user.displayName.value
                 it[bio] = user.bio.value
                 it[avatarUrl] = user.avatarUrl
+                it[passwordChangedAt] = user.passwordChangedAt
                 it[createdAt] = user.createdAt
             }
 

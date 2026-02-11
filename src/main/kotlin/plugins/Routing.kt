@@ -1,7 +1,8 @@
 package com.connor.plugins
 
-import com.connor.core.security.TokenService
 import com.connor.core.security.UserPrincipal
+import com.connor.core.security.sensitive
+import com.connor.domain.repository.UserRepository
 import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
 import com.connor.features.media.mediaRoutes
@@ -27,7 +28,7 @@ fun Application.configureRouting() {
     // Auth Use Cases
     val registerUseCase by inject<RegisterUseCase>()
     val loginUseCase by inject<LoginUseCase>()
-    val tokenService by inject<TokenService>()
+    val refreshTokenUseCase by inject<RefreshTokenUseCase>()
 
     // Post Use Cases
     val createPostUseCase by inject<CreatePostUseCase>()
@@ -77,6 +78,9 @@ fun Application.configureRouting() {
     // WebSocket Connection Manager
     val connectionManager by inject<WebSocketConnectionManager>()
 
+    // Repositories (for sensitive route plugin)
+    val userRepository by inject<UserRepository>()
+
     // Media config (for serving static files)
     val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
 
@@ -84,8 +88,8 @@ fun Application.configureRouting() {
         // Static file serving for uploads
         staticFiles("/uploads", File(uploadDir))
 
-        // 公开路由 - 不需要认证
-        authRoutes(registerUseCase, loginUseCase, tokenService)
+        // ========== 公开路由 - 不需要认证 ==========
+        authRoutes(registerUseCase, loginUseCase, refreshTokenUseCase)
         postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase, broadcastPostCreatedUseCase, appScope)
         likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, appScope)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
@@ -99,13 +103,10 @@ fun Application.configureRouting() {
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }
 
-        // ========== 受保护路由示例 ==========
-        // 所有在这个 authenticate 块内的路由都需要 JWT Token 才能访问
+        // ========== 普通认证路由（快，无状态，不查库） ==========
         authenticate("auth-jwt") {
 
-            // 示例 1: 获取当前用户信息
             get("/v1/users/me") {
-                // 从 JWT 中获取当前登录用户的 ID
                 val principal = call.principal<UserPrincipal>()
 
                 if (principal != null) {
@@ -118,30 +119,12 @@ fun Application.configureRouting() {
                 }
             }
 
-            // 示例 2: 获取用户资料（更实际的用法）
-            get("/v1/profile") {
-                // 获取当前用户 ID
-                val userId = call.principal<UserPrincipal>()?.userId
-
-                // 这里你可以根据 userId 从数据库查询用户完整信息
-                // val user = userRepository.findById(userId)
-
-                call.respondText(
-                    "用户资料页面 - User ID: $userId\n" +
-                    "提示: 这个路由需要在请求头中携带 'Authorization: Bearer <token>' 才能访问",
-                    status = HttpStatusCode.OK
-                )
-            }
-
-            // 示例 3: 模拟更新操作
-            get("/v1/posts/create") {
-                val userId = call.principal<UserPrincipal>()?.userId
-
-                call.respondText(
-                    "创建帖子 - 作者 ID: $userId\n" +
-                    "只有登录用户才能创建帖子！",
-                    status = HttpStatusCode.OK
-                )
+            // ========== 敏感路由（慢，有状态，强制查库） ==========
+            sensitive(userRepository) {
+                // 示例：修改密码、删除账号、确认支付等高风险操作
+                // post("/v1/auth/change-password") { ... }
+                // delete("/v1/account") { ... }
+                // post("/v1/payment/confirm") { ... }
             }
         }
     }

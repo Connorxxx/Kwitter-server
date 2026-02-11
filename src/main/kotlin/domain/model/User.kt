@@ -36,5 +36,6 @@ data class User(
     val displayName: DisplayName,
     val bio: Bio = Bio.unsafe(""),
     val avatarUrl: String? = null,
+    val passwordChangedAt: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis()
 )

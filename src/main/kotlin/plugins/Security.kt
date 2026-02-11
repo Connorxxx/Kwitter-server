@@ -27,10 +27,11 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
                 val userId = credential.payload.getClaim("id").asString()
                 val displayName = credential.payload.getClaim("displayName").asString()
                 val username = credential.payload.getClaim("username").asString()
+                val issuedAt = credential.payload.issuedAt?.time ?: 0L
 
                 // 确保所有字段都不为空
                 if (!userId.isNullOrBlank() && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
-                    UserPrincipal(userId, displayName, username)
+                    UserPrincipal(userId, displayName, username, issuedAt)
                 } else {
                     null
                 }

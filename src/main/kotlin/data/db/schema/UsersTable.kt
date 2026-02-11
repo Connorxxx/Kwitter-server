@@ -23,6 +23,9 @@ object UsersTable : Table("users") {
     // 头像 URL (可选)
     val avatarUrl = varchar("avatar_url", 256).nullable()
 
+    // 密码修改时间（用于敏感路由校验 tokenIssuedAt < passwordChangedAt）
+    val passwordChangedAt = long("password_changed_at").default(0)
+
     // 对应 createdAt。使用 datetime 类型
     val createdAt = long("created_at") // 或者用 datetime("created_at")
 

@@ -53,6 +53,7 @@ class RegisterUseCase(
             logger.debug("生成默认 username: ${username.value}")
 
             // 5. 创建用户实体
+            val now = System.currentTimeMillis()
             val newUser = User(
                 id = userId,
                 email = email,
@@ -61,7 +62,8 @@ class RegisterUseCase(
                 displayName = displayName,
                 bio = Bio.unsafe(""),  // 默认空简介
                 avatarUrl = null,
-                createdAt = System.currentTimeMillis()
+                passwordChangedAt = now,
+                createdAt = now
             )
             logger.debug("用户实体创建成功: userId=${userId.value}, username=${username.value}")
 

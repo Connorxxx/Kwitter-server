@@ -1,8 +1,10 @@
 package com.connor.core.di
 
 import com.connor.data.repository.ExposedPostRepository
+import com.connor.data.repository.ExposedRefreshTokenRepository
 import com.connor.data.repository.ExposedUserRepository
 import com.connor.domain.repository.PostRepository
+import com.connor.domain.repository.RefreshTokenRepository
 import com.connor.domain.repository.UserRepository
 import org.koin.dsl.module
 
@@ -12,6 +14,5 @@ val dataModule = module {
     // 接口绑定到同一个 singleton 实例，避免创建多个仓储实例
     single<UserRepository> { get<ExposedUserRepository>() }
     single<PostRepository> { ExposedPostRepository() }
-
-    // 如果有 DatabaseConfig 之类的也可以在这里 bind
+    single<RefreshTokenRepository> { ExposedRefreshTokenRepository() }
 }

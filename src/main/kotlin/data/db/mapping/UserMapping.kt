@@ -14,6 +14,7 @@ fun ResultRow.toDomain(): User {
         displayName = DisplayName.unsafe(this[UsersTable.displayName]),
         bio = Bio.unsafe(this[UsersTable.bio]),
         avatarUrl = this[UsersTable.avatarUrl],
+        passwordChangedAt = this[UsersTable.passwordChangedAt],
         createdAt = this[UsersTable.createdAt]
     )
 }

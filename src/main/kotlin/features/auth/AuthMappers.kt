@@ -3,6 +3,7 @@ package com.connor.features.auth
 import com.connor.domain.failure.AuthError
 import com.connor.domain.model.User
 import com.connor.domain.usecase.RegisterCommand
+import com.connor.domain.usecase.TokenPair
 import io.ktor.http.HttpStatusCode
 
 /**
@@ -22,7 +23,7 @@ fun LoginRequest.toCommand() = com.connor.domain.usecase.LoginCommand(
 /**
  * Domain Model -> HTTP Response DTO
  */
-fun User.toResponse(token: String? = null) = UserResponse(
+fun User.toResponse(tokenPair: TokenPair) = UserResponse(
     id = this.id.value,
     email = this.email.value,
     username = this.username.value,
@@ -30,7 +31,15 @@ fun User.toResponse(token: String? = null) = UserResponse(
     bio = this.bio.value,
     avatarUrl = this.avatarUrl,
     createdAt = this.createdAt,
-    token = token
+    token = tokenPair.accessToken,
+    refreshToken = tokenPair.refreshToken,
+    expiresIn = tokenPair.expiresIn
+)
+
+fun TokenPair.toResponse() = TokenResponse(
+    token = this.accessToken,
+    refreshToken = this.refreshToken,
+    expiresIn = this.expiresIn
 )
 
 /**
@@ -66,5 +75,35 @@ fun AuthError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
         HttpStatusCode.BadRequest to ErrorResponse(
             code = "INVALID_DISPLAY_NAME",
             message = reason
+        )
+
+    is AuthError.RefreshTokenExpired ->
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "REFRESH_TOKEN_EXPIRED",
+            message = "Refresh token 已过期，请重新登录"
+        )
+
+    is AuthError.RefreshTokenRevoked ->
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "REFRESH_TOKEN_REVOKED",
+            message = "Refresh token 已被撤销，请重新登录"
+        )
+
+    is AuthError.RefreshTokenNotFound ->
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "REFRESH_TOKEN_INVALID",
+            message = "Refresh token 无效"
+        )
+
+    is AuthError.TokenFamilyReused ->
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "TOKEN_REUSE_DETECTED",
+            message = "检测到异常登录活动，所有会话已失效，请重新登录"
+        )
+
+    is AuthError.SessionRevoked ->
+        HttpStatusCode.Unauthorized to ErrorResponse(
+            code = "SESSION_REVOKED",
+            message = "会话已失效，请重新登录"
         )
 }

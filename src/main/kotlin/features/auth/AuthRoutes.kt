@@ -1,12 +1,9 @@
 package com.connor.features.auth
 
-import com.connor.core.security.TokenService
-import com.connor.core.security.UserPrincipal
 import com.connor.domain.usecase.LoginUseCase
+import com.connor.domain.usecase.RefreshTokenUseCase
 import com.connor.domain.usecase.RegisterUseCase
 import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -17,31 +14,25 @@ private val logger = LoggerFactory.getLogger("AuthRoutes")
 fun Route.authRoutes(
     registerUseCase: RegisterUseCase,
     loginUseCase: LoginUseCase,
-    tokenService: TokenService
+    refreshTokenUseCase: RefreshTokenUseCase
 ) {
     route("/v1/auth") {
 
         post("/register") {
             val startTime = System.currentTimeMillis()
-
-            // 获取客户端信息（用于日志）
             val clientIp = call.request.local.remoteAddress
             val userAgent = call.request.headers["User-Agent"] ?: "Unknown"
 
-            // 1. 接收并反序列化 JSON
             val request = call.receive<RegisterRequest>()
             logger.info(
                 "收到注册请求: email=${request.email}, displayName=${request.displayName}, " +
                 "clientIp=$clientIp, userAgent=${userAgent.take(100)}"
             )
 
-            // 2. 调用业务逻辑
             val result = registerUseCase(request.toCommand())
 
-            // 3. 处理结果
             result.fold(
                 ifLeft = { error ->
-                    // 失败路径：记录错误并返回
                     val (status, body) = error.toHttpError()
                     val duration = System.currentTimeMillis() - startTime
 
@@ -54,9 +45,9 @@ fun Route.authRoutes(
                     call.respond(status, body)
                 },
                 ifRight = { user ->
-                    // 成功路径：生成 Token 并返回
-                    val token = tokenService.generate(
-                        userId = user.id.value,
+                    // 注册成功：创建初始 token pair（JWT + refresh token）
+                    val tokenPair = refreshTokenUseCase.createInitialTokenPair(
+                        userId = user.id,
                         displayName = user.displayName.value,
                         username = user.username.value
                     )
@@ -67,32 +58,26 @@ fun Route.authRoutes(
                         "duration=${duration}ms, clientIp=$clientIp"
                     )
 
-                    call.respond(HttpStatusCode.Created, user.toResponse(token))
+                    call.respond(HttpStatusCode.Created, user.toResponse(tokenPair))
                 }
             )
         }
 
         post("/login") {
             val startTime = System.currentTimeMillis()
-
-            // 获取客户端信息（用于日志）
             val clientIp = call.request.local.remoteAddress
             val userAgent = call.request.headers["User-Agent"] ?: "Unknown"
 
-            // 1. 接收并反序列化 JSON
             val request = call.receive<LoginRequest>()
             logger.info(
                 "收到登录请求: email=${request.email}, " +
                 "clientIp=$clientIp, userAgent=${userAgent.take(100)}"
             )
 
-            // 2. 调用业务逻辑
             val result = loginUseCase(request.toCommand())
 
-            // 3. 处理结果
             result.fold(
                 ifLeft = { error ->
-                    // 失败路径：记录错误并返回
                     val (status, body) = error.toHttpError()
                     val duration = System.currentTimeMillis() - startTime
 
@@ -105,9 +90,9 @@ fun Route.authRoutes(
                     call.respond(status, body)
                 },
                 ifRight = { user ->
-                    // 成功路径：生成 Token 并返回
-                    val token = tokenService.generate(
-                        userId = user.id.value,
+                    // 登录成功：创建初始 token pair（JWT + refresh token）
+                    val tokenPair = refreshTokenUseCase.createInitialTokenPair(
+                        userId = user.id,
                         displayName = user.displayName.value,
                         username = user.username.value
                     )
@@ -118,51 +103,44 @@ fun Route.authRoutes(
                         "duration=${duration}ms, clientIp=$clientIp"
                     )
 
-                    call.respond(HttpStatusCode.OK, user.toResponse(token))
+                    call.respond(HttpStatusCode.OK, user.toResponse(tokenPair))
                 }
             )
         }
 
-        // Token 验证端点（需要认证）
-        authenticate("auth-jwt") {
-            get("/validate") {
-                val startTime = System.currentTimeMillis()
-                val clientIp = call.request.local.remoteAddress
+        /**
+         * Token 刷新端点（公开接口，不需要 JWT 认证）
+         *
+         * 流程：JWT 过期 → 401 → 客户端用 refresh token 请求此端点 → 获取新 JWT + 新 refresh token → 重试原请求
+         */
+        post("/refresh") {
+            val startTime = System.currentTimeMillis()
+            val clientIp = call.request.local.remoteAddress
 
-                // 如果能走到这里，说明 JWT 已经通过验证
-                val principal = call.principal<UserPrincipal>()
+            val request = call.receive<RefreshRequest>()
+            logger.debug("收到 token 刷新请求: clientIp=$clientIp")
 
-                if (principal != null) {
+            val result = refreshTokenUseCase(request.refreshToken)
+
+            result.fold(
+                ifLeft = { error ->
+                    val (status, body) = error.toHttpError()
                     val duration = System.currentTimeMillis() - startTime
-                    logger.info(
-                        "Token验证成功: userId=${principal.userId}, " +
-                        "duration=${duration}ms, clientIp=$clientIp"
-                    )
 
-                    call.respond(
-                        HttpStatusCode.OK,
-                        mapOf(
-                            "valid" to true,
-                            "userId" to principal.userId
-                        )
-                    )
-                } else {
-                    // 理论上不会走到这里，因为 JWT 验证失败会在 validate 阶段被拦截
-                    val duration = System.currentTimeMillis() - startTime
                     logger.warn(
-                        "Token验证失败: principal为null, " +
-                        "duration=${duration}ms, clientIp=$clientIp"
+                        "Token 刷新失败: error=${error.javaClass.simpleName}, " +
+                        "errorCode=${body.code}, duration=${duration}ms, clientIp=$clientIp"
                     )
 
-                    call.respond(
-                        HttpStatusCode.Unauthorized,
-                        ErrorResponse(
-                            code = "INVALID_TOKEN",
-                            message = "Token is invalid or has expired"
-                        )
-                    )
+                    call.respond(status, body)
+                },
+                ifRight = { tokenPair ->
+                    val duration = System.currentTimeMillis() - startTime
+                    logger.debug("Token 刷新成功: duration=${duration}ms, clientIp=$clientIp")
+
+                    call.respond(HttpStatusCode.OK, tokenPair.toResponse())
                 }
-            }
+            )
         }
     }
 }
