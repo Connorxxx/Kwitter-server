@@ -2,19 +2,21 @@ package com.connor.core.security
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.connor.domain.service.TokenHasher
+import com.connor.domain.service.TokenIssuer
 import java.security.SecureRandom
 import java.security.MessageDigest
 import java.util.Date
 
 class TokenService(
     private val config: TokenConfig
-) {
+) : TokenIssuer {
     /**
      * 生成 JWT Token（短期：20分钟）
      *
      * 包含 issuedAt 声明，用于敏感路由校验 passwordChangedAt > issuedAt
      */
-    fun generate(userId: String, displayName: String, username: String): String {
+    override fun generate(userId: String, displayName: String, username: String): String {
         val now = System.currentTimeMillis()
         return JWT.create()
             .withAudience(config.audience)
@@ -28,13 +30,13 @@ class TokenService(
     }
 }
 
-class RefreshTokenService {
+class RefreshTokenService : TokenHasher {
     private val secureRandom = SecureRandom()
 
     /**
      * 生成安全的随机 refresh token 字符串
      */
-    fun generateToken(): String {
+    override fun generateToken(): String {
         val bytes = ByteArray(48)
         secureRandom.nextBytes(bytes)
         return bytes.joinToString("") { "%02x".format(it) }
@@ -43,7 +45,7 @@ class RefreshTokenService {
     /**
      * 对 refresh token 做 SHA-256 哈希（数据库只存哈希值）
      */
-    fun hashToken(token: String): String {
+    override fun hashToken(token: String): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.toByteArray(Charsets.UTF_8))
         return hashBytes.joinToString("") { "%02x".format(it) }

@@ -3,15 +3,15 @@ package com.connor.domain.usecase
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.connor.core.security.RefreshTokenService
-import com.connor.core.security.TokenConfig
-import com.connor.core.security.TokenService
 import com.connor.domain.failure.AuthError
 import com.connor.domain.model.RefreshToken
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.RefreshTokenRepository
 import com.connor.domain.repository.UserRepository
-import com.connor.infrastructure.websocket.WebSocketConnectionManager
+import com.connor.domain.service.AuthTokenConfig
+import com.connor.domain.service.SessionNotifier
+import com.connor.domain.service.TokenHasher
+import com.connor.domain.service.TokenIssuer
 import org.slf4j.LoggerFactory
 import java.util.UUID
 
@@ -40,10 +40,10 @@ data class TokenPair(
 class RefreshTokenUseCase(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userRepository: UserRepository,
-    private val tokenService: TokenService,
-    private val refreshTokenService: RefreshTokenService,
-    private val tokenConfig: TokenConfig,
-    private val connectionManager: WebSocketConnectionManager
+    private val tokenIssuer: TokenIssuer,
+    private val tokenHasher: TokenHasher,
+    private val authTokenConfig: AuthTokenConfig,
+    private val sessionNotifier: SessionNotifier
 ) {
     private val logger = LoggerFactory.getLogger(RefreshTokenUseCase::class.java)
 
@@ -51,7 +51,7 @@ class RefreshTokenUseCase(
      * 刷新 token
      */
     suspend operator fun invoke(rawRefreshToken: String): Either<AuthError, TokenPair> {
-        val tokenHash = refreshTokenService.hashToken(rawRefreshToken)
+        val tokenHash = tokenHasher.hashToken(rawRefreshToken)
         val storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
             ?: return AuthError.RefreshTokenNotFound.left()
 
@@ -81,13 +81,13 @@ class RefreshTokenUseCase(
      */
     suspend fun createInitialTokenPair(userId: UserId, displayName: String, username: String): TokenPair {
         val familyId = UUID.randomUUID().toString()
-        val accessToken = tokenService.generate(userId.value, displayName, username)
+        val accessToken = tokenIssuer.generate(userId.value, displayName, username)
         val refreshToken = createAndSaveRefreshToken(userId, familyId)
 
         return TokenPair(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            expiresIn = tokenConfig.expiresIn
+            expiresIn = authTokenConfig.accessTokenExpiresInMs
         )
     }
 
@@ -96,8 +96,7 @@ class RefreshTokenUseCase(
      */
     suspend fun revokeAllForUser(userId: UserId) {
         refreshTokenRepository.revokeAllForUser(userId)
-        // 通过 WebSocket 通知客户端强制下线
-        connectionManager.sendToUser(
+        sessionNotifier.notifySessionRevoked(
             userId,
             """{"type":"auth_revoked","message":"会话已失效，请重新登录"}"""
         )
@@ -118,7 +117,7 @@ class RefreshTokenUseCase(
         // Grace period: 如果 token 是在宽限期内被撤销的，视为并发请求
         if (latestRevoked?.revokedAt != null) {
             val timeSinceRevoked = now - latestRevoked.revokedAt
-            if (timeSinceRevoked <= tokenConfig.refreshTokenGracePeriod) {
+            if (timeSinceRevoked <= authTokenConfig.refreshTokenGracePeriodMs) {
                 logger.info(
                     "Grace period hit: userId={}, familyId={}, timeSinceRevoked={}ms",
                     storedToken.userId.value, storedToken.familyId, timeSinceRevoked
@@ -134,8 +133,8 @@ class RefreshTokenUseCase(
         )
         refreshTokenRepository.revokeFamily(storedToken.familyId)
 
-        // 通过 WebSocket 通知用户强制下线
-        connectionManager.sendToUser(
+        // 通知用户强制下线
+        sessionNotifier.notifySessionRevoked(
             storedToken.userId,
             """{"type":"auth_revoked","message":"检测到异常登录，会话已失效，请重新登录"}"""
         )
@@ -148,7 +147,7 @@ class RefreshTokenUseCase(
         val user = userRepository.findById(userId).getOrNull()
             ?: return AuthError.RefreshTokenNotFound.left()
 
-        val accessToken = tokenService.generate(
+        val accessToken = tokenIssuer.generate(
             userId = user.id.value,
             displayName = user.displayName.value,
             username = user.username.value
@@ -158,20 +157,20 @@ class RefreshTokenUseCase(
         return TokenPair(
             accessToken = accessToken,
             refreshToken = newRefreshToken,
-            expiresIn = tokenConfig.expiresIn
+            expiresIn = authTokenConfig.accessTokenExpiresInMs
         ).right()
     }
 
     private suspend fun createAndSaveRefreshToken(userId: UserId, familyId: String): String {
-        val rawToken = refreshTokenService.generateToken()
-        val tokenHash = refreshTokenService.hashToken(rawToken)
+        val rawToken = tokenHasher.generateToken()
+        val tokenHash = tokenHasher.hashToken(rawToken)
 
         val refreshToken = RefreshToken(
             id = UUID.randomUUID().toString(),
             tokenHash = tokenHash,
             userId = userId,
             familyId = familyId,
-            expiresAt = System.currentTimeMillis() + tokenConfig.refreshTokenExpiresIn
+            expiresAt = System.currentTimeMillis() + authTokenConfig.refreshTokenExpiresInMs
         )
 
         refreshTokenRepository.save(refreshToken)

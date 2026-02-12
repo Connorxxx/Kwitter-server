@@ -3,9 +3,14 @@ package com.connor.core.di
 import com.connor.core.security.RefreshTokenService
 import com.connor.core.security.TokenConfig
 import com.connor.core.security.TokenService
+import com.connor.domain.service.AuthTokenConfig
 import com.connor.domain.service.PasswordHasher
+import com.connor.domain.service.SessionNotifier
+import com.connor.domain.service.TokenHasher
+import com.connor.domain.service.TokenIssuer
 import com.connor.domain.usecase.*
 import com.connor.infrastructure.service.BCryptPasswordHasher
+import com.connor.infrastructure.websocket.WebSocketSessionNotifier
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -49,9 +54,21 @@ val domainModule = module {
     single { GetUserRepliesWithStatusUseCase(get(), get()) }
 }
 
-// Security 模块：JWT 相关配置
+// Security 模块：JWT 相关配置 + Domain Port 绑定
 fun securityModule(tokenConfig: TokenConfig) = module {
     single { tokenConfig }
     single { TokenService(get()) }
     single { RefreshTokenService() }
+
+    // Domain Port 绑定：将 core/infrastructure 实现适配为 domain 接口
+    single<TokenIssuer> { get<TokenService>() }
+    single<TokenHasher> { get<RefreshTokenService>() }
+    single<SessionNotifier> { WebSocketSessionNotifier(get()) }
+    single {
+        AuthTokenConfig(
+            accessTokenExpiresInMs = tokenConfig.expiresIn,
+            refreshTokenExpiresInMs = tokenConfig.refreshTokenExpiresIn,
+            refreshTokenGracePeriodMs = tokenConfig.refreshTokenGracePeriod
+        )
+    }
 }

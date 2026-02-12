@@ -68,8 +68,8 @@ class ExposedMessageRepository : MessageRepository {
 
     override fun findConversationsForUser(userId: UserId, limit: Int, offset: Int): Flow<ConversationDetail> = flow {
         val details = dbQuery {
-            // Find conversations where user is participant, ordered by last message time
-            val conversations = ConversationsTable.selectAll()
+            // Query 1: Get paginated conversations
+            val conversationRows = ConversationsTable.selectAll()
                 .where {
                     (ConversationsTable.participant1Id eq userId.value) or
                         (ConversationsTable.participant2Id eq userId.value)
@@ -78,41 +78,51 @@ class ExposedMessageRepository : MessageRepository {
                 .limit(limit + 1).offset(offset.toLong())
                 .toList()
 
-            conversations.map { row ->
-                val conversation = row.toConversation()
+            if (conversationRows.isEmpty()) return@dbQuery emptyList()
 
-                // Determine the other user
-                val otherUserId = if (conversation.participant1Id == userId)
-                    conversation.participant2Id else conversation.participant1Id
+            val conversations = conversationRows.map { it.toConversation() }
 
-                // Fetch other user
-                val otherUser = UsersTable.selectAll()
-                    .where { UsersTable.id eq otherUserId.value }
-                    .single()
-                    .toDomain()
+            // Collect IDs for batch loading
+            val otherUserIds = conversations.map { conv ->
+                if (conv.participant1Id == userId) conv.participant2Id else conv.participant1Id
+            }
+            val lastMessageIds = conversations.mapNotNull { it.lastMessageId }
+            val conversationIds = conversations.map { it.id }
 
-                // Fetch last message
-                val lastMessage = conversation.lastMessageId?.let { msgId ->
-                    MessagesTable.selectAll()
-                        .where { MessagesTable.id eq msgId.value }
-                        .singleOrNull()
-                        ?.toMessage()
+            // Query 2: Batch fetch other users
+            val usersById = UsersTable.selectAll()
+                .where { UsersTable.id inList otherUserIds.map { it.value } }
+                .associate { it[UsersTable.id] to it.toDomain() }
+
+            // Query 3: Batch fetch last messages
+            val messagesById = if (lastMessageIds.isNotEmpty()) {
+                MessagesTable.selectAll()
+                    .where { MessagesTable.id inList lastMessageIds.map { it.value } }
+                    .associate { it[MessagesTable.id] to it.toMessage() }
+            } else {
+                emptyMap()
+            }
+
+            // Query 4: Batch count unread messages per conversation
+            val unreadCountExpr = MessagesTable.id.count()
+            val unreadCounts = MessagesTable
+                .select(MessagesTable.conversationId, unreadCountExpr)
+                .where {
+                    (MessagesTable.conversationId inList conversationIds.map { it.value }) and
+                        (MessagesTable.senderId neq userId.value) and
+                        (MessagesTable.readAt.isNull())
                 }
+                .groupBy(MessagesTable.conversationId)
+                .associate { it[MessagesTable.conversationId] to it[unreadCountExpr].toInt() }
 
-                // Count unread messages (sent by other user, not yet read)
-                val unreadCount = MessagesTable.selectAll()
-                    .where {
-                        (MessagesTable.conversationId eq conversation.id.value) and
-                            (MessagesTable.senderId eq otherUserId.value) and
-                            (MessagesTable.readAt.isNull())
-                    }
-                    .count().toInt()
-
+            // Assemble in memory (preserving original order)
+            conversations.map { conv ->
+                val otherUserId = if (conv.participant1Id == userId) conv.participant2Id else conv.participant1Id
                 ConversationDetail(
-                    conversation = conversation,
-                    otherUser = otherUser,
-                    lastMessage = lastMessage,
-                    unreadCount = unreadCount
+                    conversation = conv,
+                    otherUser = usersById.getValue(otherUserId.value),
+                    lastMessage = conv.lastMessageId?.let { messagesById[it.value] },
+                    unreadCount = unreadCounts[conv.id.value] ?: 0
                 )
             }
         }

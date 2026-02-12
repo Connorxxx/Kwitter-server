@@ -40,8 +40,8 @@ fun Route.messagingRoutes(
                     return@get
                 }
 
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
-                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
+                val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
                 val userId = UserId(principal.userId)
                 val conversations = getConversationsUseCase(userId, limit, offset).toList()
@@ -125,8 +125,8 @@ fun Route.messagingRoutes(
                     return@get
                 }
 
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
-                val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+                val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceIn(1, 100)
+                val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
                 val userId = UserId(principal.userId)
 
                 val result = getMessagesUseCase(ConversationId(conversationId), userId, limit, offset)
