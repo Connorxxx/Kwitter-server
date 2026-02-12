@@ -36,21 +36,27 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
     }
 
     override suspend fun revokeByTokenHash(tokenHash: String): Unit = dbQuery {
+        val now = System.currentTimeMillis()
         RefreshTokensTable.update({ RefreshTokensTable.tokenHash eq tokenHash }) {
             it[isRevoked] = true
+            it[revokedAt] = now
         }
     }
 
     override suspend fun revokeFamily(familyId: String): Unit = dbQuery {
+        val now = System.currentTimeMillis()
         val count = RefreshTokensTable.update({ RefreshTokensTable.familyId eq familyId }) {
             it[isRevoked] = true
+            it[revokedAt] = now
         }
         logger.warn("Token family revoked: familyId={}, revokedCount={}", familyId, count)
     }
 
     override suspend fun revokeAllForUser(userId: UserId): Unit = dbQuery {
+        val now = System.currentTimeMillis()
         val count = RefreshTokensTable.update({ RefreshTokensTable.userId eq userId.value }) {
             it[isRevoked] = true
+            it[revokedAt] = now
         }
         logger.info("All refresh tokens revoked for user: userId={}, revokedCount={}", userId.value, count)
     }
@@ -65,12 +71,23 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
         }
     }
 
+    override suspend fun revokeIfActive(tokenHash: String): Boolean = dbQuery {
+        val now = System.currentTimeMillis()
+        val affected = RefreshTokensTable.update({
+            (RefreshTokensTable.tokenHash eq tokenHash) and (RefreshTokensTable.isRevoked eq false)
+        }) {
+            it[isRevoked] = true
+            it[revokedAt] = now
+        }
+        affected > 0
+    }
+
     override suspend fun findLatestRevokedInFamily(familyId: String): RefreshToken? = dbQuery {
         RefreshTokensTable.selectAll()
             .where {
                 (RefreshTokensTable.familyId eq familyId) and (RefreshTokensTable.isRevoked eq true)
             }
-            .orderBy(RefreshTokensTable.createdAt to SortOrder.DESC)
+            .orderBy(RefreshTokensTable.revokedAt to SortOrder.DESC)
             .limit(1)
             .singleOrNull()
             ?.toRefreshToken()
@@ -84,6 +101,7 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
             familyId = this[RefreshTokensTable.familyId],
             expiresAt = this[RefreshTokensTable.expiresAt],
             isRevoked = this[RefreshTokensTable.isRevoked],
+            revokedAt = this[RefreshTokensTable.revokedAt],
             createdAt = this[RefreshTokensTable.createdAt]
         )
     }

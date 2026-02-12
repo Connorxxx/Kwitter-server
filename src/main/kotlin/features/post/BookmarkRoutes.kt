@@ -10,7 +10,6 @@ import com.connor.domain.usecase.BookmarkPostUseCase
 import com.connor.domain.usecase.GetUserBookmarksUseCase
 import com.connor.domain.usecase.GetUserBookmarksWithStatusUseCase
 import com.connor.domain.usecase.UnbookmarkPostUseCase
-import com.connor.plugins.authenticateOptional
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal

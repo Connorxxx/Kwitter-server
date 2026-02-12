@@ -2,7 +2,6 @@ package com.connor.features.search
 
 import arrow.core.Either
 import com.connor.core.http.ApiErrorResponse
-import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostSearchSort
 import com.connor.domain.model.UserId
 import com.connor.domain.model.UserSearchSort
@@ -11,10 +10,9 @@ import com.connor.domain.usecase.SearchRepliesUseCase
 import com.connor.domain.usecase.SearchUsersUseCase
 import com.connor.features.post.PostListResponse
 import com.connor.features.post.toResponse
-import com.connor.plugins.authenticateOptional
+import com.connor.plugins.tryResolvePrincipal
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.flow.toList
@@ -28,9 +26,8 @@ fun Route.searchRoutes(
     searchUsersUseCase: SearchUsersUseCase
 ) {
     route("/v1/search") {
-        // ========== 公开路由（可选认证）==========
+        // ========== 公开路由（软鉴权）==========
         // 未认证用户可以搜索，认证用户获得交互状态（点赞/收藏/关注）
-        authenticateOptional("auth-jwt") {
 
             /**
              * GET /v1/search/posts?q=kotlin&sort=relevance&limit=20&offset=0
@@ -68,7 +65,7 @@ fun Route.searchRoutes(
                     )
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchPostsUseCase(query, sort, limit + 1, offset, currentUserId).toList()
@@ -145,7 +142,7 @@ fun Route.searchRoutes(
                     logger.info("搜索 Replies: query='$query', limit=$limit, offset=$offset")
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchRepliesUseCase(query, limit + 1, offset, currentUserId).toList()
@@ -221,7 +218,7 @@ fun Route.searchRoutes(
                     logger.info("搜索用户: query='$query', limit=$limit, offset=$offset")
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchUsersUseCase(query, UserSearchSort.RELEVANCE, limit + 1, offset, currentUserId).toList()
@@ -266,6 +263,5 @@ fun Route.searchRoutes(
                     throw e
                 }
             }
-        }
     }
 }

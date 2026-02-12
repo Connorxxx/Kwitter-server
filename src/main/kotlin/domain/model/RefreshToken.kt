@@ -15,6 +15,7 @@ data class RefreshToken(
     val familyId: String,
     val expiresAt: Long,
     val isRevoked: Boolean = false,
+    val revokedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
 ) {
     val isExpired: Boolean get() = System.currentTimeMillis() > expiresAt

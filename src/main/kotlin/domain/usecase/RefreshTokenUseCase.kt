@@ -66,8 +66,12 @@ class RefreshTokenUseCase(
             return handlePossibleReuse(storedToken)
         }
 
-        // 正常轮换：撤销旧 token，生成新 token
-        refreshTokenRepository.revokeByTokenHash(tokenHash)
+        // 原子轮换：仅当 token 仍为 active 时才撤销（防止并发竞态）
+        val wasActive = refreshTokenRepository.revokeIfActive(tokenHash)
+        if (!wasActive) {
+            // 另一个并发请求已经完成了轮换，按 reuse 路径处理
+            return handlePossibleReuse(storedToken)
+        }
 
         return issueNewTokenPair(storedToken.userId, storedToken.familyId)
     }
@@ -112,8 +116,8 @@ class RefreshTokenUseCase(
         val latestRevoked = refreshTokenRepository.findLatestRevokedInFamily(storedToken.familyId)
 
         // Grace period: 如果 token 是在宽限期内被撤销的，视为并发请求
-        if (latestRevoked != null) {
-            val timeSinceRevoked = now - latestRevoked.createdAt
+        if (latestRevoked?.revokedAt != null) {
+            val timeSinceRevoked = now - latestRevoked.revokedAt
             if (timeSinceRevoked <= tokenConfig.refreshTokenGracePeriod) {
                 logger.info(
                     "Grace period hit: userId={}, familyId={}, timeSinceRevoked={}ms",

@@ -7,11 +7,10 @@ import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.usecase.*
-import com.connor.plugins.authenticateOptional
+import com.connor.plugins.tryResolvePrincipal
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -35,11 +34,8 @@ fun Route.postRoutes(
     appScope: ApplicationCoroutineScope
 ) {
     route("/v1/posts") {
-        // ========== 公开路由（可选认证）==========
-        // 这些路由使用 authenticateOptional 包裹，支持认证用户和未认证用户
-        // 认证用户可以在 call.principal<UserPrincipal>() 中获取用户信息
-        // 未认证用户 call.principal<UserPrincipal>() 返回 null
-        authenticateOptional("auth-jwt") {
+        // ========== 公开路由（软鉴权）==========
+        // tryResolvePrincipal() 尝试解析 JWT，无效/过期 token 静默返回 null，不会 401
 
             /**
              * GET /v1/posts/timeline?limit=20&offset=0
@@ -56,7 +52,7 @@ fun Route.postRoutes(
                 logger.info("查询时间线: limit=$limit, offset=$offset")
 
                 // 获取当前用户ID（如果已认证）
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                 val timelineItems = getTimelineWithStatusUseCase(limit, offset, currentUserId).toList()
@@ -128,8 +124,8 @@ fun Route.postRoutes(
                 try {
                     logger.info("查询 Post 详情: postId=$postId")
 
-                    // 获取当前用户ID（如果已认证）- authenticateOptional 保证这可以工作
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    // 获取当前用户ID（如果已认证）
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 UseCase（包含详情+交互状态的完整查询，遵循Hex架构）
                     val result = getPostDetailWithStatusUseCase(
@@ -182,7 +178,7 @@ fun Route.postRoutes(
                     logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                     val replyItems = getRepliesWithStatusUseCase(PostId(postId), limit, offset, currentUserId).toList()
@@ -259,7 +255,7 @@ fun Route.postRoutes(
                     logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                     val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
@@ -319,8 +315,6 @@ fun Route.postRoutes(
                     throw e
                 }
             }
-        }  // 关闭 authenticateOptional 块
-
         // ========== 需要认证的路由 ==========
 
         authenticate("auth-jwt") {

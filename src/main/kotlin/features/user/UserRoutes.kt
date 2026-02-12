@@ -7,12 +7,11 @@ import com.connor.domain.model.Username
 import com.connor.domain.usecase.*
 import com.connor.features.post.PostListResponse
 import com.connor.features.post.toResponse
-import com.connor.plugins.authenticateOptional
+import com.connor.plugins.tryResolvePrincipal
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -37,9 +36,7 @@ fun Route.userRoutes(
     deleteAvatarUseCase: DeleteAvatarUseCase
 ) {
     route("/v1/users") {
-        // ========== 公开路由（可选认证）==========
-
-        authenticateOptional("auth-jwt") {
+        // ========== 公开路由（软鉴权）==========
             /**
              * GET /v1/users/{userId}
              * 获取用户资料（通过 UserId）
@@ -50,7 +47,7 @@ fun Route.userRoutes(
                     return@get
                 }
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 val result = getUserProfileUseCase(UserId(userId), currentUserId)
                 result.fold(
@@ -74,7 +71,7 @@ fun Route.userRoutes(
                     return@get
                 }
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 // 解析 Username
                 val usernameResult = Username(usernameStr)
@@ -111,7 +108,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 val items = getUserFollowingUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
@@ -154,7 +151,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 val items = getUserFollowersUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
@@ -197,7 +194,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
@@ -252,7 +249,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 val replyItems = getUserRepliesWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
 
@@ -308,7 +305,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.principal<UserPrincipal>()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
 
                 // TODO: 后期添加隐私检查
                 // if (targetUser.likesPrivacy == Private && currentUserId != userId) {
@@ -354,8 +351,6 @@ fun Route.userRoutes(
                     )
                 )
             }
-        }
-
         // ========== 需要认证的路由 ==========
 
         authenticate("auth-jwt") {

@@ -2,6 +2,11 @@
 
 ## 功能文档
 
+### Auth 功能（认证与会话）
+
+- **[Auth Token 系统设计文档](./auth-refresh-token-system.md)** - JWT + Refresh Token + Token Family 的现有设计
+- **[Auth 根因级重构修复方案](./auth-root-cause-refactor-plan.md)** - 从源头修复并发与鉴权语义问题的重构方案
+
 ### Post 功能（推文/评论系统）
 
 - **[Post 功能设计文档](./post-feature-design.md)** - 架构设计、数据模型、Repository 接口、UseCase、错误处理策略
