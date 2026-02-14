@@ -216,9 +216,8 @@ class ExposedUserRepository : UserRepository {
     }
 
     override fun findFollowing(userId: UserId, limit: Int, offset: Int): Flow<User> = flow {
-        dbQuery {
-            // JOIN follows and users: SELECT users.* FROM follows JOIN users ON follows.following_id = users.id
-            val users = FollowsTable
+        val users = dbQuery {
+            FollowsTable
                 .join(UsersTable, JoinType.INNER, FollowsTable.followingId, UsersTable.id)
                 .selectAll()
                 .where { FollowsTable.followerId eq userId.value }
@@ -226,15 +225,13 @@ class ExposedUserRepository : UserRepository {
                 .limit(limit + 1)
                 .offset(offset.toLong())
                 .map { it.toDomain() }
-
-            users.forEach { emit(it) }
         }
+        users.forEach { emit(it) }
     }
 
     override fun findFollowers(userId: UserId, limit: Int, offset: Int): Flow<User> = flow {
-        dbQuery {
-            // JOIN follows and users: SELECT users.* FROM follows JOIN users ON follows.follower_id = users.id
-            val users = FollowsTable
+        val users = dbQuery {
+            FollowsTable
                 .join(UsersTable, JoinType.INNER, FollowsTable.followerId, UsersTable.id)
                 .selectAll()
                 .where { FollowsTable.followingId eq userId.value }
@@ -242,9 +239,8 @@ class ExposedUserRepository : UserRepository {
                 .limit(limit + 1)
                 .offset(offset.toLong())
                 .map { it.toDomain() }
-
-            users.forEach { emit(it) }
         }
+        users.forEach { emit(it) }
     }
 
     override suspend fun batchCheckFollowing(followerId: UserId, userIds: List<UserId>): Set<UserId> = dbQuery {

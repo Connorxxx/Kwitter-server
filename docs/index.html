@@ -724,8 +724,26 @@
                     <li data-group="Default" data-name="v1AuthRegisterPost" class="">
                       <a href="#api-Default-v1AuthRegisterPost">v1AuthRegisterPost</a>
                     </li>
+                    <li data-group="Default" data-name="v1ConversationsGet" class="">
+                      <a href="#api-Default-v1ConversationsGet">v1ConversationsGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1ConversationsIdMessagesGet" class="">
+                      <a href="#api-Default-v1ConversationsIdMessagesGet">v1ConversationsIdMessagesGet</a>
+                    </li>
+                    <li data-group="Default" data-name="v1ConversationsIdReadPut" class="">
+                      <a href="#api-Default-v1ConversationsIdReadPut">v1ConversationsIdReadPut</a>
+                    </li>
+                    <li data-group="Default" data-name="v1ConversationsMessagesPost" class="">
+                      <a href="#api-Default-v1ConversationsMessagesPost">v1ConversationsMessagesPost</a>
+                    </li>
                     <li data-group="Default" data-name="v1MediaUploadPost" class="">
                       <a href="#api-Default-v1MediaUploadPost">v1MediaUploadPost</a>
+                    </li>
+                    <li data-group="Default" data-name="v1MessagesIdDelete" class="">
+                      <a href="#api-Default-v1MessagesIdDelete">v1MessagesIdDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1MessagesIdRecallPut" class="">
+                      <a href="#api-Default-v1MessagesIdRecallPut">v1MessagesIdRecallPut</a>
                     </li>
                     <li data-group="Default" data-name="v1NotificationsWsGet" class="">
                       <a href="#api-Default-v1NotificationsWsGet">v1NotificationsWsGet</a>
@@ -769,11 +787,23 @@
                     <li data-group="Default" data-name="v1SearchUsersGet" class="">
                       <a href="#api-Default-v1SearchUsersGet">v1SearchUsersGet</a>
                     </li>
+                    <li data-group="Default" data-name="v1UsersMeAvatarDelete" class="">
+                      <a href="#api-Default-v1UsersMeAvatarDelete">v1UsersMeAvatarDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1UsersMeAvatarPost" class="">
+                      <a href="#api-Default-v1UsersMeAvatarPost">v1UsersMeAvatarPost</a>
+                    </li>
                     <li data-group="Default" data-name="v1UsersMeGet" class="">
                       <a href="#api-Default-v1UsersMeGet">v1UsersMeGet</a>
                     </li>
                     <li data-group="Default" data-name="v1UsersMePatch" class="">
                       <a href="#api-Default-v1UsersMePatch">v1UsersMePatch</a>
+                    </li>
+                    <li data-group="Default" data-name="v1UsersUserIdBlockDelete" class="">
+                      <a href="#api-Default-v1UsersUserIdBlockDelete">v1UsersUserIdBlockDelete</a>
+                    </li>
+                    <li data-group="Default" data-name="v1UsersUserIdBlockPost" class="">
+                      <a href="#api-Default-v1UsersUserIdBlockPost">v1UsersUserIdBlockPost</a>
                     </li>
                     <li data-group="Default" data-name="v1UsersUserIdBookmarksGet" class="">
                       <a href="#api-Default-v1UsersUserIdBookmarksGet">v1UsersUserIdBookmarksGet</a>
@@ -2008,6 +2038,904 @@ except ApiException as e:
                         </article>
                       </div>
                       <hr>
+                    <div id="api-Default-v1ConversationsGet">
+                      <article id="api-Default-v1ConversationsGet-0" data-group="User" data-name="v1ConversationsGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1ConversationsGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/conversations</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1ConversationsGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1ConversationsGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/conversations"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1ConversationsGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1ConversationsGet();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1ConversationsGetWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1ConversationsGet(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1ConversationsGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1ConversationsGetExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1ConversationsGet();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1ConversationsGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1ConversationsGet();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1ConversationsGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1ConversationsGet();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1ConversationsGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_conversations_get()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1ConversationsGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1ConversationsIdMessagesGet">
+                      <article id="api-Default-v1ConversationsIdMessagesGet-0" data-group="User" data-name="v1ConversationsIdMessagesGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1ConversationsIdMessagesGet</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/v1/conversations/{id}/messages</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1ConversationsIdMessagesGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdMessagesGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1ConversationsIdMessagesGet-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X GET\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/conversations/{id}/messages"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1ConversationsIdMessagesGet(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsIdMessagesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1ConversationsIdMessagesGet(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsIdMessagesGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *id = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1ConversationsIdMessagesGetWith:id
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var id = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1ConversationsIdMessagesGet(id, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1ConversationsIdMessagesGetExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var id = new (); //  | 
+
+            try
+            {
+                apiInstance.v1ConversationsIdMessagesGet(id);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1ConversationsIdMessagesGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$id = ; //  | 
+
+try {
+    $api_instance->v1ConversationsIdMessagesGet($id);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1ConversationsIdMessagesGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $id = ; #  | 
+
+eval { 
+    $api_instance->v1ConversationsIdMessagesGet(id => $id);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1ConversationsIdMessagesGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdMessagesGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+id =  #  | 
+
+try: 
+    api_instance.v1_conversations_id_messages_get(id)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1ConversationsIdMessagesGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">id*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1ConversationsIdMessagesGet_id">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1ConversationsIdReadPut">
+                      <article id="api-Default-v1ConversationsIdReadPut-0" data-group="User" data-name="v1ConversationsIdReadPut" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1ConversationsIdReadPut</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="put"><code><span class="pln">/v1/conversations/{id}/read</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1ConversationsIdReadPut-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsIdReadPut-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1ConversationsIdReadPut-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X PUT\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/conversations/{id}/read"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1ConversationsIdReadPut(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsIdReadPut");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1ConversationsIdReadPut(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsIdReadPut");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *id = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1ConversationsIdReadPutWith:id
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var id = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1ConversationsIdReadPut(id, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1ConversationsIdReadPutExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var id = new (); //  | 
+
+            try
+            {
+                apiInstance.v1ConversationsIdReadPut(id);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1ConversationsIdReadPut: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$id = ; //  | 
+
+try {
+    $api_instance->v1ConversationsIdReadPut($id);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1ConversationsIdReadPut: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $id = ; #  | 
+
+eval { 
+    $api_instance->v1ConversationsIdReadPut(id => $id);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1ConversationsIdReadPut: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsIdReadPut-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+id =  #  | 
+
+try: 
+    api_instance.v1_conversations_id_read_put(id)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1ConversationsIdReadPut: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">id*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1ConversationsIdReadPut_id">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1ConversationsMessagesPost">
+                      <article id="api-Default-v1ConversationsMessagesPost-0" data-group="User" data-name="v1ConversationsMessagesPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1ConversationsMessagesPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/conversations/messages</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1ConversationsMessagesPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1ConversationsMessagesPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1ConversationsMessagesPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/conversations/messages"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1ConversationsMessagesPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsMessagesPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1ConversationsMessagesPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1ConversationsMessagesPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1ConversationsMessagesPostWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1ConversationsMessagesPost(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1ConversationsMessagesPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1ConversationsMessagesPost();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1ConversationsMessagesPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1ConversationsMessagesPost();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1ConversationsMessagesPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1ConversationsMessagesPost();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1ConversationsMessagesPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1ConversationsMessagesPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_conversations_messages_post()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1ConversationsMessagesPost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
                     <div id="api-Default-v1MediaUploadPost">
                       <article id="api-Default-v1MediaUploadPost-0" data-group="User" data-name="v1MediaUploadPost" data-version="0">
                         <div class="pull-left">
@@ -2206,6 +3134,490 @@ except ApiException as e:
 
                           <h2>Parameters</h2>
 
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1MessagesIdDelete">
+                      <article id="api-Default-v1MessagesIdDelete-0" data-group="User" data-name="v1MessagesIdDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1MessagesIdDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/messages/{id}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1MessagesIdDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MessagesIdDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MessagesIdDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1MessagesIdDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/messages/{id}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1MessagesIdDelete(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MessagesIdDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1MessagesIdDelete(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MessagesIdDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *id = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1MessagesIdDeleteWith:id
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var id = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1MessagesIdDelete(id, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1MessagesIdDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var id = new (); //  | 
+
+            try
+            {
+                apiInstance.v1MessagesIdDelete(id);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1MessagesIdDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$id = ; //  | 
+
+try {
+    $api_instance->v1MessagesIdDelete($id);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1MessagesIdDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $id = ; #  | 
+
+eval { 
+    $api_instance->v1MessagesIdDelete(id => $id);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1MessagesIdDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+id =  #  | 
+
+try: 
+    api_instance.v1_messages_id_delete(id)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1MessagesIdDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">id*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1MessagesIdDelete_id">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1MessagesIdRecallPut">
+                      <article id="api-Default-v1MessagesIdRecallPut-0" data-group="User" data-name="v1MessagesIdRecallPut" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1MessagesIdRecallPut</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="put"><code><span class="pln">/v1/messages/{id}/recall</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1MessagesIdRecallPut-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1MessagesIdRecallPut-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1MessagesIdRecallPut-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X PUT\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/messages/{id}/recall"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1MessagesIdRecallPut(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MessagesIdRecallPut");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         id = ; //  | 
+        try {
+            apiInstance.v1MessagesIdRecallPut(id);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1MessagesIdRecallPut");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *id = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1MessagesIdRecallPutWith:id
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var id = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1MessagesIdRecallPut(id, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1MessagesIdRecallPutExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var id = new (); //  | 
+
+            try
+            {
+                apiInstance.v1MessagesIdRecallPut(id);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1MessagesIdRecallPut: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$id = ; //  | 
+
+try {
+    $api_instance->v1MessagesIdRecallPut($id);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1MessagesIdRecallPut: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $id = ; #  | 
+
+eval { 
+    $api_instance->v1MessagesIdRecallPut(id => $id);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1MessagesIdRecallPut: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1MessagesIdRecallPut-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+id =  #  | 
+
+try: 
+    api_instance.v1_messages_id_recall_put(id)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1MessagesIdRecallPut: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">id*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1MessagesIdRecallPut_id">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
 
 
 
@@ -3446,7 +4858,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsPostIdGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/{postId}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-java">
@@ -3461,9 +4872,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          postId = ; //  | 
         try {
@@ -3498,8 +4907,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *postId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -3514,8 +4922,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var postId = ; // {{}} 
@@ -3548,7 +4954,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var postId = new (); //  | 
 
@@ -3570,7 +4975,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $postId = ; //  | 
 
@@ -3586,7 +4990,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $postId = ; #  | 
@@ -3605,7 +5008,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -4172,7 +5574,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsPostIdRepliesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/{postId}/replies"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-java">
@@ -4187,9 +5588,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          postId = ; //  | 
         try {
@@ -4224,8 +5623,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *postId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *postId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -4240,8 +5638,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsPostIdRepliesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var postId = ; // {{}} 
@@ -4274,7 +5670,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var postId = new (); //  | 
 
@@ -4296,7 +5691,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $postId = ; //  | 
 
@@ -4312,7 +5706,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $postId = ; #  | 
@@ -4331,7 +5724,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -4414,7 +5806,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsTimelineGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/timeline"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-java">
@@ -4429,9 +5820,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
         try {
             apiInstance.v1PostsTimelineGet();
@@ -4464,8 +5853,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
-
+                              <pre class="prettyprint"><code class="language-cpp">
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 [apiInstance v1PostsTimelineGetWithCompletionHandler: 
@@ -4479,8 +5867,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsTimelineGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var callback = function(error, data, response) {
@@ -4511,7 +5897,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
 
             try
@@ -4532,7 +5917,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 
 try {
@@ -4547,7 +5931,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 
@@ -4565,7 +5948,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -4621,7 +6003,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1PostsUsersUserIdGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/posts/users/{userId}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-java">
@@ -4636,9 +6017,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -4673,8 +6052,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -4689,8 +6067,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1PostsUsersUserIdGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -4723,7 +6099,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -4745,7 +6120,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -4761,7 +6135,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -4780,7 +6153,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -4863,7 +6235,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1SearchPostsGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/search/posts"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1SearchPostsGet-0-java">
@@ -4878,9 +6249,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
         try {
             apiInstance.v1SearchPostsGet();
@@ -4913,8 +6282,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1SearchPostsGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
-
+                              <pre class="prettyprint"><code class="language-cpp">
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 [apiInstance v1SearchPostsGetWithCompletionHandler: 
@@ -4928,8 +6296,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1SearchPostsGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var callback = function(error, data, response) {
@@ -4960,7 +6326,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
 
             try
@@ -4981,7 +6346,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 
 try {
@@ -4996,7 +6360,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 
@@ -5014,7 +6377,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -5070,7 +6432,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1SearchRepliesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/search/replies"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1SearchRepliesGet-0-java">
@@ -5085,9 +6446,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
         try {
             apiInstance.v1SearchRepliesGet();
@@ -5120,8 +6479,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1SearchRepliesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
-
+                              <pre class="prettyprint"><code class="language-cpp">
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 [apiInstance v1SearchRepliesGetWithCompletionHandler: 
@@ -5135,8 +6493,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1SearchRepliesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var callback = function(error, data, response) {
@@ -5167,7 +6523,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
 
             try
@@ -5188,7 +6543,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 
 try {
@@ -5203,7 +6557,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 
@@ -5221,7 +6574,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -5277,7 +6629,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1SearchUsersGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/search/users"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1SearchUsersGet-0-java">
@@ -5292,9 +6643,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
         try {
             apiInstance.v1SearchUsersGet();
@@ -5327,8 +6676,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1SearchUsersGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
-
+                              <pre class="prettyprint"><code class="language-cpp">
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
 [apiInstance v1SearchUsersGetWithCompletionHandler: 
@@ -5342,8 +6690,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1SearchUsersGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var callback = function(error, data, response) {
@@ -5374,7 +6720,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
 
             try
@@ -5395,7 +6740,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 
 try {
@@ -5410,7 +6754,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 
@@ -5429,7 +6772,6 @@ import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
 
-
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
 
@@ -5437,6 +6779,420 @@ try:
     api_instance.v1_search_users_get()
 except ApiException as e:
     print("Exception when calling DefaultApi->v1SearchUsersGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersMeAvatarDelete">
+                      <article id="api-Default-v1UsersMeAvatarDelete-0" data-group="User" data-name="v1UsersMeAvatarDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersMeAvatarDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/users/me/avatar</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersMeAvatarDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersMeAvatarDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/users/me/avatar"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1UsersMeAvatarDelete();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersMeAvatarDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1UsersMeAvatarDelete();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersMeAvatarDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersMeAvatarDeleteWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersMeAvatarDelete(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersMeAvatarDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1UsersMeAvatarDelete();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersMeAvatarDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1UsersMeAvatarDelete();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersMeAvatarDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1UsersMeAvatarDelete();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersMeAvatarDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_users_me_avatar_delete()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersMeAvatarDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersMeAvatarPost">
+                      <article id="api-Default-v1UsersMeAvatarPost-0" data-group="User" data-name="v1UsersMeAvatarPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersMeAvatarPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/users/me/avatar</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersMeAvatarPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersMeAvatarPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersMeAvatarPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/users/me/avatar"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1UsersMeAvatarPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersMeAvatarPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+        try {
+            apiInstance.v1UsersMeAvatarPost();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersMeAvatarPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersMeAvatarPostWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersMeAvatarPost(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersMeAvatarPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+
+            try
+            {
+                apiInstance.v1UsersMeAvatarPost();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersMeAvatarPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+
+try {
+    $api_instance->v1UsersMeAvatarPost();
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersMeAvatarPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+
+eval { 
+    $api_instance->v1UsersMeAvatarPost();
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersMeAvatarPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersMeAvatarPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+
+try: 
+    api_instance.v1_users_me_avatar_post()
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersMeAvatarPost: %s\n" % e)</code></pre>
                             </div>
                           </div>
 
@@ -5856,6 +7612,490 @@ except ApiException as e:
 
                           <h2>Parameters</h2>
 
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersUserIdBlockDelete">
+                      <article id="api-Default-v1UsersUserIdBlockDelete-0" data-group="User" data-name="v1UsersUserIdBlockDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersUserIdBlockDelete</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/v1/users/{userId}/block</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersUserIdBlockDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersUserIdBlockDelete-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X DELETE\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/users/{userId}/block"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBlockDelete(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBlockDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBlockDelete(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBlockDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *userId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersUserIdBlockDeleteWith:userId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var userId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersUserIdBlockDelete(userId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersUserIdBlockDeleteExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var userId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1UsersUserIdBlockDelete(userId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersUserIdBlockDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$userId = ; //  | 
+
+try {
+    $api_instance->v1UsersUserIdBlockDelete($userId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersUserIdBlockDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $userId = ; #  | 
+
+eval { 
+    $api_instance->v1UsersUserIdBlockDelete(userId => $userId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersUserIdBlockDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+userId =  #  | 
+
+try: 
+    api_instance.v1_users_user_id_block_delete(userId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersUserIdBlockDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">userId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1UsersUserIdBlockDelete_userId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-Default-v1UsersUserIdBlockPost">
+                      <article id="api-Default-v1UsersUserIdBlockPost-0" data-group="User" data-name="v1UsersUserIdBlockPost" data-version="0">
+                        <div class="pull-left">
+                          <h1>v1UsersUserIdBlockPost</h1>
+                          <p></p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/v1/users/{userId}/block</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-Default-v1UsersUserIdBlockPost-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-java">Java</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-Default-v1UsersUserIdBlockPost-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-Default-v1UsersUserIdBlockPost-0-curl">
+                           <pre class="prettyprint"><code class="language-bsh">curl -X POST\
+ -H "Authorization: Bearer [[accessToken]]"\
+"//v1/users/{userId}/block"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.DefaultApi;
+
+import java.io.File;
+import java.util.*;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+
+
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBlockPost(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBlockPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.DefaultApi;
+
+public class DefaultApiExample {
+
+    public static void main(String[] args) {
+        DefaultApi apiInstance = new DefaultApi();
+         userId = ; //  | 
+        try {
+            apiInstance.v1UsersUserIdBlockPost(userId);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling DefaultApi#v1UsersUserIdBlockPost");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
+ *userId = ; // 
+
+DefaultApi *apiInstance = [[DefaultApi alloc] init];
+
+[apiInstance v1UsersUserIdBlockPostWith:userId
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
+var defaultClient = MyApi.ApiClient.instance;
+
+
+var api = new MyApi.DefaultApi()
+var userId = ; // {{}} 
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.v1UsersUserIdBlockPost(userId, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class v1UsersUserIdBlockPostExample
+    {
+        public void main()
+        {
+
+
+            var apiInstance = new DefaultApi();
+            var userId = new (); //  | 
+
+            try
+            {
+                apiInstance.v1UsersUserIdBlockPost(userId);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling DefaultApi.v1UsersUserIdBlockPost: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+
+$api_instance = new Swagger\Client\ApiDefaultApi();
+$userId = ; //  | 
+
+try {
+    $api_instance->v1UsersUserIdBlockPost($userId);
+} catch (Exception $e) {
+    echo 'Exception when calling DefaultApi->v1UsersUserIdBlockPost: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::DefaultApi;
+
+
+my $api_instance = WWW::SwaggerClient::DefaultApi->new();
+my $userId = ; #  | 
+
+eval { 
+    $api_instance->v1UsersUserIdBlockPost(userId => $userId);
+};
+if ($@) {
+    warn "Exception when calling DefaultApi->v1UsersUserIdBlockPost: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-Default-v1UsersUserIdBlockPost-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+userId =  #  | 
+
+try: 
+    api_instance.v1_users_user_id_block_post(userId)
+except ApiException as e:
+    print("Exception when calling DefaultApi->v1UsersUserIdBlockPost: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">userId*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_v1UsersUserIdBlockPost_userId">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      
+                                                  </span>
+                                  
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
 
 
 
@@ -6624,7 +8864,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdFollowersGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/followers"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowersGet-0-java">
@@ -6639,9 +8878,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -6676,8 +8913,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowersGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -6692,8 +8928,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowersGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -6726,7 +8960,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -6748,7 +8981,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -6764,7 +8996,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -6783,7 +9014,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -6866,7 +9096,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdFollowingGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/following"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowingGet-0-java">
@@ -6881,9 +9110,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -6918,8 +9145,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowingGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -6934,8 +9160,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdFollowingGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -6968,7 +9192,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -6990,7 +9213,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -7006,7 +9228,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -7025,7 +9246,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -7108,7 +9328,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdGet-0-java">
@@ -7123,9 +9342,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -7160,8 +9377,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -7176,8 +9392,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -7210,7 +9424,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -7232,7 +9445,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -7248,7 +9460,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -7267,7 +9478,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -7350,7 +9560,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdLikesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/likes"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-java">
@@ -7365,9 +9574,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -7402,8 +9609,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -7418,8 +9624,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdLikesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -7452,7 +9656,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -7474,7 +9677,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -7490,7 +9692,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -7509,7 +9710,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -7592,7 +9792,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdPostsGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/posts"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdPostsGet-0-java">
@@ -7607,9 +9806,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -7644,8 +9841,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdPostsGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -7660,8 +9856,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdPostsGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -7694,7 +9888,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -7716,7 +9909,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -7732,7 +9924,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -7751,7 +9942,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -7834,7 +10024,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUserIdRepliesGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/{userId}/replies"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUserIdRepliesGet-0-java">
@@ -7849,9 +10038,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          userId = ; //  | 
         try {
@@ -7886,8 +10073,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdRepliesGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *userId = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *userId = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -7902,8 +10088,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUserIdRepliesGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var userId = ; // {{}} 
@@ -7936,7 +10120,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var userId = new (); //  | 
 
@@ -7958,7 +10141,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $userId = ; //  | 
 
@@ -7974,7 +10156,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $userId = ; #  | 
@@ -7993,7 +10174,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
@@ -8076,7 +10256,6 @@ except ApiException as e:
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-Default-v1UsersUsernameUsernameGet-0-curl">
                            <pre class="prettyprint"><code class="language-bsh">curl -X GET\
- -H "Authorization: Bearer [[accessToken]]"\
 "//v1/users/username/{username}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Default-v1UsersUsernameUsernameGet-0-java">
@@ -8091,9 +10270,7 @@ import java.util.*;
 public class DefaultApiExample {
 
     public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-
-
+        
         DefaultApi apiInstance = new DefaultApi();
          username = ; //  | 
         try {
@@ -8128,8 +10305,7 @@ public class DefaultApiExample {
   <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
   </div> -->
                             <div class="tab-pane" id="examples-Default-v1UsersUsernameUsernameGet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">Configuration *apiConfig = [Configuration sharedConfig];
- *username = ; // 
+                              <pre class="prettyprint"><code class="language-cpp"> *username = ; // 
 
 DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
@@ -8144,8 +10320,6 @@ DefaultApi *apiInstance = [[DefaultApi alloc] init];
 
                             <div class="tab-pane" id="examples-Default-v1UsersUsernameUsernameGet-0-javascript">
                               <pre class="prettyprint"><code class="language-js">var MyApi = require('my_api');
-var defaultClient = MyApi.ApiClient.instance;
-
 
 var api = new MyApi.DefaultApi()
 var username = ; // {{}} 
@@ -8178,7 +10352,6 @@ namespace Example
         public void main()
         {
 
-
             var apiInstance = new DefaultApi();
             var username = new (); //  | 
 
@@ -8200,7 +10373,6 @@ namespace Example
                               <pre class="prettyprint"><code class="language-php"><&#63;php
 require_once(__DIR__ . '/vendor/autoload.php');
 
-
 $api_instance = new Swagger\Client\ApiDefaultApi();
 $username = ; //  | 
 
@@ -8216,7 +10388,6 @@ try {
                               <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
 use WWW::SwaggerClient::Configuration;
 use WWW::SwaggerClient::DefaultApi;
-
 
 my $api_instance = WWW::SwaggerClient::DefaultApi->new();
 my $username = ; #  | 
@@ -8235,7 +10406,6 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
