@@ -37,6 +37,12 @@ class FollowUserUseCase(
             return UserError.CannotFollowSelf.left()
         }
 
+        // 业务规则：拉黑关系中不能关注
+        if (userRepository.isBlocked(followerId, followingId)) {
+            logger.warn("拉黑关系中尝试关注: followerId=${followerId.value}, followingId=${followingId.value}")
+            return UserError.UserBlocked(followingId).left()
+        }
+
         return userRepository.follow(followerId, followingId)
     }
 }

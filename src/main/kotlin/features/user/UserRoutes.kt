@@ -33,7 +33,9 @@ fun Route.userRoutes(
     getUserRepliesWithStatusUseCase: GetUserRepliesWithStatusUseCase,
     getUserLikesWithStatusUseCase: GetUserLikesWithStatusUseCase,
     uploadAvatarUseCase: UploadAvatarUseCase,
-    deleteAvatarUseCase: DeleteAvatarUseCase
+    deleteAvatarUseCase: DeleteAvatarUseCase,
+    blockUserUseCase: BlockUserUseCase,
+    unblockUserUseCase: UnblockUserUseCase
 ) {
     route("/v1/users") {
         // ========== 公开路由（软鉴权）==========
@@ -515,6 +517,62 @@ fun Route.userRoutes(
                     },
                     ifRight = {
                         call.respond(HttpStatusCode.OK, mapOf("message" to "取消关注成功"))
+                    }
+                )
+            }
+
+            /**
+             * POST /v1/users/{userId}/block
+             * 拉黑用户
+             */
+            post("/{userId}/block") {
+                val principal = call.principal<UserPrincipal>()
+                val blockerId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@post
+                }
+
+                val blockedId = call.parameters["userId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
+                    return@post
+                }
+
+                val result = blockUserUseCase(UserId(blockerId), UserId(blockedId))
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        call.respond(status, body)
+                    },
+                    ifRight = {
+                        call.respond(HttpStatusCode.OK, mapOf("message" to "拉黑成功"))
+                    }
+                )
+            }
+
+            /**
+             * DELETE /v1/users/{userId}/block
+             * 取消拉黑
+             */
+            delete("/{userId}/block") {
+                val principal = call.principal<UserPrincipal>()
+                val blockerId = principal?.userId ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@delete
+                }
+
+                val blockedId = call.parameters["userId"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 userId 参数"))
+                    return@delete
+                }
+
+                val result = unblockUserUseCase(UserId(blockerId), UserId(blockedId))
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        call.respond(status, body)
+                    },
+                    ifRight = {
+                        call.respond(HttpStatusCode.OK, mapOf("message" to "取消拉黑成功"))
                     }
                 )
             }

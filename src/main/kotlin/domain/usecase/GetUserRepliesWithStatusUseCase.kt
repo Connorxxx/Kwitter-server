@@ -76,12 +76,24 @@ class GetUserRepliesWithStatusUseCase(
             return@flow
         }
 
-        // 2. 如果用户已认证，批量查询交互状态（1次查询，不是N次）
+        // 2. 过滤拉黑用户的回复
+        val blockedUserIds = currentUserId?.let { userRepository.getBlockedRelationUserIds(it) } ?: emptySet()
+        val filteredReplies = if (blockedUserIds.isNotEmpty()) {
+            replies.filter { it.post.authorId !in blockedUserIds }
+        } else {
+            replies
+        }
+
+        if (filteredReplies.isEmpty()) {
+            return@flow
+        }
+
+        // 3. 如果用户已认证，批量查询交互状态（1次查询，不是N次）
         var likedPostIds: Set<PostId> = emptySet()
         var bookmarkedPostIds: Set<PostId> = emptySet()
 
         if (currentUserId != null) {
-            val postIds = replies.map { it.post.id }
+            val postIds = filteredReplies.map { it.post.id }
 
             // 批量查询点赞状态（一次性查询所有reply的状态）
             val likedResult = postRepository.batchCheckLiked(currentUserId, postIds)
@@ -104,8 +116,8 @@ class GetUserRepliesWithStatusUseCase(
             bookmarkedPostIds = (bookmarkedResult as Either.Right).value
         }
 
-        // 3. 返回结果（交互状态已准备好，O(1) 查找）
-        replies.forEach { replyDetail ->
+        // 4. 返回结果（交互状态已准备好，O(1) 查找）
+        filteredReplies.forEach { replyDetail ->
             emit(
                 Either.Right(
                     UserReplyItem(

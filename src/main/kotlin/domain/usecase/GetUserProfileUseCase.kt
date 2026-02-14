@@ -26,11 +26,12 @@ class GetUserProfileUseCase(
     private val logger = LoggerFactory.getLogger(GetUserProfileUseCase::class.java)
 
     /**
-     * 用户资料视图（包含关注状态）
+     * 用户资料视图（包含关注状态和拉黑状态）
      */
     data class ProfileView(
         val profile: UserProfile,
-        val isFollowedByCurrentUser: Boolean? = null // null = 当前用户未认证
+        val isFollowedByCurrentUser: Boolean? = null, // null = 当前用户未认证
+        val isBlockedByCurrentUser: Boolean? = null // null = 当前用户未认证
     )
 
     /**
@@ -46,12 +47,19 @@ class GetUserProfileUseCase(
             val isFollowing = if (currentUserId != null && currentUserId != userId) {
                 userRepository.isFollowing(currentUserId, userId)
             } else {
-                null // 未认证或查看自己
+                null
+            }
+
+            val isBlocked = if (currentUserId != null && currentUserId != userId) {
+                userRepository.isBlocked(currentUserId, userId)
+            } else {
+                null
             }
 
             ProfileView(
                 profile = profile,
-                isFollowedByCurrentUser = isFollowing
+                isFollowedByCurrentUser = isFollowing,
+                isBlockedByCurrentUser = isBlocked
             )
         }
     }
@@ -69,12 +77,19 @@ class GetUserProfileUseCase(
             val isFollowing = if (currentUserId != null && currentUserId != profile.user.id) {
                 userRepository.isFollowing(currentUserId, profile.user.id)
             } else {
-                null // 未认证或查看自己
+                null
+            }
+
+            val isBlocked = if (currentUserId != null && currentUserId != profile.user.id) {
+                userRepository.isBlocked(currentUserId, profile.user.id)
+            } else {
+                null
             }
 
             ProfileView(
                 profile = profile,
-                isFollowedByCurrentUser = isFollowing
+                isFollowedByCurrentUser = isFollowing,
+                isBlockedByCurrentUser = isBlocked
             )
         }
     }

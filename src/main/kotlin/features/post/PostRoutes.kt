@@ -23,6 +23,7 @@ private val logger = LoggerFactory.getLogger("PostRoutes")
 
 fun Route.postRoutes(
     createPostUseCase: CreatePostUseCase,
+    deletePostUseCase: DeletePostUseCase,
     getPostUseCase: GetPostUseCase,
     getTimelineWithStatusUseCase: GetTimelineWithStatusUseCase,
     getRepliesUseCase: GetRepliesUseCase,
@@ -434,16 +435,19 @@ fun Route.postRoutes(
                 try {
                     logger.info("删除 Post 请求: userId=$userId, postId=$postId")
 
-                    // TODO: 添加权限检查（只能删除自己的 Post）
-                    // 这里需要先查询 Post 的 authorId，然后比对
+                    val result = deletePostUseCase(PostId(postId), UserId(userId))
+                    val duration = System.currentTimeMillis() - startTime
 
-                    // 暂时直接删除
-                    // val result = deletePostUseCase(PostId(postId))
-                    // 由于 Use Case 未实现，暂时返回未实现错误
-
-                    call.respond(
-                        HttpStatusCode.NotImplemented,
-                        ApiErrorResponse("NOT_IMPLEMENTED", "删除功能暂未实现")
+                    result.fold(
+                        ifLeft = { error ->
+                            val (status, body) = error.toHttpError()
+                            logger.warn("Post 删除失败: userId=$userId, postId=$postId, error=${error.javaClass.simpleName}, duration=${duration}ms")
+                            call.respond(status, body)
+                        },
+                        ifRight = {
+                            logger.info("Post 删除成功: userId=$userId, postId=$postId, duration=${duration}ms")
+                            call.respond(HttpStatusCode.OK, mapOf("message" to "Post 已删除"))
+                        }
                     )
 
                 } catch (e: Exception) {

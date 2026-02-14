@@ -78,6 +78,7 @@ Content-Type: application/json
 | `400` | `CANNOT_MESSAGE_SELF` | recipientId 等于自己 |
 | `404` | `RECIPIENT_NOT_FOUND` | 接收者不存在 |
 | `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息（未来） |
+| `403` | `USER_BLOCKED` | 存在拉黑关系，无法发送消息 |
 
 ### 示例代码
 
@@ -660,6 +661,7 @@ Server:
 | `401` | `UNAUTHORIZED` | 未授权访问 | 未携带或无效 JWT |
 | `403` | `NOT_PARTICIPANT` | 您不是该对话的参与者 | 试图查看他人对话 |
 | `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息 | 对方开启了互关限制（未来）|
+| `403` | `USER_BLOCKED` | 无法发送消息，用户已被拉黑 | 存在拉黑关系（双向） |
 | `404` | `RECIPIENT_NOT_FOUND` | 接收者不存在 | recipientId 无效 |
 | `404` | `CONVERSATION_NOT_FOUND` | 对话不存在 | conversationId 无效 |
 

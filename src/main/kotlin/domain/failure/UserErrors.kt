@@ -25,4 +25,11 @@ sealed interface UserError {
     data object AlreadyFollowing : UserError
     data object NotFollowing : UserError
     data class FollowTargetNotFound(val userId: UserId) : UserError
+
+    // 拉黑相关错误
+    data object CannotBlockSelf : UserError
+    data object AlreadyBlocked : UserError
+    data object NotBlocked : UserError
+    data class BlockTargetNotFound(val userId: UserId) : UserError
+    data class UserBlocked(val userId: UserId) : UserError
 }

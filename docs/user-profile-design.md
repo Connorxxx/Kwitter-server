@@ -12,6 +12,7 @@
 │  Models:                                                    │
 │    - User (聚合根，扩展: username, displayName, bio)        │
 │    - Follow (关注关系实体)                                   │
+│    - Block (拉黑关系实体)                                    │
 │    - UserProfile, UserStats (只读投影)                      │
 │                                                             │
 │  Value Objects (with validation):                          │
@@ -29,8 +30,9 @@
 │    - GetUserProfileUseCase                                 │
 │    - UpdateUserProfileUseCase                              │
 │    - FollowUserUseCase / UnfollowUserUseCase               │
+│    - BlockUserUseCase / UnblockUserUseCase                  │
 │    - GetUserFollowingUseCase / GetUserFollowersUseCase     │
-│    - GetUserRepliesWithStatusUseCase (新增)                 │
+│    - GetUserRepliesWithStatusUseCase                        │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     (依赖倒置：接口在上，实现在下)
@@ -41,7 +43,8 @@
 ├─────────────────────────────────────────────────────────────┤
 │  - ExposedUserRepository (implements UserRepository)       │
 │  - UsersTable (Exposed schema - 扩展: username)            │
-│  - FollowsTable (Exposed schema - 新增)                    │
+│  - FollowsTable (Exposed schema)                           │
+│  - BlocksTable (Exposed schema)                            │
 │  - User Mapping (DAO ↔ Domain Entity)                      │
 └─────────────────────────────────────────────────────────────┘
                               ↓
@@ -59,6 +62,8 @@
 │  - GET    /users/:id/posts              (用户Posts)         │
 │  - GET    /users/:id/replies            (用户回复)          │
 │  - GET    /users/:id/likes              (用户点赞)          │
+│  - POST   /users/:id/block             (拉黑用户)          │
+│  - DELETE /users/:id/block             (取消拉黑)          │
 └─────────────────────────────────────────────────────────────┘
 ```
 

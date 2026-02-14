@@ -74,4 +74,10 @@ fun MessageError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (t
             code = "DM_PERMISSION_DENIED",
             message = "对方仅允许互相关注的用户发送私信"
         )
+
+    is MessageError.UserBlocked ->
+        HttpStatusCode.Forbidden to ApiErrorResponse(
+            code = "USER_BLOCKED",
+            message = "无法发送消息，用户已被拉黑: ${userId.value}"
+        )
 }

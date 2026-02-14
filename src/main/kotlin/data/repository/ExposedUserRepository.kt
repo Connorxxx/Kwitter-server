@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.connor.data.db.dbQuery
 import com.connor.data.db.mapping.toDomain
+import com.connor.data.db.schema.BlocksTable
 import com.connor.data.db.schema.FollowsTable
 import com.connor.data.db.schema.PostsTable
 import com.connor.data.db.schema.UsersTable
@@ -255,6 +256,72 @@ class ExposedUserRepository : UserRepository {
             }
             .map { UserId(it[FollowsTable.followingId]) }
             .toSet()
+    }
+
+    // ========== Block 相关实现 ==========
+
+    override suspend fun block(blockerId: UserId, blockedId: UserId): Either<UserError, Block> = dbQuery {
+        try {
+            // 检查目标用户是否存在
+            val targetExists = UsersTable.selectAll()
+                .where { UsersTable.id eq blockedId.value }
+                .count() > 0
+
+            if (!targetExists) {
+                return@dbQuery UserError.BlockTargetNotFound(blockedId).left()
+            }
+
+            val block = Block(blockerId, blockedId)
+
+            BlocksTable.insert {
+                it[BlocksTable.blockerId] = blockerId.value
+                it[BlocksTable.blockedId] = blockedId.value
+                it[createdAt] = block.createdAt
+            }
+
+            block.right()
+
+        } catch (e: SQLException) {
+            when {
+                e.sqlState == "23505" || e.sqlState == "23000" -> {
+                    UserError.AlreadyBlocked.left()
+                }
+                else -> throw e
+            }
+        }
+    }
+
+    override suspend fun unblock(blockerId: UserId, blockedId: UserId): Either<UserError, Unit> = dbQuery {
+        val deleted = BlocksTable.deleteWhere {
+            (BlocksTable.blockerId eq blockerId.value) and (BlocksTable.blockedId eq blockedId.value)
+        }
+
+        if (deleted == 0) {
+            UserError.NotBlocked.left()
+        } else {
+            Unit.right()
+        }
+    }
+
+    override suspend fun isBlocked(userId1: UserId, userId2: UserId): Boolean = dbQuery {
+        BlocksTable.selectAll()
+            .where {
+                ((BlocksTable.blockerId eq userId1.value) and (BlocksTable.blockedId eq userId2.value)) or
+                ((BlocksTable.blockerId eq userId2.value) and (BlocksTable.blockedId eq userId1.value))
+            }
+            .count() > 0
+    }
+
+    override suspend fun getBlockedRelationUserIds(userId: UserId): Set<UserId> = dbQuery {
+        val blocked = BlocksTable.selectAll()
+            .where { BlocksTable.blockerId eq userId.value }
+            .map { UserId(it[BlocksTable.blockedId]) }
+
+        val blockedBy = BlocksTable.selectAll()
+            .where { BlocksTable.blockedId eq userId.value }
+            .map { UserId(it[BlocksTable.blockerId]) }
+
+        (blocked + blockedBy).toSet()
     }
 
     // ========== Helper Functions ==========

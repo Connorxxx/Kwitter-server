@@ -33,6 +33,7 @@ fun Application.configureRouting() {
 
     // Post Use Cases
     val createPostUseCase by inject<CreatePostUseCase>()
+    val deletePostUseCase by inject<DeletePostUseCase>()
     val getPostUseCase by inject<GetPostUseCase>()
     val getTimelineWithStatusUseCase by inject<GetTimelineWithStatusUseCase>()
     val getRepliesUseCase by inject<GetRepliesUseCase>()
@@ -80,6 +81,10 @@ fun Application.configureRouting() {
     val getUserFollowersUseCase by inject<GetUserFollowersUseCase>()
     val getUserRepliesWithStatusUseCase by inject<GetUserRepliesWithStatusUseCase>()
 
+    // Block Use Cases
+    val blockUserUseCase by inject<BlockUserUseCase>()
+    val unblockUserUseCase by inject<UnblockUserUseCase>()
+
     // Messaging Use Cases
     val sendMessageUseCase by inject<SendMessageUseCase>()
     val getConversationsUseCase by inject<GetConversationsUseCase>()
@@ -102,11 +107,11 @@ fun Application.configureRouting() {
 
         // ========== 公开路由 - 不需要认证 ==========
         authRoutes(registerUseCase, loginUseCase, refreshTokenUseCase)
-        postRoutes(createPostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase, broadcastPostCreatedUseCase, appScope)
+        postRoutes(createPostUseCase, deletePostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase, broadcastPostCreatedUseCase, appScope)
         likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, appScope)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
-        userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase)
+        userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase, blockUserUseCase, unblockUserUseCase)
         searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
         messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, appScope)
 

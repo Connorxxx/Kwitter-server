@@ -22,6 +22,7 @@
 │                                                             │
 │  Use Cases (Application Services):                         │
 │    - CreatePostUseCase                                     │
+│    - DeletePostUseCase                                     │
 │    - GetPostUseCase                                        │
 │    - GetTimelineUseCase                                    │
 │    - GetRepliesUseCase                                     │
@@ -45,6 +46,7 @@
 │                   (HTTP API - Ktor Routes)                  │
 ├─────────────────────────────────────────────────────────────┤
 │  - POST   /posts              (创建 Post)                   │
+│  - DELETE /posts/:id          (删除 Post，仅作者)           │
 │  - GET    /posts/:id          (获取 Post 详情)              │
 │  - GET    /posts/:id/replies  (获取回复列表)                 │
 │  - GET    /timeline           (获取时间线)                   │
@@ -132,7 +134,19 @@ data class PostDetail(
 - `TooManyMedia`：超过 4 个媒体
 - `ParentPostNotFound`：回复的父 Post 不存在
 
-### 2. GetPostUseCase
+### 2. DeletePostUseCase
+
+**业务规则编排**：
+1. 查询 Post，验证存在性
+2. 验证当前用户是 Post 的作者（权限检查）
+3. 调用 Repository 删除
+4. 如果是回复，自动递减父 Post 的 `replyCount`
+
+**错误处理**：
+- `PostNotFound`：Post 不存在
+- `Unauthorized`：非作者尝试删除
+
+### 3. GetPostUseCase
 
 **职责**：
 - 查询 Post 详情 (`PostDetail`)

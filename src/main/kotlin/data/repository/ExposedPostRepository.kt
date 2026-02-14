@@ -289,21 +289,31 @@ class ExposedPostRepository : PostRepository {
     override suspend fun delete(postId: PostId): Either<PostError, Unit> = dbQuery {
         logger.debug("删除 Post: postId=${postId.value}")
 
-        // 先检查 Post 是否存在
-        val exists = PostsTable.selectAll()
+        // 先检查 Post 是否存在，并读取 parent_id
+        val row = PostsTable.selectAll()
             .where { PostsTable.id eq postId.value }
-            .singleOrNull() != null
+            .singleOrNull()
 
-        if (!exists) {
+        if (row == null) {
             logger.debug("Post 不存在，无法删除: postId=${postId.value}")
             return@dbQuery PostError.PostNotFound(postId).left()
         }
+
+        val parentId = row[PostsTable.parentId]
 
         // 删除媒体附件
         MediaTable.deleteWhere { MediaTable.postId eq postId.value }
 
         // 删除 Post
         PostsTable.deleteWhere { PostsTable.id eq postId.value }
+
+        // 如果是回复，原子递减父 Post 的 replyCount
+        if (parentId != null) {
+            PostsTable.update({ PostsTable.id eq parentId }) {
+                it[replyCount] = replyCount - 1
+            }
+            logger.debug("父 Post replyCount 已递减: parentId=$parentId")
+        }
 
         logger.info("Post 删除成功: postId=${postId.value}")
         Unit.right()

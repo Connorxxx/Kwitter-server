@@ -40,11 +40,15 @@ fun UserStats.toDto(): UserStatsDto {
 /**
  * UserProfile -> UserProfileResponse
  */
-fun UserProfile.toResponse(isFollowedByCurrentUser: Boolean? = null): UserProfileResponse {
+fun UserProfile.toResponse(
+    isFollowedByCurrentUser: Boolean? = null,
+    isBlockedByCurrentUser: Boolean? = null
+): UserProfileResponse {
     return UserProfileResponse(
         user = user.toDto(),
         stats = stats.toDto(),
-        isFollowedByCurrentUser = isFollowedByCurrentUser
+        isFollowedByCurrentUser = isFollowedByCurrentUser,
+        isBlockedByCurrentUser = isBlockedByCurrentUser
     )
 }
 
@@ -52,7 +56,7 @@ fun UserProfile.toResponse(isFollowedByCurrentUser: Boolean? = null): UserProfil
  * GetUserProfileUseCase.ProfileView -> UserProfileResponse
  */
 fun GetUserProfileUseCase.ProfileView.toResponse(): UserProfileResponse {
-    return profile.toResponse(isFollowedByCurrentUser)
+    return profile.toResponse(isFollowedByCurrentUser, isBlockedByCurrentUser)
 }
 
 /**
@@ -151,5 +155,35 @@ fun UserError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (this
         HttpStatusCode.InternalServerError to ApiErrorResponse(
             code = "AVATAR_UPLOAD_FAILED",
             message = "头像上传失败: $reason"
+        )
+
+    is UserError.CannotBlockSelf ->
+        HttpStatusCode.BadRequest to ApiErrorResponse(
+            code = "CANNOT_BLOCK_SELF",
+            message = "不能拉黑自己"
+        )
+
+    is UserError.AlreadyBlocked ->
+        HttpStatusCode.Conflict to ApiErrorResponse(
+            code = "ALREADY_BLOCKED",
+            message = "已经拉黑该用户"
+        )
+
+    is UserError.NotBlocked ->
+        HttpStatusCode.BadRequest to ApiErrorResponse(
+            code = "NOT_BLOCKED",
+            message = "未拉黑该用户"
+        )
+
+    is UserError.BlockTargetNotFound ->
+        HttpStatusCode.NotFound to ApiErrorResponse(
+            code = "BLOCK_TARGET_NOT_FOUND",
+            message = "目标用户不存在: ${userId.value}"
+        )
+
+    is UserError.UserBlocked ->
+        HttpStatusCode.Forbidden to ApiErrorResponse(
+            code = "USER_BLOCKED",
+            message = "用户已被拉黑: ${userId.value}"
         )
 }

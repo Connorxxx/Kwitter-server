@@ -53,7 +53,8 @@ data class UserStatsDto(
 data class UserProfileResponse(
     val user: UserDto,
     val stats: UserStatsDto,
-    val isFollowedByCurrentUser: Boolean? = null // null = 当前用户未认证或查看自己
+    val isFollowedByCurrentUser: Boolean? = null, // null = 当前用户未认证或查看自己
+    val isBlockedByCurrentUser: Boolean? = null // null = 当前用户未认证或查看自己
 )
 
 /**

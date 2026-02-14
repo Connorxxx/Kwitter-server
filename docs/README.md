@@ -12,6 +12,11 @@
 - **[Post 功能设计文档](./post-feature-design.md)** - 架构设计、数据模型、Repository 接口、UseCase、错误处理策略
 - **[Post 功能实现总结](./post-feature-implementation.md)** - Infrastructure 层、Transport 层、DI 配置、API 测试示例、已知限制和未来优化
 
+### Block 功能（拉黑与删除 Post）
+
+- **[Block 功能设计文档](./block-feature-design.md)** - 拉黑模型、数据库设计、UseCase 编排、内容过滤策略、跨功能影响分析
+- **[Block & 删除 Post 客户端接入指南](./block-client-integration-guide.md)** - 拉黑/取消拉黑/删除 Post API、错误码、客户端代码示例、测试清单
+
 ### Media 功能（媒体上传系统）
 
 - **[Media 功能设计文档](./media-feature-design.md)** - 六边形架构、Domain Models、Repository 接口、UseCase 设计、错误处理、配置管理
@@ -30,10 +35,10 @@
 
 ```
 Domain Layer
-    ├─ Models (Post, MediaId, etc.)
-    ├─ Errors (PostError, MediaError)
-    ├─ Repositories (PostRepository, MediaStorageRepository)
-    └─ UseCases (CreatePostUseCase, UploadMediaUseCase)
+    ├─ Models (Post, User, Follow, Block, Message, etc.)
+    ├─ Errors (PostError, UserError, MessageError, etc.)
+    ├─ Repositories (PostRepository, UserRepository, MessageRepository)
+    └─ UseCases (CreatePostUseCase, BlockUserUseCase, SendMessageUseCase, etc.)
             ↓
 Infrastructure Layer
     ├─ Database (ExposedPostRepository, ExposedUserRepository)
@@ -86,10 +91,26 @@ java -jar build/libs/app-all.jar
 ### Post（推文）
 
 - `POST /v1/posts` - 创建 Post（需认证）
+- `DELETE /v1/posts/{postId}` - 删除 Post（需认证，仅作者）
 - `GET /v1/posts/timeline` - 获取时间线
 - `GET /v1/posts/{postId}` - 获取 Post 详情
 - `GET /v1/posts/{postId}/replies` - 获取回复列表
 - `GET /v1/posts/users/{userId}` - 获取用户的 Posts
+
+### 用户（User）
+
+- `GET /v1/users/{userId}` - 获取用户资料
+- `GET /v1/users/username/{username}` - 通过 username 获取用户资料
+- `PATCH /v1/users/me` - 更新当前用户资料（需认证）
+- `POST /v1/users/{userId}/follow` - 关注用户（需认证）
+- `DELETE /v1/users/{userId}/follow` - 取消关注（需认证）
+- `POST /v1/users/{userId}/block` - 拉黑用户（需认证）
+- `DELETE /v1/users/{userId}/block` - 取消拉黑（需认证）
+- `GET /v1/users/{userId}/following` - 获取关注列表
+- `GET /v1/users/{userId}/followers` - 获取粉丝列表
+- `GET /v1/users/{userId}/posts` - 获取用户的 Posts
+- `GET /v1/users/{userId}/replies` - 获取用户的回复
+- `GET /v1/users/{userId}/likes` - 获取用户的点赞
 
 ### Media（媒体）
 
@@ -136,6 +157,10 @@ src/main/kotlin/
 ├── features/                    # 功能模块（HTTP 适配）
 │   ├── auth/
 │   ├── post/
+│   ├── user/
+│   ├── messaging/
+│   ├── search/
+│   ├── notification/
 │   └── media/
 ├── core/                        # 核心功能
 │   ├── di/                      # 依赖注入配置
@@ -264,4 +289,4 @@ JWT_SECRET=your-secret-key
 
 ---
 
-**最后更新**: 2026-02-08
+**最后更新**: 2026-02-13

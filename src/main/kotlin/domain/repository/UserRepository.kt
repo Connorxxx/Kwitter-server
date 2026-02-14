@@ -6,6 +6,7 @@ import com.connor.domain.failure.UserError
 import com.connor.domain.model.*
 import kotlinx.coroutines.flow.Flow
 
+
 interface UserRepository {
     /**
      * 保存用户
@@ -92,4 +93,29 @@ interface UserRepository {
      * @return Set<UserId> 当前用户正在关注的用户ID集合
      */
     suspend fun batchCheckFollowing(followerId: UserId, userIds: List<UserId>): Set<UserId>
+
+    // ========== Block 相关方法 ==========
+
+    /**
+     * 拉黑用户
+     * @return Either.Left(UserError.AlreadyBlocked) 如果已拉黑
+     * @return Either.Left(UserError.BlockTargetNotFound) 如果目标用户不存在
+     */
+    suspend fun block(blockerId: UserId, blockedId: UserId): Either<UserError, Block>
+
+    /**
+     * 取消拉黑
+     * @return Either.Left(UserError.NotBlocked) 如果未拉黑
+     */
+    suspend fun unblock(blockerId: UserId, blockedId: UserId): Either<UserError, Unit>
+
+    /**
+     * 双向检查是否存在拉黑关系（A拉黑B 或 B拉黑A）
+     */
+    suspend fun isBlocked(userId1: UserId, userId2: UserId): Boolean
+
+    /**
+     * 获取与用户存在拉黑关系的所有用户ID（已拉黑 + 被拉黑）
+     */
+    suspend fun getBlockedRelationUserIds(userId: UserId): Set<UserId>
 }

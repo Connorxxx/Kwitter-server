@@ -9,6 +9,7 @@ import com.connor.domain.model.PostDetail
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.PostRepository
+import com.connor.domain.repository.UserRepository
 import org.slf4j.LoggerFactory
 
 /**
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory
  * 设计原理：Route -> UseCase -> Repository（遵循Hexagonal Architecture）
  */
 class GetPostDetailWithStatusUseCase(
-    private val postRepository: PostRepository
+    private val postRepository: PostRepository,
+    private val userRepository: UserRepository
 ) {
     private val logger = LoggerFactory.getLogger(GetPostDetailWithStatusUseCase::class.java)
 
@@ -38,7 +40,12 @@ class GetPostDetailWithStatusUseCase(
 
         // 1. 先查询Post详情
         return postRepository.findDetailById(postId).flatMap { postDetail ->
-            // 2. 如果用户未认证，直接返回详情（不包含交互状态）
+            // 2. 如果存在拉黑关系，隐藏Post
+            if (currentUserId != null && userRepository.isBlocked(currentUserId, postDetail.author.id)) {
+                return@flatMap PostError.PostNotFound(postId).left()
+            }
+
+            // 3. 如果用户未认证，直接返回详情（不包含交互状态）
             if (currentUserId == null) {
                 logger.debug("Post详情查询完成: postId=${postId.value}, 用户未认证")
                 PostDetailWithStatus(

@@ -13,4 +13,5 @@ sealed interface MessageError {
     data object CannotMessageSelf : MessageError
     data class RecipientNotFound(val recipientId: UserId) : MessageError
     data object DmPermissionDenied : MessageError
+    data class UserBlocked(val userId: UserId) : MessageError
 }

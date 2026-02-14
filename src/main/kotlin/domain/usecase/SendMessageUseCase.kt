@@ -43,19 +43,24 @@ class SendMessageUseCase(
                 ifRight = { it }
             )
 
-            // 3. Check DM permission (future: check dmPermission field on recipient)
+            // 3. Check block relationship
+            ensure(!userRepository.isBlocked(cmd.senderId, cmd.recipientId)) {
+                MessageError.UserBlocked(cmd.recipientId)
+            }
+
+            // 4. Check DM permission (future: check dmPermission field on recipient)
             // For now, everyone can DM. When dmPermission = MUTUAL_FOLLOW:
             // val isMutualFollow = userRepository.isFollowing(cmd.senderId, cmd.recipientId)
             //     && userRepository.isFollowing(cmd.recipientId, cmd.senderId)
             // ensure(isMutualFollow) { MessageError.DmPermissionDenied }
 
-            // 4. Validate content
+            // 5. Validate content
             val content = MessageContent(cmd.content).bind()
 
-            // 5. Find or create conversation
+            // 6. Find or create conversation
             val conversation = messageRepository.findOrCreateConversation(cmd.senderId, cmd.recipientId)
 
-            // 6. Save message
+            // 7. Save message
             val message = Message(
                 id = MessageId(UUID.randomUUID().toString()),
                 conversationId = conversation.id,

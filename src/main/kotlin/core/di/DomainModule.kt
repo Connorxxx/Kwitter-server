@@ -24,13 +24,14 @@ val domainModule = module {
 
     // Use Case 层：Post 相关
     single { CreatePostUseCase(get()) }
+    single { DeletePostUseCase(get()) }
     single { GetPostUseCase(get()) }
-    single { GetTimelineWithStatusUseCase(get()) }
+    single { GetTimelineWithStatusUseCase(get(), get()) }
     single { GetRepliesUseCase(get()) }
-    single { GetRepliesWithStatusUseCase(get()) }
+    single { GetRepliesWithStatusUseCase(get(), get()) }
     single { GetUserPostsUseCase(get()) }
     single { GetUserPostsWithStatusUseCase(get(), get()) }
-    single { GetPostDetailWithStatusUseCase(get()) }
+    single { GetPostDetailWithStatusUseCase(get(), get()) }
 
     // Use Case 层：Like 相关
     single { LikePostUseCase(get()) }
@@ -52,6 +53,10 @@ val domainModule = module {
     single { GetUserFollowingUseCase(get()) }
     single { GetUserFollowersUseCase(get()) }
     single { GetUserRepliesWithStatusUseCase(get(), get()) }
+
+    // Use Case 层：Block 相关
+    single { BlockUserUseCase(get()) }
+    single { UnblockUserUseCase(get()) }
 }
 
 // Security 模块：JWT 相关配置 + Domain Port 绑定
