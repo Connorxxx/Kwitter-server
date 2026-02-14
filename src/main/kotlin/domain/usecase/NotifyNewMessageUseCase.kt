@@ -1,6 +1,7 @@
 package com.connor.domain.usecase
 
 import com.connor.domain.model.*
+import com.connor.domain.repository.MessageRepository
 import com.connor.domain.repository.NotificationRepository
 import com.connor.domain.service.PushNotificationService
 import kotlinx.coroutines.CancellationException
@@ -8,7 +9,8 @@ import org.slf4j.LoggerFactory
 
 class NotifyNewMessageUseCase(
     private val notificationRepository: NotificationRepository,
-    private val pushNotificationService: PushNotificationService
+    private val pushNotificationService: PushNotificationService,
+    private val messageRepository: MessageRepository
 ) {
     private val logger = LoggerFactory.getLogger(NotifyNewMessageUseCase::class.java)
 
@@ -55,6 +57,34 @@ class NotifyNewMessageUseCase(
                 "Failed to notify new message: recipientId={}, messageId={}",
                 recipientId.value, messageId.value, e
             )
+        }
+    }
+
+    suspend fun notifyMessageRecalled(messageId: MessageId) {
+        try {
+            val message = messageRepository.findMessageById(messageId) ?: return
+            val conversation = messageRepository.findConversationById(message.conversationId) ?: return
+
+            // Determine the other participant
+            val recipientId = if (conversation.participant1Id == message.senderId)
+                conversation.participant2Id else conversation.participant1Id
+
+            val event = NotificationEvent.MessageRecalled(
+                messageId = messageId.value,
+                conversationId = message.conversationId.value,
+                recalledByUserId = message.senderId.value,
+                timestamp = System.currentTimeMillis()
+            )
+            notificationRepository.notifyMessageRecalled(recipientId, event)
+
+            logger.info(
+                "Notified message recalled: recipientId={}, messageId={}",
+                recipientId.value, messageId.value
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Failed to notify message recalled: messageId={}", messageId.value, e)
         }
     }
 }

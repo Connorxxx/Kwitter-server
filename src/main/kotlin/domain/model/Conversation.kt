@@ -59,9 +59,15 @@ data class Message(
     val senderId: UserId,
     val content: MessageContent,
     val imageUrl: String? = null,
+    val replyToMessageId: MessageId? = null,
     val readAt: Long? = null,
+    val deletedAt: Long? = null,
+    val recalledAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
-)
+) {
+    val isDeleted: Boolean get() = deletedAt != null
+    val isRecalled: Boolean get() = recalledAt != null
+}
 
 data class ConversationDetail(
     val conversation: Conversation,

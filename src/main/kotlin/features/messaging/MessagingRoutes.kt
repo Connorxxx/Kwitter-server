@@ -4,6 +4,7 @@ import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.ConversationId
+import com.connor.domain.model.MessageId
 import com.connor.domain.model.UserId
 import com.connor.domain.usecase.*
 import io.ktor.http.*
@@ -25,6 +26,8 @@ fun Route.messagingRoutes(
     getMessagesUseCase: GetMessagesUseCase,
     markConversationReadUseCase: MarkConversationReadUseCase,
     notifyNewMessageUseCase: NotifyNewMessageUseCase,
+    deleteMessageUseCase: DeleteMessageUseCase,
+    recallMessageUseCase: RecallMessageUseCase,
     appScope: ApplicationCoroutineScope
 ) {
     authenticate("auth-jwt") {
@@ -75,7 +78,8 @@ fun Route.messagingRoutes(
                     senderId = userId,
                     recipientId = UserId(request.recipientId),
                     content = request.content,
-                    imageUrl = request.imageUrl
+                    imageUrl = request.imageUrl,
+                    replyToMessageId = request.replyToMessageId?.let { MessageId(it) }
                 )
 
                 val result = sendMessageUseCase(cmd)
@@ -185,6 +189,78 @@ fun Route.messagingRoutes(
                                 readAt = System.currentTimeMillis()
                             )
                         )
+                    }
+                )
+            }
+        }
+
+        route("/v1/messages") {
+            /**
+             * DELETE /v1/messages/{id}
+             * Soft delete a message (only sender can delete)
+             */
+            delete("/{id}") {
+                val principal = call.principal<UserPrincipal>() ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@delete
+                }
+
+                val messageId = call.parameters["id"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 messageId 参数"))
+                    return@delete
+                }
+
+                val userId = UserId(principal.userId)
+                val result = deleteMessageUseCase(MessageId(messageId), userId)
+
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        call.respond(status, body)
+                    },
+                    ifRight = {
+                        call.respond(HttpStatusCode.NoContent)
+                    }
+                )
+            }
+
+            /**
+             * PUT /v1/messages/{id}/recall
+             * Recall a message (within 3 minutes, only sender)
+             */
+            put("/{id}/recall") {
+                val principal = call.principal<UserPrincipal>() ?: run {
+                    call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                    return@put
+                }
+
+                val messageId = call.parameters["id"] ?: run {
+                    call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 messageId 参数"))
+                    return@put
+                }
+
+                val userId = UserId(principal.userId)
+                val msgId = MessageId(messageId)
+                val result = recallMessageUseCase(msgId, userId)
+
+                result.fold(
+                    ifLeft = { error ->
+                        val (status, body) = error.toHttpError()
+                        call.respond(status, body)
+                    },
+                    ifRight = {
+                        // Notify the other participant via WebSocket
+                        appScope.launch {
+                            try {
+                                notifyNewMessageUseCase.notifyMessageRecalled(msgId)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                logger.error("Failed to notify message recalled", e)
+                            }
+                        }
+
+                        call.respond(HttpStatusCode.OK, mapOf("messageId" to messageId, "recalled" to true))
                     }
                 )
             }

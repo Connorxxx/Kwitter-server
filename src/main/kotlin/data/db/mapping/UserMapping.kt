@@ -14,6 +14,11 @@ fun ResultRow.toDomain(): User {
         displayName = DisplayName.unsafe(this[UsersTable.displayName]),
         bio = Bio.unsafe(this[UsersTable.bio]),
         avatarUrl = this[UsersTable.avatarUrl],
+        dmPermission = try {
+            DmPermission.valueOf(this[UsersTable.dmPermission])
+        } catch (_: IllegalArgumentException) {
+            DmPermission.EVERYONE
+        },
         passwordChangedAt = this[UsersTable.passwordChangedAt],
         createdAt = this[UsersTable.createdAt]
     )

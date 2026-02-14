@@ -70,4 +70,10 @@ interface NotificationRepository {
      * @param event 已读事件
      */
     suspend fun notifyMessagesRead(recipientId: UserId, event: NotificationEvent.MessagesRead)
+
+    suspend fun notifyMessageRecalled(recipientId: UserId, event: NotificationEvent.MessageRecalled)
+
+    suspend fun notifyTypingIndicator(recipientId: UserId, event: NotificationEvent.TypingIndicator)
+
+    suspend fun notifyUserPresenceChanged(userId: UserId, event: NotificationEvent.UserPresenceChanged)
 }

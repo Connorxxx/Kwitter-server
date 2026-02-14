@@ -8,7 +8,8 @@ import kotlinx.serialization.Serializable
 data class SendMessageRequest(
     val recipientId: String,
     val content: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val replyToMessageId: String? = null
 )
 
 // ========== Response DTOs ==========
@@ -37,7 +38,10 @@ data class MessageResponse(
     val senderId: String,
     val content: String,
     val imageUrl: String?,
+    val replyToMessageId: String?,
     val readAt: Long?,
+    val deletedAt: Long?,
+    val recalledAt: Long?,
     val createdAt: Long
 )
 

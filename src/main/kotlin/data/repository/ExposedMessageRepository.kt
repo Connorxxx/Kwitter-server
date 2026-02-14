@@ -110,7 +110,9 @@ class ExposedMessageRepository : MessageRepository {
                 .where {
                     (MessagesTable.conversationId inList conversationIds.map { it.value }) and
                         (MessagesTable.senderId neq userId.value) and
-                        (MessagesTable.readAt.isNull())
+                        (MessagesTable.readAt.isNull()) and
+                        (MessagesTable.deletedAt.isNull()) and
+                        (MessagesTable.recalledAt.isNull())
                 }
                 .groupBy(MessagesTable.conversationId)
                 .associate { it[MessagesTable.conversationId] to it[unreadCountExpr].toInt() }
@@ -137,7 +139,10 @@ class ExposedMessageRepository : MessageRepository {
             it[senderId] = message.senderId.value
             it[content] = message.content.value
             it[imageUrl] = message.imageUrl
+            it[replyToMessageId] = message.replyToMessageId?.value
             it[readAt] = message.readAt
+            it[deletedAt] = message.deletedAt
+            it[recalledAt] = message.recalledAt
             it[createdAt] = message.createdAt
         }
 
@@ -197,8 +202,35 @@ class ExposedMessageRepository : MessageRepository {
             .where {
                 (MessagesTable.conversationId inList conversationIds) and
                     (MessagesTable.senderId neq userId.value) and
-                    (MessagesTable.readAt.isNull())
+                    (MessagesTable.readAt.isNull()) and
+                    (MessagesTable.deletedAt.isNull()) and
+                    (MessagesTable.recalledAt.isNull())
             }
             .count().toInt()
+    }
+
+    override suspend fun findMessageById(messageId: MessageId): Message? = dbQuery {
+        MessagesTable.selectAll()
+            .where { MessagesTable.id eq messageId.value }
+            .singleOrNull()
+            ?.toMessage()
+    }
+
+    override suspend fun softDeleteMessage(messageId: MessageId): Boolean = dbQuery {
+        val updated = MessagesTable.update({
+            (MessagesTable.id eq messageId.value) and (MessagesTable.deletedAt.isNull())
+        }) {
+            it[deletedAt] = System.currentTimeMillis()
+        }
+        updated > 0
+    }
+
+    override suspend fun recallMessage(messageId: MessageId): Boolean = dbQuery {
+        val updated = MessagesTable.update({
+            (MessagesTable.id eq messageId.value) and (MessagesTable.recalledAt.isNull())
+        }) {
+            it[recalledAt] = System.currentTimeMillis()
+        }
+        updated > 0
     }
 }

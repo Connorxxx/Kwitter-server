@@ -14,7 +14,8 @@ data class SendMessageCommand(
     val senderId: UserId,
     val recipientId: UserId,
     val content: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val replyToMessageId: MessageId? = null
 )
 
 data class SendMessageResult(
@@ -48,11 +49,12 @@ class SendMessageUseCase(
                 MessageError.UserBlocked(cmd.recipientId)
             }
 
-            // 4. Check DM permission (future: check dmPermission field on recipient)
-            // For now, everyone can DM. When dmPermission = MUTUAL_FOLLOW:
-            // val isMutualFollow = userRepository.isFollowing(cmd.senderId, cmd.recipientId)
-            //     && userRepository.isFollowing(cmd.recipientId, cmd.senderId)
-            // ensure(isMutualFollow) { MessageError.DmPermissionDenied }
+            // 4. Check DM permission
+            if (recipient.dmPermission == DmPermission.MUTUAL_FOLLOW) {
+                val isMutualFollow = userRepository.isFollowing(cmd.senderId, cmd.recipientId)
+                    && userRepository.isFollowing(cmd.recipientId, cmd.senderId)
+                ensure(isMutualFollow) { MessageError.DmPermissionDenied }
+            }
 
             // 5. Validate content
             val content = MessageContent(cmd.content).bind()
@@ -66,7 +68,8 @@ class SendMessageUseCase(
                 conversationId = conversation.id,
                 senderId = cmd.senderId,
                 content = content,
-                imageUrl = cmd.imageUrl
+                imageUrl = cmd.imageUrl,
+                replyToMessageId = cmd.replyToMessageId
             )
 
             val savedMessage = messageRepository.saveMessage(message)

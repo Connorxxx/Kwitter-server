@@ -2,6 +2,8 @@ package com.connor.plugins
 
 import com.connor.core.security.UserPrincipal
 import com.connor.core.security.sensitive
+import com.connor.domain.repository.MessageRepository
+import com.connor.domain.repository.NotificationRepository
 import com.connor.domain.repository.UserRepository
 import com.connor.domain.usecase.*
 import com.connor.features.auth.authRoutes
@@ -91,12 +93,16 @@ fun Application.configureRouting() {
     val getMessagesUseCase by inject<GetMessagesUseCase>()
     val markConversationReadUseCase by inject<MarkConversationReadUseCase>()
     val notifyNewMessageUseCase by inject<NotifyNewMessageUseCase>()
+    val deleteMessageUseCase by inject<DeleteMessageUseCase>()
+    val recallMessageUseCase by inject<RecallMessageUseCase>()
 
     // WebSocket Connection Manager
     val connectionManager by inject<WebSocketConnectionManager>()
 
-    // Repositories (for sensitive route plugin)
+    // Repositories
     val userRepository by inject<UserRepository>()
+    val notificationRepository by inject<NotificationRepository>()
+    val messageRepository by inject<MessageRepository>()
 
     // Media config (for serving static files)
     val uploadDir = environment.config.propertyOrNull("media.uploadDir")?.getString() ?: "uploads"
@@ -113,10 +119,10 @@ fun Application.configureRouting() {
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase, blockUserUseCase, unblockUserUseCase)
         searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
-        messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, appScope)
+        messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, deleteMessageUseCase, recallMessageUseCase, appScope)
 
         // WebSocket 实时通知路由
-        notificationWebSocket(connectionManager)
+        notificationWebSocket(connectionManager, notificationRepository, messageRepository)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }

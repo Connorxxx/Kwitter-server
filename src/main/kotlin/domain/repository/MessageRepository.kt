@@ -17,4 +17,10 @@ interface MessageRepository {
     suspend fun markConversationAsRead(conversationId: ConversationId, userId: UserId)
 
     suspend fun getUnreadCountForUser(userId: UserId): Int
+
+    suspend fun findMessageById(messageId: MessageId): Message?
+
+    suspend fun softDeleteMessage(messageId: MessageId): Boolean
+
+    suspend fun recallMessage(messageId: MessageId): Boolean
 }

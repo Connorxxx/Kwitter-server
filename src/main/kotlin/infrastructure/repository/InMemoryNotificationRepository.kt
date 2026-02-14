@@ -128,6 +128,64 @@ class InMemoryNotificationRepository(
             logger.error("Failed to notify messages read: recipientId={}, conversationId={}", recipientId.value, event.conversationId, e)
         }
     }
+
+    override suspend fun notifyMessageRecalled(recipientId: UserId, event: NotificationEvent.MessageRecalled) {
+        try {
+            val message = NotificationMessage(
+                type = "message_recalled",
+                data = event
+            )
+
+            val jsonMessage = json.encodeToString(message)
+            connectionManager.sendToUser(recipientId, jsonMessage)
+
+            logger.info(
+                "Notified message recalled: recipientId={}, messageId={}",
+                recipientId.value, event.messageId
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to notify message recalled: recipientId={}, messageId={}", recipientId.value, event.messageId, e)
+        }
+    }
+
+    override suspend fun notifyTypingIndicator(recipientId: UserId, event: NotificationEvent.TypingIndicator) {
+        try {
+            val message = NotificationMessage(
+                type = "typing_indicator",
+                data = event
+            )
+
+            val jsonMessage = json.encodeToString(message)
+            connectionManager.sendToUser(recipientId, jsonMessage)
+
+            logger.debug(
+                "Notified typing indicator: recipientId={}, conversationId={}, isTyping={}",
+                recipientId.value, event.conversationId, event.isTyping
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to notify typing indicator: recipientId={}", recipientId.value, e)
+        }
+    }
+
+    override suspend fun notifyUserPresenceChanged(userId: UserId, event: NotificationEvent.UserPresenceChanged) {
+        try {
+            val message = NotificationMessage(
+                type = "user_presence_changed",
+                data = event
+            )
+
+            val jsonMessage = json.encodeToString(message)
+            // Broadcast to all online users (they can filter client-side)
+            connectionManager.broadcastToAll(jsonMessage)
+
+            logger.info(
+                "Broadcasted user presence change: userId={}, isOnline={}",
+                userId.value, event.isOnline
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to broadcast user presence change: userId={}", userId.value, e)
+        }
+    }
 }
 
 /**

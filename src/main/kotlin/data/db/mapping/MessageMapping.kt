@@ -23,7 +23,10 @@ fun ResultRow.toMessage(): Message {
         senderId = UserId(this[MessagesTable.senderId]),
         content = MessageContent.unsafe(this[MessagesTable.content]),
         imageUrl = this[MessagesTable.imageUrl],
+        replyToMessageId = this[MessagesTable.replyToMessageId]?.let { MessageId(it) },
         readAt = this[MessagesTable.readAt],
+        deletedAt = this[MessagesTable.deletedAt],
+        recalledAt = this[MessagesTable.recalledAt],
         createdAt = this[MessagesTable.createdAt]
     )
 }

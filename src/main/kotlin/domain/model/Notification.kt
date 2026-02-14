@@ -85,6 +85,48 @@ sealed interface NotificationEvent {
         val readByUserId: String,
         val timestamp: Long
     ) : NotificationEvent
+
+    /**
+     * 消息撤回事件
+     *
+     * 触发条件：用户撤回消息（3 分钟内）
+     * 推送对象：对话中的另一方
+     */
+    @Serializable
+    data class MessageRecalled(
+        val messageId: String,
+        val conversationId: String,
+        val recalledByUserId: String,
+        val timestamp: Long
+    ) : NotificationEvent
+
+    /**
+     * 打字状态事件
+     *
+     * 触发条件：用户正在输入/停止输入
+     * 推送对象：对话中的另一方
+     * 不持久化
+     */
+    @Serializable
+    data class TypingIndicator(
+        val conversationId: String,
+        val userId: String,
+        val isTyping: Boolean,
+        val timestamp: Long
+    ) : NotificationEvent
+
+    /**
+     * 用户在线状态变更事件
+     *
+     * 触发条件：用户上线/下线
+     * 推送对象：相关用户（关注者或对话参与者）
+     */
+    @Serializable
+    data class UserPresenceChanged(
+        val userId: String,
+        val isOnline: Boolean,
+        val timestamp: Long
+    ) : NotificationEvent
 }
 
 /**

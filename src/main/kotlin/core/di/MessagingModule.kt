@@ -19,5 +19,7 @@ val messagingModule = module {
     single { GetConversationsUseCase(get()) }
     single { GetMessagesUseCase(get()) }
     single { MarkConversationReadUseCase(get()) }
-    single { NotifyNewMessageUseCase(get(), get()) }
+    single { NotifyNewMessageUseCase(get(), get(), get()) }
+    single { DeleteMessageUseCase(get()) }
+    single { RecallMessageUseCase(get()) }
 }

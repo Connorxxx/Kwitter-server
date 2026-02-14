@@ -1,12 +1,15 @@
 # 私信（DM）客户端接入指南
 
-**更新时间**: 2026-02-11
+**更新时间**: 2026-02-14
+**版本**: v2
 **适用**: Android (Kotlin) / iOS (Swift) / Web (TypeScript)
 **前置阅读**: [auth-client-integration-guide.md](./auth-client-integration-guide.md)
 
 ---
 
 ## 1. 快速接入清单
+
+### 基础功能（v1）
 
 - [ ] 所有请求带 `Authorization: Bearer <token>` 请求头
 - [ ] 实现发送消息（`POST /v1/conversations/messages`）
@@ -16,16 +19,29 @@
 - [ ] WebSocket 监听 `new_message` 事件，实时显示新消息
 - [ ] WebSocket 监听 `messages_read` 事件，更新已读状态
 
+### 新增功能（v2）
+
+- [ ] 发送消息支持回复/引用（`replyToMessageId` 字段）
+- [ ] 实现消息删除（`DELETE /v1/messages/{id}`）
+- [ ] 实现消息撤回（`PUT /v1/messages/{id}/recall`），含 3 分钟倒计时 UI
+- [ ] WebSocket 监听 `message_recalled` 事件，实时更新 UI
+- [ ] WebSocket 发送 `typing` / `stop_typing` 事件
+- [ ] WebSocket 监听 `typing_indicator` 事件，显示打字状态
+- [ ] WebSocket 监听 `user_presence_changed` 事件，显示在线状态
+- [ ] 处理 `MessageResponse` 中的 `deletedAt` / `recalledAt` 字段（内容占位显示）
+
 ---
 
 ## 2. API 端点总览
 
-| 方法 | 路径 | 说明 | 认证 |
+| 方法 | 路径 | 说明 | 版本 |
 |------|------|------|------|
-| `GET` | `/v1/conversations` | 对话列表 | 必须 |
-| `POST` | `/v1/conversations/messages` | 发送消息 | 必须 |
-| `GET` | `/v1/conversations/{id}/messages` | 消息历史 | 必须 |
-| `PUT` | `/v1/conversations/{id}/read` | 标记已读 | 必须 |
+| `GET` | `/v1/conversations` | 对话列表 | v1 |
+| `POST` | `/v1/conversations/messages` | 发送消息（含回复） | v1, v2 扩展 |
+| `GET` | `/v1/conversations/{id}/messages` | 消息历史 | v1 |
+| `PUT` | `/v1/conversations/{id}/read` | 标记已读 | v1 |
+| `DELETE` | `/v1/messages/{id}` | 删除消息 | v2 |
+| `PUT` | `/v1/messages/{id}/recall` | 撤回消息 | v2 |
 
 所有端点要求 JWT 认证，未携带或过期返回 `401`。
 
@@ -45,7 +61,8 @@ Content-Type: application/json
 {
   "recipientId": "user-uuid-of-recipient",
   "content": "你好！",
-  "imageUrl": "https://example.com/photo.jpg"   // 可选
+  "imageUrl": "https://example.com/photo.jpg",
+  "replyToMessageId": "msg-uuid-to-reply"
 }
 ```
 
@@ -54,6 +71,7 @@ Content-Type: application/json
 | `recipientId` | string | 是 | 接收者的 UserId |
 | `content` | string | 是 | 消息文本，1~2000 字符 |
 | `imageUrl` | string | 否 | 图片 URL（复用 Media 上传系统） |
+| `replyToMessageId` | string | 否 | **[v2]** 被回复/引用的消息 ID |
 
 ### 成功响应 `201 Created`
 
@@ -64,7 +82,10 @@ Content-Type: application/json
   "senderId": "your-user-id",
   "content": "你好！",
   "imageUrl": "https://example.com/photo.jpg",
+  "replyToMessageId": "msg-uuid-to-reply",
   "readAt": null,
+  "deletedAt": null,
+  "recalledAt": null,
   "createdAt": 1707600000000
 }
 ```
@@ -77,17 +98,22 @@ Content-Type: application/json
 | `400` | `CONTENT_TOO_LONG` | 超过 2000 字符 |
 | `400` | `CANNOT_MESSAGE_SELF` | recipientId 等于自己 |
 | `404` | `RECIPIENT_NOT_FOUND` | 接收者不存在 |
-| `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息（未来） |
+| `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息 |
 | `403` | `USER_BLOCKED` | 存在拉黑关系，无法发送消息 |
 
 ### 示例代码
 
 ```kotlin
 // Android - Ktor Client
-suspend fun sendMessage(recipientId: String, content: String, imageUrl: String? = null): MessageResponse {
+suspend fun sendMessage(
+    recipientId: String,
+    content: String,
+    imageUrl: String? = null,
+    replyToMessageId: String? = null
+): MessageResponse {
     return httpClient.post("$BASE_URL/v1/conversations/messages") {
         contentType(ContentType.Application.Json)
-        setBody(SendMessageRequest(recipientId, content, imageUrl))
+        setBody(SendMessageRequest(recipientId, content, imageUrl, replyToMessageId))
     }.body()
 }
 
@@ -95,20 +121,26 @@ suspend fun sendMessage(recipientId: String, content: String, imageUrl: String? 
 data class SendMessageRequest(
     val recipientId: String,
     val content: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val replyToMessageId: String? = null
 )
 ```
 
 ```typescript
 // Web - TypeScript
-async function sendMessage(recipientId: string, content: string, imageUrl?: string) {
+async function sendMessage(
+  recipientId: string,
+  content: string,
+  imageUrl?: string,
+  replyToMessageId?: string
+) {
   const res = await fetch(`${BASE_URL}/v1/conversations/messages`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ recipientId, content, imageUrl })
+    body: JSON.stringify({ recipientId, content, imageUrl, replyToMessageId })
   });
 
   if (!res.ok) {
@@ -118,6 +150,24 @@ async function sendMessage(recipientId: string, content: string, imageUrl?: stri
   return res.json();
 }
 ```
+
+### 回复消息 [v2]
+
+回复消息时，传入被回复消息的 ID。客户端应在 UI 上展示被引用的原始消息内容。
+
+```kotlin
+// 回复某条消息
+val reply = sendMessage(
+    recipientId = otherUserId,
+    content = "同意你说的！",
+    replyToMessageId = originalMessage.id
+)
+```
+
+**客户端职责**:
+- 本地缓存消息列表，用 `replyToMessageId` 查找原始消息内容展示
+- 如果原始消息不在本地缓存中，可显示「引用的消息」占位符
+- 原始消息被删除/撤回时，引用区域显示「消息已删除」或「消息已撤回」
 
 ### 发送图片消息
 
@@ -156,7 +206,7 @@ Authorization: Bearer <token>
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `limit` | int | 20 | 每页条数 |
+| `limit` | int | 20 | 每页条数（1~100） |
 | `offset` | int | 0 | 跳过条数 |
 
 ### 成功响应 `200 OK`
@@ -178,7 +228,10 @@ Authorization: Bearer <token>
         "senderId": "user-uuid",
         "content": "See you tomorrow!",
         "imageUrl": null,
+        "replyToMessageId": null,
         "readAt": null,
+        "deletedAt": null,
+        "recalledAt": null,
         "createdAt": 1707600000000
       },
       "unreadCount": 3,
@@ -192,7 +245,8 @@ Authorization: Bearer <token>
 **关键字段说明**:
 - `otherUser`: 对话中对方的用户信息（不是你自己）
 - `lastMessage`: 最后一条消息的完整内容，用于列表预览；如果对话刚创建还没消息，为 `null`
-- `unreadCount`: 对方发送的、你尚未阅读的消息数量
+- `lastMessage.deletedAt` / `lastMessage.recalledAt`: 非 null 时，`content` 为空字符串，客户端应显示「消息已删除」或「消息已撤回」
+- `unreadCount`: 对方发送的、你尚未阅读的消息数量（排除已删除和已撤回的消息）
 - `hasMore`: 是否还有更多对话可加载
 
 ### 分页加载
@@ -231,7 +285,7 @@ Authorization: Bearer <token>
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `limit` | int | 50 | 每页条数 |
+| `limit` | int | 50 | 每页条数（1~100） |
 | `offset` | int | 0 | 跳过条数 |
 
 ### 成功响应 `200 OK`
@@ -245,16 +299,22 @@ Authorization: Bearer <token>
       "senderId": "other-user-id",
       "content": "See you tomorrow!",
       "imageUrl": null,
+      "replyToMessageId": null,
       "readAt": 1707600050000,
+      "deletedAt": null,
+      "recalledAt": null,
       "createdAt": 1707600000000
     },
     {
       "id": "msg-uuid-1",
       "conversationId": "conv-uuid",
       "senderId": "your-user-id",
-      "content": "Sounds good",
+      "content": "",
       "imageUrl": null,
+      "replyToMessageId": null,
       "readAt": 1707599900000,
+      "deletedAt": null,
+      "recalledAt": 1707599850000,
       "createdAt": 1707599800000
     }
   ],
@@ -262,7 +322,29 @@ Authorization: Bearer <token>
 }
 ```
 
-**注意**: 消息按 `createdAt DESC` 排序（最新在前）。客户端显示时需要反转，或使用 `reversed()` 在 UI 层处理。
+**注意**:
+- 消息按 `createdAt DESC` 排序（最新在前）。客户端显示时需要反转。
+- 已删除/已撤回的消息**仍然返回**（保证列表连续性），但 `content` 为空字符串，`imageUrl` 为 null。
+- 客户端根据 `deletedAt` / `recalledAt` 是否为 null 决定显示占位符。
+
+### 消息状态判断逻辑
+
+```kotlin
+// 客户端渲染消息的判断逻辑
+fun renderMessage(msg: MessageResponse) {
+    when {
+        msg.recalledAt != null -> showRecalledPlaceholder("消息已撤回")
+        msg.deletedAt != null  -> showDeletedPlaceholder("消息已删除")
+        else                   -> showNormalMessage(msg.content, msg.imageUrl)
+    }
+
+    // 如果是回复消息，显示引用区域
+    if (msg.replyToMessageId != null) {
+        val originalMsg = findMessageInCache(msg.replyToMessageId)
+        showReplyQuote(originalMsg)
+    }
+}
+```
 
 ### 错误响应
 
@@ -347,20 +429,185 @@ useEffect(() => {
 
 ---
 
-## 7. 实时通知（WebSocket）
+## 7. 删除消息 [v2]
+
+删除自己发送的消息（逻辑删除）。删除后消息仍存在于消息列表中，但 content 被清空，客户端显示「消息已删除」。
+
+### 请求
+
+```
+DELETE /v1/messages/{messageId}
+Authorization: Bearer <token>
+```
+
+### 成功响应 `204 No Content`
+
+（无响应体）
+
+### 错误响应
+
+| HTTP 状态 | code | 场景 |
+|-----------|------|------|
+| `404` | `MESSAGE_NOT_FOUND` | 消息不存在 |
+| `403` | `NOT_MESSAGE_SENDER` | 不是消息发送者 |
+| `403` | `NOT_PARTICIPANT` | 不是对话参与者 |
+| `409` | `MESSAGE_ALREADY_DELETED` | 消息已被删除 |
+
+### 示例代码
+
+```kotlin
+// Android
+suspend fun deleteMessage(messageId: String) {
+    httpClient.delete("$BASE_URL/v1/messages/$messageId")
+}
+
+// 调用后更新本地 UI
+fun onDeleteMessage(messageId: String) {
+    viewModelScope.launch {
+        api.deleteMessage(messageId)
+        // 更新本地消息状态
+        messages.replaceAll { msg ->
+            if (msg.id == messageId) msg.copy(
+                content = "",
+                imageUrl = null,
+                deletedAt = System.currentTimeMillis()
+            ) else msg
+        }
+    }
+}
+```
+
+```typescript
+// Web
+async function deleteMessage(messageId: string) {
+  await fetch(`${BASE_URL}/v1/messages/${messageId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  // 更新本地状态
+  updateMessage(messageId, {
+    content: '',
+    imageUrl: null,
+    deletedAt: Date.now()
+  });
+}
+```
+
+### 注意事项
+
+- 删除是**单向操作**，不通知对方（静默删除）
+- 对方的消息列表中该消息仍然正常显示原始内容
+- 如果你同时想让对方也看不到消息内容，应使用**撤回**功能（有 3 分钟时间限制）
+
+---
+
+## 8. 撤回消息 [v2]
+
+撤回自己发送的消息，仅限发送后 3 分钟内。撤回后双方都无法看到原始内容，并且对方会收到 WebSocket 实时通知。
+
+### 请求
+
+```
+PUT /v1/messages/{messageId}/recall
+Authorization: Bearer <token>
+```
+
+### 成功响应 `200 OK`
+
+```json
+{
+  "messageId": "msg-uuid",
+  "recalled": true
+}
+```
+
+### 错误响应
+
+| HTTP 状态 | code | 场景 |
+|-----------|------|------|
+| `404` | `MESSAGE_NOT_FOUND` | 消息不存在 |
+| `403` | `NOT_MESSAGE_SENDER` | 不是消息发送者 |
+| `400` | `RECALL_TIME_EXPIRED` | 超过 3 分钟撤回时限 |
+| `409` | `MESSAGE_ALREADY_RECALLED` | 消息已被撤回 |
+| `409` | `MESSAGE_ALREADY_DELETED` | 消息已被删除 |
+
+### 示例代码
+
+```kotlin
+// Android
+suspend fun recallMessage(messageId: String) {
+    httpClient.put("$BASE_URL/v1/messages/$messageId/recall")
+}
+
+// UI: 长按消息 → 弹出菜单 → 撤回
+fun onRecallMessage(message: MessageResponse) {
+    val elapsedMs = System.currentTimeMillis() - message.createdAt
+    val threeMinutesMs = 3 * 60 * 1000L
+
+    if (elapsedMs > threeMinutesMs) {
+        showToast("已超过 3 分钟，无法撤回")
+        return
+    }
+
+    viewModelScope.launch {
+        try {
+            api.recallMessage(message.id)
+            // 更新本地消息状态
+            messages.replaceAll { msg ->
+                if (msg.id == message.id) msg.copy(
+                    content = "",
+                    imageUrl = null,
+                    recalledAt = System.currentTimeMillis()
+                ) else msg
+            }
+        } catch (e: ApiException) {
+            when (e.code) {
+                "RECALL_TIME_EXPIRED" -> showToast("已超过 3 分钟，无法撤回")
+                "MESSAGE_ALREADY_RECALLED" -> showToast("消息已被撤回")
+                else -> showToast("撤回失败")
+            }
+        }
+    }
+}
+```
+
+```typescript
+// Web
+async function recallMessage(messageId: string) {
+  const res = await fetch(`${BASE_URL}/v1/messages/${messageId}/recall`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new ApiError(error.code, error.message);
+  }
+  return res.json();
+}
+```
+
+### 撤回 UI 建议
+
+- 只对自己发送的消息显示「撤回」选项
+- 发送超过 3 分钟的消息，UI 上隐藏「撤回」按钮（或灰置）
+- 可选：显示撤回倒计时（3:00 → 0:00）
+
+---
+
+## 9. 实时通知（WebSocket）
 
 私信通知通过已有的 WebSocket 通道推送，无需建立新连接。
 
-### 7.1 连接方式
-
-参考 [realtime-notification-client-examples.md](./realtime-notification-client-examples.md) 中的 WebSocket 连接方式：
+### 9.1 连接方式
 
 ```
 ws://host:port/v1/notifications/ws
 Authorization: Bearer <token>
 ```
 
-### 7.2 新消息通知
+### 9.2 新消息通知
 
 当有人给你发私信时，WebSocket 会收到：
 
@@ -378,7 +625,7 @@ Authorization: Bearer <token>
 }
 ```
 
-### 7.3 已读回执通知
+### 9.3 已读回执通知
 
 当对方读了你的消息时，WebSocket 会收到：
 
@@ -393,7 +640,203 @@ Authorization: Bearer <token>
 }
 ```
 
-### 7.4 客户端处理
+### 9.4 消息撤回通知 [v2]
+
+当对方撤回了一条消息时，WebSocket 会收到：
+
+```json
+{
+  "type": "message_recalled",
+  "data": {
+    "messageId": "msg-uuid",
+    "conversationId": "conv-uuid",
+    "recalledByUserId": "sender-uuid",
+    "timestamp": 1707600000000
+  }
+}
+```
+
+**客户端处理**: 收到此事件后，在本地消息列表中将对应消息标记为已撤回，将 content 清空并显示「对方撤回了一条消息」。
+
+### 9.5 打字状态指示器 [v2]
+
+#### 发送打字状态
+
+客户端在用户输入时，通过 WebSocket 发送打字事件：
+
+```json
+// 用户开始输入
+{"type": "typing", "conversationId": "conv-uuid"}
+
+// 用户停止输入
+{"type": "stop_typing", "conversationId": "conv-uuid"}
+```
+
+#### 接收打字状态
+
+当对方正在输入时，WebSocket 会收到：
+
+```json
+{
+  "type": "typing_indicator",
+  "data": {
+    "conversationId": "conv-uuid",
+    "userId": "other-user-id",
+    "isTyping": true,
+    "timestamp": 1707600000000
+  }
+}
+```
+
+#### 打字状态实现建议
+
+```kotlin
+// Android - 发送打字状态（带 debounce）
+class ChatViewModel(private val conversationId: String) : ViewModel() {
+    private var typingJob: Job? = null
+    private var isCurrentlyTyping = false
+
+    // 输入框文字变化时调用
+    fun onTextChanged(text: String) {
+        if (text.isNotEmpty() && !isCurrentlyTyping) {
+            isCurrentlyTyping = true
+            webSocket.send("""{"type":"typing","conversationId":"$conversationId"}""")
+        }
+
+        // 重置停止输入计时器
+        typingJob?.cancel()
+        typingJob = viewModelScope.launch {
+            delay(3000) // 3 秒无输入 → 发送 stop_typing
+            if (isCurrentlyTyping) {
+                isCurrentlyTyping = false
+                webSocket.send("""{"type":"stop_typing","conversationId":"$conversationId"}""")
+            }
+        }
+    }
+
+    // 发送消息后立即停止打字状态
+    fun onMessageSent() {
+        typingJob?.cancel()
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false
+            webSocket.send("""{"type":"stop_typing","conversationId":"$conversationId"}""")
+        }
+    }
+}
+```
+
+```typescript
+// Web - 打字状态 debounce
+let typingTimer: NodeJS.Timeout | null = null;
+let isTyping = false;
+
+function onInputChange(text: string, conversationId: string) {
+  if (text.length > 0 && !isTyping) {
+    isTyping = true;
+    ws.send(JSON.stringify({ type: 'typing', conversationId }));
+  }
+
+  // 重置计时器
+  if (typingTimer) clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    if (isTyping) {
+      isTyping = false;
+      ws.send(JSON.stringify({ type: 'stop_typing', conversationId }));
+    }
+  }, 3000);
+}
+```
+
+#### 显示打字状态
+
+```kotlin
+// Android - Compose UI
+@Composable
+fun TypingIndicator(isOtherUserTyping: Boolean) {
+    AnimatedVisibility(visible = isOtherUserTyping) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 三个跳动的圆点动画
+            TypingDots()
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("对方正在输入...", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+```
+
+**注意**: 收到 `typing_indicator` 后，客户端应启动一个超时计时器（如 5 秒）。如果 5 秒内没有再次收到 `typing_indicator(isTyping=true)`，自动隐藏打字状态。这样即使 `stop_typing` 消息丢失也不会一直显示打字中。
+
+### 9.6 在线状态 [v2]
+
+#### 接收在线状态变更
+
+当有用户上线或下线时，WebSocket 会收到：
+
+```json
+{
+  "type": "user_presence_changed",
+  "data": {
+    "userId": "user-uuid",
+    "isOnline": true,
+    "timestamp": 1707600000000
+  }
+}
+```
+
+#### 在线状态实现建议
+
+```kotlin
+// Android - 维护在线用户集合
+class PresenceManager {
+    private val _onlineUsers = mutableStateMapOf<String, Boolean>()
+    val onlineUsers: Map<String, Boolean> = _onlineUsers
+
+    fun handlePresenceEvent(userId: String, isOnline: Boolean) {
+        _onlineUsers[userId] = isOnline
+    }
+
+    fun isOnline(userId: String): Boolean = _onlineUsers[userId] == true
+}
+
+// 在对话列表/聊天页面显示在线状态
+@Composable
+fun OnlineIndicator(userId: String, presenceManager: PresenceManager) {
+    val isOnline = presenceManager.isOnline(userId)
+    Box(
+        modifier = Modifier
+            .size(10.dp)
+            .background(
+                color = if (isOnline) Color.Green else Color.Gray,
+                shape = CircleShape
+            )
+    )
+}
+```
+
+```typescript
+// Web - 在线状态管理
+const onlineUsers = new Set<string>();
+
+function handlePresenceChange(data: { userId: string; isOnline: boolean }) {
+  if (data.isOnline) {
+    onlineUsers.add(data.userId);
+  } else {
+    onlineUsers.delete(data.userId);
+  }
+  // 触发 UI 更新
+  updateOnlineStatus();
+}
+```
+
+**注意**:
+- 在线状态是当前连接 WebSocket 时的快照，首次连接时不会收到所有在线用户列表
+- 客户端可在打开对话时将对方默认标记为「未知」，收到 `user_presence_changed` 事件后更新
+- 多设备场景：用户从手机和电脑同时登录，只有当所有设备都断开连接后才会广播「下线」
+
+### 9.7 客户端统一消息处理
 
 ```kotlin
 // Android - WebSocket 消息处理
@@ -410,7 +853,7 @@ override fun onMessage(webSocket: WebSocket, text: String) {
             // 2. 如果当前在该对话的聊天页 → 追加消息到底部 + 自动标记已读
             if (currentConversationId == data.conversationId) {
                 chatState.appendMessage(data)
-                api.markAsRead(data.conversationId)  // 自动标记已读
+                api.markAsRead(data.conversationId)
             }
 
             // 3. 如果在其他页面 → 显示通知横幅 / 更新未读 badge
@@ -419,9 +862,28 @@ override fun onMessage(webSocket: WebSocket, text: String) {
 
         "messages_read" -> {
             val data = json.decodeFromString<MessagesReadEvent>(message.dataJson)
-
-            // 更新消息的已读状态（双勾 ✓✓）
             chatState.markMessagesAsRead(data.conversationId, data.timestamp)
+        }
+
+        "message_recalled" -> {
+            val data = json.decodeFromString<MessageRecalledEvent>(message.dataJson)
+            // 更新本地消息列表：将对应消息标记为已撤回
+            chatState.markMessageAsRecalled(data.messageId)
+            // 如果在对话列表页，且该消息是最后一条消息，更新预览
+            conversationListState.updateLastMessageIfRecalled(data.conversationId, data.messageId)
+        }
+
+        "typing_indicator" -> {
+            val data = json.decodeFromString<TypingIndicatorEvent>(message.dataJson)
+            // 仅当用户在该对话页面时显示打字状态
+            if (currentConversationId == data.conversationId) {
+                chatState.setOtherUserTyping(data.isTyping)
+            }
+        }
+
+        "user_presence_changed" -> {
+            val data = json.decodeFromString<UserPresenceEvent>(message.dataJson)
+            presenceManager.handlePresenceEvent(data.userId, data.isOnline)
         }
 
         // ... 其他通知类型 (new_post, post_liked, etc.)
@@ -438,39 +900,25 @@ ws.onmessage = (event) => {
     case 'new_message':
       handleNewMessage(message.data);
       break;
-
     case 'messages_read':
       handleMessagesRead(message.data);
       break;
+    case 'message_recalled':
+      handleMessageRecalled(message.data);
+      break;
+    case 'typing_indicator':
+      handleTypingIndicator(message.data);
+      break;
+    case 'user_presence_changed':
+      handlePresenceChange(message.data);
+      break;
   }
 };
-
-function handleNewMessage(data: NewMessageEvent) {
-  // 更新对话列表
-  updateConversationList(data.conversationId, {
-    lastMessagePreview: data.contentPreview,
-    senderName: data.senderDisplayName,
-    timestamp: data.timestamp
-  });
-
-  // 如果在当前对话中，追加消息
-  if (currentConversation === data.conversationId) {
-    appendMessageToChat(data);
-    markAsRead(data.conversationId);
-  } else {
-    incrementUnreadBadge();
-  }
-}
-
-function handleMessagesRead(data: MessagesReadEvent) {
-  // 更新该对话中所有你发送的消息为已读
-  markSentMessagesAsRead(data.conversationId, data.timestamp);
-}
 ```
 
 ---
 
-## 8. TypeScript 类型定义
+## 10. TypeScript 类型定义
 
 ```typescript
 // ========== Request ==========
@@ -478,6 +926,7 @@ interface SendMessageRequest {
   recipientId: string;
   content: string;
   imageUrl?: string;
+  replyToMessageId?: string;       // [v2]
 }
 
 // ========== Response ==========
@@ -485,9 +934,12 @@ interface MessageResponse {
   id: string;
   conversationId: string;
   senderId: string;
-  content: string;
-  imageUrl: string | null;
-  readAt: number | null;       // null = 未读, 数字 = 已读时间戳
+  content: string;                  // 已删除/已撤回时为 ""
+  imageUrl: string | null;          // 已删除/已撤回时为 null
+  replyToMessageId: string | null;  // [v2]
+  readAt: number | null;            // null = 未读, 数字 = 已读时间戳
+  deletedAt: number | null;         // [v2] null = 未删除
+  recalledAt: number | null;        // [v2] null = 未撤回
   createdAt: number;
 }
 
@@ -521,7 +973,7 @@ interface MarkReadResponse {
   readAt: number;
 }
 
-// ========== WebSocket Events ==========
+// ========== WebSocket Events (服务端 → 客户端) ==========
 interface NewMessageEvent {
   messageId: string;
   conversationId: string;
@@ -536,30 +988,81 @@ interface MessagesReadEvent {
   readByUserId: string;
   timestamp: number;
 }
+
+// [v2]
+interface MessageRecalledEvent {
+  messageId: string;
+  conversationId: string;
+  recalledByUserId: string;
+  timestamp: number;
+}
+
+// [v2]
+interface TypingIndicatorEvent {
+  conversationId: string;
+  userId: string;
+  isTyping: boolean;
+  timestamp: number;
+}
+
+// [v2]
+interface UserPresenceEvent {
+  userId: string;
+  isOnline: boolean;
+  timestamp: number;
+}
+
+// ========== WebSocket Messages (客户端 → 服务端) ==========
+// [v2] 打字状态
+interface TypingMessage {
+  type: 'typing' | 'stop_typing';
+  conversationId: string;
+}
+
+// 心跳
+interface PingMessage {
+  type: 'ping';
+}
+
+// Post 订阅
+interface PostSubscriptionMessage {
+  type: 'subscribe_post' | 'unsubscribe_post';
+  postId: string;
+}
 ```
 
 ---
 
-## 9. Kotlin 数据类（Android / KMP）
+## 11. Kotlin 数据类（Android / KMP）
 
 ```kotlin
+// ========== Request ==========
 @Serializable
 data class SendMessageRequest(
     val recipientId: String,
     val content: String,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val replyToMessageId: String? = null    // [v2]
 )
 
+// ========== Response ==========
 @Serializable
 data class MessageResponse(
     val id: String,
     val conversationId: String,
     val senderId: String,
-    val content: String,
-    val imageUrl: String?,
+    val content: String,                     // 已删除/已撤回时为 ""
+    val imageUrl: String?,                   // 已删除/已撤回时为 null
+    val replyToMessageId: String?,           // [v2]
     val readAt: Long?,
+    val deletedAt: Long?,                    // [v2] null = 未删除
+    val recalledAt: Long?,                   // [v2] null = 未撤回
     val createdAt: Long
-)
+) {
+    val isDeleted: Boolean get() = deletedAt != null
+    val isRecalled: Boolean get() = recalledAt != null
+    val isNormalMessage: Boolean get() = !isDeleted && !isRecalled
+}
 
 @Serializable
 data class ConversationUserDto(
@@ -595,13 +1098,57 @@ data class MarkReadResponse(
     val conversationId: String,
     val readAt: Long
 )
+
+// ========== WebSocket Events ==========
+@Serializable
+data class NewMessageEvent(
+    val messageId: String,
+    val conversationId: String,
+    val senderDisplayName: String,
+    val senderUsername: String,
+    val contentPreview: String,
+    val timestamp: Long
+)
+
+@Serializable
+data class MessagesReadEvent(
+    val conversationId: String,
+    val readByUserId: String,
+    val timestamp: Long
+)
+
+// [v2]
+@Serializable
+data class MessageRecalledEvent(
+    val messageId: String,
+    val conversationId: String,
+    val recalledByUserId: String,
+    val timestamp: Long
+)
+
+// [v2]
+@Serializable
+data class TypingIndicatorEvent(
+    val conversationId: String,
+    val userId: String,
+    val isTyping: Boolean,
+    val timestamp: Long
+)
+
+// [v2]
+@Serializable
+data class UserPresenceEvent(
+    val userId: String,
+    val isOnline: Boolean,
+    val timestamp: Long
+)
 ```
 
 ---
 
-## 10. 完整交互流程
+## 12. 完整交互流程
 
-### 10.1 首次发起对话
+### 12.1 首次发起对话
 
 ```
 用户 A 给用户 B 发消息（A 和 B 之前没聊过）
@@ -610,31 +1157,33 @@ A: POST /v1/conversations/messages
    { "recipientId": "B-id", "content": "Hi!" }
 
 Server:
-  1. 创建 Conversation (A, B)     ← 自动
-  2. 保存 Message                 ← 自动
-  3. 推送 WebSocket "new_message" 给 B  ← 异步
+  1. 检查 B 的 dmPermission（如果 MUTUAL_FOLLOW，验证互关）
+  2. 创建 Conversation (A, B)     ← 自动
+  3. 保存 Message                 ← 自动
+  4. 推送 WebSocket "new_message" 给 B  ← 异步
 
 A ← 201 { id: "msg-1", conversationId: "conv-1", ... }
 B ← WS  { type: "new_message", data: { messageId: "msg-1", ... } }
 ```
 
-### 10.2 继续对话
+### 12.2 回复消息
 
 ```
-B 回复 A
+B 回复 A 的消息（引用 msg-1）
 
 B: POST /v1/conversations/messages
-   { "recipientId": "A-id", "content": "Hey!" }
+   { "recipientId": "A-id", "content": "你好！", "replyToMessageId": "msg-1" }
 
 Server:
   1. 找到已有的 Conversation      ← 自动
-  2. 保存 Message
+  2. 保存 Message (replyToMessageId = "msg-1")
   3. 推送给 A
 
 A ← WS { type: "new_message", data: { ... } }
+B ← 201 { ..., "replyToMessageId": "msg-1" }
 ```
 
-### 10.3 查看对话 + 已读
+### 12.3 查看对话 + 已读
 
 ```
 A 打开和 B 的对话
@@ -643,14 +1192,53 @@ A: GET /v1/conversations/conv-1/messages?limit=50
 A: PUT /v1/conversations/conv-1/read
 
 Server:
-  1. 返回消息历史
+  1. 返回消息历史（含已删除/已撤回消息的占位）
   2. 标记 B 发送的未读消息为已读
-  3. （未来）推送 "messages_read" 给 B
+  3. 推送 "messages_read" 给 B
+```
+
+### 12.4 撤回消息
+
+```
+A 发送了一条消息后反悔（1 分钟内）
+
+A: PUT /v1/messages/msg-2/recall
+
+Server:
+  1. 校验 A 是发送者
+  2. 校验未超过 3 分钟
+  3. 设置 recalled_at
+  4. 推送 WebSocket "message_recalled" 给 B
+
+A ← 200 { "messageId": "msg-2", "recalled": true }
+B ← WS  { type: "message_recalled", data: { messageId: "msg-2", ... } }
+```
+
+### 12.5 打字状态
+
+```
+A 开始输入
+
+A → WS { "type": "typing", "conversationId": "conv-1" }
+
+Server:
+  1. 查找 conv-1 的另一方（B）
+  2. 推送 typing_indicator 给 B
+
+B ← WS { type: "typing_indicator", data: { isTyping: true, ... } }
+B 的 UI 显示 "A 正在输入..."
+
+A 停止输入 3 秒后
+
+A → WS { "type": "stop_typing", "conversationId": "conv-1" }
+
+B ← WS { type: "typing_indicator", data: { isTyping: false, ... } }
+B 的 UI 隐藏打字状态
 ```
 
 ---
 
-## 11. 错误码汇总
+## 13. 错误码汇总
 
 | HTTP 状态 | code | message | 场景 |
 |-----------|------|---------|------|
@@ -658,12 +1246,17 @@ Server:
 | `400` | `CONTENT_TOO_LONG` | 消息内容过长：最多 2000 字符 | content > 2000 字符 |
 | `400` | `CANNOT_MESSAGE_SELF` | 不能给自己发送消息 | recipientId = 自己 |
 | `400` | `MISSING_PARAM` | 缺少参数 | URL 参数缺失 |
+| `400` | `RECALL_TIME_EXPIRED` | 消息撤回超时，仅支持 3 分钟内 | 超过 3 分钟撤回 |
 | `401` | `UNAUTHORIZED` | 未授权访问 | 未携带或无效 JWT |
 | `403` | `NOT_PARTICIPANT` | 您不是该对话的参与者 | 试图查看他人对话 |
-| `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息 | 对方开启了互关限制（未来）|
+| `403` | `NOT_MESSAGE_SENDER` | 只有消息发送者可以执行此操作 | 非发送者删除/撤回 |
+| `403` | `DM_PERMISSION_DENIED` | 对方仅允许互关用户发消息 | 对方开启了互关限制 |
 | `403` | `USER_BLOCKED` | 无法发送消息，用户已被拉黑 | 存在拉黑关系（双向） |
 | `404` | `RECIPIENT_NOT_FOUND` | 接收者不存在 | recipientId 无效 |
 | `404` | `CONVERSATION_NOT_FOUND` | 对话不存在 | conversationId 无效 |
+| `404` | `MESSAGE_NOT_FOUND` | 消息不存在 | messageId 无效 |
+| `409` | `MESSAGE_ALREADY_RECALLED` | 消息已被撤回 | 重复撤回 |
+| `409` | `MESSAGE_ALREADY_DELETED` | 消息已被删除 | 重复删除或对已删除消息撤回 |
 
 错误响应格式统一为：
 
@@ -677,7 +1270,7 @@ Server:
 
 ---
 
-## 12. 测试检查清单
+## 14. 测试检查清单
 
 ### 基础流程
 
@@ -690,21 +1283,71 @@ Server:
 | 5 | A 标记已读 | B 的消息 readAt 被设置 |
 | 6 | A 再查对话列表 | unreadCount = 0 |
 
+### 回复消息 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 7 | A 回复 B 的某条消息 | 201，返回的 replyToMessageId 不为 null |
+| 8 | 查消息历史 | 回复消息中 replyToMessageId 正确指向原始消息 |
+
+### 消息删除 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 9 | A 删除自己的消息 | 204，消息历史中该消息 content 为空、deletedAt 不为 null |
+| 10 | A 删除 B 的消息 | 403 `NOT_MESSAGE_SENDER` |
+| 11 | A 再次删除同一条消息 | 409 `MESSAGE_ALREADY_DELETED` |
+| 12 | 删除消息后查对话列表 | unreadCount 不计入已删除消息 |
+
+### 消息撤回 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 13 | A 发送消息后 1 分钟内撤回 | 200，B 收到 `message_recalled` WebSocket 事件 |
+| 14 | A 发送消息后 4 分钟撤回 | 400 `RECALL_TIME_EXPIRED` |
+| 15 | A 撤回 B 的消息 | 403 `NOT_MESSAGE_SENDER` |
+| 16 | A 对同一条消息撤回两次 | 409 `MESSAGE_ALREADY_RECALLED` |
+| 17 | 撤回已删除的消息 | 409 `MESSAGE_ALREADY_DELETED` |
+
+### 打字状态 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 18 | A 发送 typing 事件 | B 收到 `typing_indicator(isTyping=true)` |
+| 19 | A 发送 stop_typing 事件 | B 收到 `typing_indicator(isTyping=false)` |
+| 20 | A 发送 typing 到不存在的对话 | WebSocket 返回 error |
+
+### 在线状态 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 21 | A 连接 WebSocket | 广播 `user_presence_changed(isOnline=true)` |
+| 22 | A 断开最后一个 WebSocket 连接 | 广播 `user_presence_changed(isOnline=false)` |
+| 23 | A 有两个设备连接，断开一个 | 不广播下线（仍有一个设备在线） |
+
+### DM 权限 [v2]
+
+| # | 测试场景 | 预期结果 |
+|---|---------|---------|
+| 24 | B 设置 dmPermission=MUTUAL_FOLLOW，A 未关注 B | 403 `DM_PERMISSION_DENIED` |
+| 25 | B 设置 dmPermission=MUTUAL_FOLLOW，A 和 B 互关 | 201 发送成功 |
+| 26 | B 设置 dmPermission=EVERYONE | 201 任何人都能发送 |
+
 ### 边界和错误
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 7 | 发空消息 | 400 `EMPTY_CONTENT` |
-| 8 | 发 2001 字符消息 | 400 `CONTENT_TOO_LONG` |
-| 9 | 发消息给自己 | 400 `CANNOT_MESSAGE_SELF` |
-| 10 | 发消息给不存在的用户 | 404 `RECIPIENT_NOT_FOUND` |
-| 11 | 查看不存在的对话消息 | 404 `CONVERSATION_NOT_FOUND` |
-| 12 | 查看他人对话的消息 | 403 `NOT_PARTICIPANT` |
+| 27 | 发空消息 | 400 `EMPTY_CONTENT` |
+| 28 | 发 2001 字符消息 | 400 `CONTENT_TOO_LONG` |
+| 29 | 发消息给自己 | 400 `CANNOT_MESSAGE_SELF` |
+| 30 | 发消息给不存在的用户 | 404 `RECIPIENT_NOT_FOUND` |
+| 31 | 查看不存在的对话消息 | 404 `CONVERSATION_NOT_FOUND` |
+| 32 | 查看他人对话的消息 | 403 `NOT_PARTICIPANT` |
 
 ### 实时通知
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 13 | A 发消息，B 在线 | B 的 WebSocket 收到 `new_message` |
-| 14 | A 发消息，B 离线 | 无 WebSocket 推送（消息已持久化，B 上线后从 API 获取） |
-| 15 | A 标记已读 | （未来）B 的 WebSocket 收到 `messages_read` |
+| 33 | A 发消息，B 在线 | B 的 WebSocket 收到 `new_message` |
+| 34 | A 发消息，B 离线 | 无 WebSocket 推送（消息已持久化，B 上线后从 API 获取） |
+| 35 | A 标记已读 | B 的 WebSocket 收到 `messages_read` |

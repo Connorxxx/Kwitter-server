@@ -26,9 +26,19 @@ fun Message.toResponse(): MessageResponse {
         id = id.value,
         conversationId = conversationId.value,
         senderId = senderId.value,
-        content = content.value,
-        imageUrl = imageUrl,
+        content = when {
+            isRecalled -> ""
+            isDeleted -> ""
+            else -> content.value
+        },
+        imageUrl = when {
+            isRecalled || isDeleted -> null
+            else -> imageUrl
+        },
+        replyToMessageId = replyToMessageId?.value,
         readAt = readAt,
+        deletedAt = deletedAt,
+        recalledAt = recalledAt,
         createdAt = createdAt
     )
 }
@@ -79,5 +89,29 @@ fun MessageError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = when (t
         HttpStatusCode.Forbidden to ApiErrorResponse(
             code = "USER_BLOCKED",
             message = "无法发送消息，用户已被拉黑: ${userId.value}"
+        )
+
+    is MessageError.NotMessageSender ->
+        HttpStatusCode.Forbidden to ApiErrorResponse(
+            code = "NOT_MESSAGE_SENDER",
+            message = "只有消息发送者可以执行此操作"
+        )
+
+    is MessageError.RecallTimeExpired ->
+        HttpStatusCode.BadRequest to ApiErrorResponse(
+            code = "RECALL_TIME_EXPIRED",
+            message = "消息撤回超时，仅支持发送后 3 分钟内撤回"
+        )
+
+    is MessageError.MessageAlreadyRecalled ->
+        HttpStatusCode.Conflict to ApiErrorResponse(
+            code = "MESSAGE_ALREADY_RECALLED",
+            message = "消息已被撤回"
+        )
+
+    is MessageError.MessageAlreadyDeleted ->
+        HttpStatusCode.Conflict to ApiErrorResponse(
+            code = "MESSAGE_ALREADY_DELETED",
+            message = "消息已被删除"
         )
 }

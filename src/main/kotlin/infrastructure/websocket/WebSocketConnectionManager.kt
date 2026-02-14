@@ -237,6 +237,17 @@ class WebSocketConnectionManager {
     fun getOnlineUserCount(): Int = userSessions.size
 
     /**
+     * 检查用户是否在线
+     */
+    fun isUserOnline(userId: UserId): Boolean = userSessions.containsKey(userId)
+
+    /**
+     * 获取一批用户的在线状态
+     */
+    fun getOnlineStatus(userIds: Collection<UserId>): Map<UserId, Boolean> =
+        userIds.associateWith { isUserOnline(it) }
+
+    /**
      * 获取特定 Post 的订阅者数量
      */
     fun getPostSubscriberCount(postId: PostId): Int = postSubscriptions[postId]?.size ?: 0

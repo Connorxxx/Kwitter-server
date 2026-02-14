@@ -36,6 +36,7 @@ data class User(
     val displayName: DisplayName,
     val bio: Bio = Bio.unsafe(""),
     val avatarUrl: String? = null,
+    val dmPermission: DmPermission = DmPermission.EVERYONE,
     val passwordChangedAt: Long = System.currentTimeMillis(),
     val createdAt: Long = System.currentTimeMillis()
 )

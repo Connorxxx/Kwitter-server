@@ -23,6 +23,9 @@ object UsersTable : Table("users") {
     // 头像 URL (可选)
     val avatarUrl = varchar("avatar_url", 256).nullable()
 
+    // DM 权限设置（EVERYONE / MUTUAL_FOLLOW）
+    val dmPermission = varchar("dm_permission", 20).default("EVERYONE")
+
     // 密码修改时间（用于敏感路由校验 tokenIssuedAt < passwordChangedAt）
     val passwordChangedAt = long("password_changed_at").default(0)
 

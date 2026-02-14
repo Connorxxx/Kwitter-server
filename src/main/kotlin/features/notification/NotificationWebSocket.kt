@@ -1,8 +1,10 @@
 package com.connor.features.notification
 
 import com.connor.core.security.UserPrincipal
+import com.connor.domain.model.NotificationEvent
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
+import com.connor.domain.repository.NotificationRepository
 import com.connor.infrastructure.websocket.WebSocketConnectionManager
 import io.ktor.server.auth.*
 import io.ktor.server.routing.*
@@ -23,11 +25,13 @@ private val logger = LoggerFactory.getLogger("NotificationWebSocket")
  * 功能：
  * 1. 建立 WebSocket 连接
  * 2. 处理客户端订阅消息
- * 3. 推送实时通知
+ * 3. 推送实时通知（含打字状态、在线状态）
  * 4. 自动清理断开的连接
  */
 fun Route.notificationWebSocket(
-    connectionManager: WebSocketConnectionManager
+    connectionManager: WebSocketConnectionManager,
+    notificationRepository: NotificationRepository,
+    messageRepository: com.connor.domain.repository.MessageRepository
 ) {
     authenticate("auth-jwt") {
         webSocket("/v1/notifications/ws") {
@@ -50,12 +54,26 @@ fun Route.notificationWebSocket(
                 // 发送连接成功消息
                 send(Frame.Text("""{"type":"connected","userId":"${userId.value}"}"""))
 
+                // 广播上线状态
+                try {
+                    notificationRepository.notifyUserPresenceChanged(
+                        userId,
+                        NotificationEvent.UserPresenceChanged(
+                            userId = userId.value,
+                            isOnline = true,
+                            timestamp = System.currentTimeMillis()
+                        )
+                    )
+                } catch (e: Exception) {
+                    logger.error("Failed to broadcast online status for user {}", userId.value, e)
+                }
+
                 // 处理客户端消息
                 for (frame in incoming) {
                     when (frame) {
                         is Frame.Text -> {
                             val text = frame.readText()
-                            handleClientMessage(text, userId, this, connectionManager)
+                            handleClientMessage(text, userId, this, connectionManager, notificationRepository, messageRepository)
                         }
                         is Frame.Close -> {
                             logger.info("WebSocket close frame received: userId={}", userId.value)
@@ -75,6 +93,23 @@ fun Route.notificationWebSocket(
             } finally {
                 // 清理连接和所有订阅
                 connectionManager.removeUserSession(this)
+
+                // 仅当用户所有会话都断开时才广播下线
+                if (!connectionManager.isUserOnline(userId)) {
+                    try {
+                        notificationRepository.notifyUserPresenceChanged(
+                            userId,
+                            NotificationEvent.UserPresenceChanged(
+                                userId = userId.value,
+                                isOnline = false,
+                                timestamp = System.currentTimeMillis()
+                            )
+                        )
+                    } catch (e: Exception) {
+                        logger.error("Failed to broadcast offline status for user {}", userId.value, e)
+                    }
+                }
+
                 logger.info("WebSocket disconnected: userId={}", userId.value)
             }
         }
@@ -93,7 +128,9 @@ private suspend fun handleClientMessage(
     text: String,
     userId: UserId,
     session: DefaultWebSocketServerSession,
-    connectionManager: WebSocketConnectionManager
+    connectionManager: WebSocketConnectionManager,
+    notificationRepository: NotificationRepository,
+    messageRepository: com.connor.domain.repository.MessageRepository
 ) {
     try {
         val json = Json { ignoreUnknownKeys = true }
@@ -122,6 +159,37 @@ private suspend fun handleClientMessage(
                 connectionManager.unsubscribeFromPost(PostId(postId), session)
                 session.send(Frame.Text("""{"type":"unsubscribed","postId":"$postId"}"""))
                 logger.debug("User unsubscribed from post: userId={}, postId={}", userId.value, postId)
+            }
+
+            "typing", "stop_typing" -> {
+                val conversationId = message.conversationId
+                if (conversationId == null) {
+                    session.send(Frame.Text("""{"type":"error","message":"Missing conversationId"}"""))
+                    return
+                }
+
+                val isTyping = message.type == "typing"
+                val convId = com.connor.domain.model.ConversationId(conversationId)
+                val conversation = messageRepository.findConversationById(convId)
+                if (conversation == null) {
+                    session.send(Frame.Text("""{"type":"error","message":"Conversation not found"}"""))
+                    return
+                }
+
+                // Determine the partner
+                val partnerId = if (conversation.participant1Id == userId)
+                    conversation.participant2Id else conversation.participant1Id
+
+                val event = NotificationEvent.TypingIndicator(
+                    conversationId = conversationId,
+                    userId = userId.value,
+                    isTyping = isTyping,
+                    timestamp = System.currentTimeMillis()
+                )
+
+                notificationRepository.notifyTypingIndicator(partnerId, event)
+
+                logger.trace("Typing indicator: userId={}, conversationId={}, isTyping={}", userId.value, conversationId, isTyping)
             }
 
             "ping" -> {

@@ -25,7 +25,10 @@ object MessagesTable : Table("messages") {
     val senderId = varchar("sender_id", 36).references(UsersTable.id)
     val content = varchar("content", 2000)
     val imageUrl = varchar("image_url", 256).nullable()
+    val replyToMessageId = varchar("reply_to_message_id", 36).nullable()
     val readAt = long("read_at").nullable()
+    val deletedAt = long("deleted_at").nullable()
+    val recalledAt = long("recalled_at").nullable()
     val createdAt = long("created_at")
 
     override val primaryKey = PrimaryKey(id)
