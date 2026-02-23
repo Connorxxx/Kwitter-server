@@ -198,10 +198,13 @@ CREATE TABLE refresh_token_families (
 
 ## 6.3 为什么改为 `STALE_REFRESH_TOKEN`
 
+> **✅ 已采纳实施**（2026-02-24）：grace period 内不再签发新 token pair，改为返回 `StaleRefreshToken` 错误（HTTP 409）。
+> 见 `RefreshTokenUseCase.handlePossibleReuse()` 和 `AuthMappers.kt` 中的 409 映射。
+
 这是本次去熵增的关键决策：
 
-1. 保持“单 family 单 active token”不变量。  
-2. 避免宽限期内重复签发导致的 token 分叉。  
+1. 保持"单 family 单 active token"不变量。
+2. 避免宽限期内重复签发导致的 token 分叉。
 3. 并发语义可解释，客户端可实现确定性恢复。
 
 ---

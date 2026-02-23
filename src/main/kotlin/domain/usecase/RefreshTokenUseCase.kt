@@ -107,8 +107,10 @@ class RefreshTokenUseCase(
      * 处理可能的 token reuse
      *
      * 已撤销的 token 被使用可能是：
-     * 1. 并发请求（grace period 内） → 允许
+     * 1. 并发请求（grace period 内） → 返回 StaleRefreshToken，客户端应使用最新本地 token 重试
      * 2. Token 被盗用（replay attack） → 撤销整个 family + 通知
+     *
+     * 关键设计：宽限期内不再签发新 token pair，保持"单 family 单 active token"不变量。
      */
     private suspend fun handlePossibleReuse(storedToken: RefreshToken): Either<AuthError, TokenPair> {
         val now = System.currentTimeMillis()
@@ -119,10 +121,10 @@ class RefreshTokenUseCase(
             val timeSinceRevoked = now - latestRevoked.revokedAt
             if (timeSinceRevoked <= authTokenConfig.refreshTokenGracePeriodMs) {
                 logger.info(
-                    "Grace period hit: userId={}, familyId={}, timeSinceRevoked={}ms",
+                    "Grace period hit (stale token): userId={}, familyId={}, timeSinceRevoked={}ms",
                     storedToken.userId.value, storedToken.familyId, timeSinceRevoked
                 )
-                return issueNewTokenPair(storedToken.userId, storedToken.familyId)
+                return AuthError.StaleRefreshToken.left()
             }
         }
 

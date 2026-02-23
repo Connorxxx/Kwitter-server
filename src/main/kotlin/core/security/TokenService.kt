@@ -12,9 +12,10 @@ class TokenService(
     private val config: TokenConfig
 ) : TokenIssuer {
     /**
-     * 生成 JWT Token（短期：20分钟）
+     * 生成 JWT Token（短期：3分钟）
      *
      * 包含 issuedAt 声明，用于敏感路由校验 passwordChangedAt > issuedAt
+     * 配合服务端 15 秒 leeway，实际有效窗口 ~3:15
      */
     override fun generate(userId: String, displayName: String, username: String): String {
         val now = System.currentTimeMillis()
@@ -57,7 +58,7 @@ data class TokenConfig(
     val audience: String,
     val secret: String,
     val realm: String,
-    val expiresIn: Long = 20L * 60 * 1000, // 20分钟过期
-    val refreshTokenExpiresIn: Long = 30L * 24 * 60 * 60 * 1000, // 30天过期
+    val expiresIn: Long = 3L * 60 * 1000, // 3分钟过期（配合服务端 15s leeway，实际窗口 ~3:15）
+    val refreshTokenExpiresIn: Long = 14L * 24 * 60 * 60 * 1000, // 14天过期
     val refreshTokenGracePeriod: Long = 10_000 // 10秒宽限期（并发刷新）
 )

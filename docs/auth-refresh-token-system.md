@@ -10,8 +10,8 @@
 
 ### 1.1 核心设计原则
 
-- **JWT 无状态快速验证**：20分钟有效期，普通接口不查库
-- **Refresh Token 长期登录**：30天有效期，Token Rotation 确保安全
+- **JWT 无状态快速验证**：3分钟有效期 + 15秒服务端 leeway，普通接口不查库
+- **Refresh Token 长期登录**：14天有效期，Token Rotation 确保安全
 - **双重保险机制**：WebSocket 主动推送 + 敏感路由数据库校验，无需 Redis
 - **Token Family 防重放**：同一登录会话的 token 共享 familyId，检测到旧 token 被重用时撤销整个 family
 
@@ -41,8 +41,9 @@
 
 | 参数 | 值 | 说明 |
 |------|-----|------|
-| JWT 有效期 | 20 分钟 | 短期无状态令牌 |
-| Refresh Token 有效期 | 30 天 | 长期登录凭证 |
+| JWT 有效期 | 3 分钟 | 短期无状态令牌（配合 15 秒服务端 leeway，实际窗口 ~3:15） |
+| Refresh Token 有效期 | 14 天 | 长期登录凭证 |
+| JWT 服务端 Leeway | 15 秒 | 处理慢网络和时钟漂移，对 exp/iat/nbf 统一生效 |
 | 并发刷新宽限期 | 10 秒 | 多设备/多 tab 同时刷新时的容错窗口 |
 | JWT 算法 | HMAC256 | 对称签名 |
 | Refresh Token 格式 | 48字节随机 hex | 96字符，SecureRandom 生成 |
@@ -63,7 +64,7 @@
 ```
 
 - `iat` (issuedAt): 签发时间戳（毫秒），敏感路由用于对比 `passwordChangedAt`
-- `exp`: 过期时间 = `iat` + 20分钟
+- `exp`: 过期时间 = `iat` + 3分钟
 
 ---
 
@@ -141,14 +142,14 @@ ALTER TABLE users ADD COLUMN password_changed_at BIGINT DEFAULT 0;
   "createdAt": 1707600000000,
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "refreshToken": "a1b2c3d4e5f6...（96字符hex）",
-  "expiresIn": 1200000
+  "expiresIn": 180000
 }
 ```
 
 **字段说明**:
-- `token`: JWT，20分钟有效，放入 `Authorization: Bearer <token>` 请求头
-- `refreshToken`: 刷新令牌，30天有效，客户端安全存储（如 EncryptedSharedPreferences）
-- `expiresIn`: JWT 有效期毫秒数（1200000 = 20分钟），客户端可用于提前刷新
+- `token`: JWT，3分钟有效，放入 `Authorization: Bearer <token>` 请求头
+- `refreshToken`: 刷新令牌，14天有效，客户端安全存储（如 EncryptedSharedPreferences）
+- `expiresIn`: JWT 有效期毫秒数（180000 = 3分钟），客户端可用于提前刷新（建议在 80% 生命周期时刷新）
 
 **错误响应**:
 
@@ -185,7 +186,7 @@ ALTER TABLE users ADD COLUMN password_changed_at BIGINT DEFAULT 0;
   "createdAt": 1707600000000,
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "refreshToken": "a1b2c3d4e5f6...",
-  "expiresIn": 1200000
+  "expiresIn": 180000
 }
 ```
 
@@ -214,7 +215,7 @@ Token 刷新端点。**不需要 JWT 认证**（因为 JWT 已过期才会调用
 {
   "token": "eyJhbGciOiJIUzI1NiIs...（新 JWT）",
   "refreshToken": "x9y8z7w6v5u4...（新 refresh token）",
-  "expiresIn": 1200000
+  "expiresIn": 180000
 }
 ```
 
@@ -225,8 +226,9 @@ Token 刷新端点。**不需要 JWT 认证**（因为 JWT 已过期才会调用
 | 状态码 | code | 场景 | 客户端处理 |
 |--------|------|------|-----------|
 | 401 | REFRESH_TOKEN_INVALID | token 不存在或格式错误 | 跳转登录页 |
-| 401 | REFRESH_TOKEN_EXPIRED | token 已过期（>30天） | 跳转登录页 |
+| 401 | REFRESH_TOKEN_EXPIRED | token 已过期（>14天） | 跳转登录页 |
 | 401 | TOKEN_REUSE_DETECTED | 检测到旧 token 被重用（疑似被盗） | 跳转登录页 + 提示安全风险 |
+| 409 | STALE_REFRESH_TOKEN | token 已被并发请求轮换（宽限期内） | 重读本地最新 token + 重试原请求 |
 
 ---
 
@@ -321,7 +323,7 @@ routing {
   │                                   │
   │── POST /v1/auth/login ──────────→│
   │                                   │── 验证邮箱密码
-  │                                   │── 生成 JWT(20min) + RefreshToken(30天)
+  │                                   │── 生成 JWT(3min) + RefreshToken(14天)
   │                                   │── 存储 RefreshToken 哈希到数据库
   │←── { token, refreshToken } ──────│
   │                                   │
@@ -330,7 +332,7 @@ routing {
   │   Authorization: Bearer <jwt>     │── JWT 签名验证（不查库）
   │←── { posts: [...] } ─────────────│
   │                                   │
-  │  （20分钟后 JWT 过期...）           │
+  │  （3分钟后 JWT 过期...）           │
   │── GET /v1/timeline ──────────────→│
   │   Authorization: Bearer <jwt>     │── JWT 过期
   │←── 401 INVALID_TOKEN ────────────│
@@ -407,6 +409,7 @@ routing {
 | 401 | TOKEN_REUSE_DETECTED | 检测到 token 被盗用 | 跳转登录页 + 安全提示 |
 | 401 | SESSION_REVOKED | 会话已失效（密码已改等） | 跳转登录页 |
 | 409 | USER_EXISTS | 邮箱已注册 | 提示已注册 |
+| 409 | STALE_REFRESH_TOKEN | token 已被并发请求轮换 | 重读本地最新 token + 重试 |
 
 ---
 
@@ -414,13 +417,13 @@ routing {
 
 | 特性 | 旧版 | 新版 |
 |------|------|------|
-| JWT 有效期 | 14 天 | 20 分钟 |
-| 长期登录 | 依赖长期 JWT | Refresh Token (30天) + Token Rotation |
+| JWT 有效期 | 14 天 | 3 分钟（+ 15秒 leeway） |
+| 长期登录 | 依赖长期 JWT | Refresh Token (14天) + Token Rotation |
 | Token 验证 | `GET /v1/auth/validate`（客户端轮询） | WebSocket 主动推送（服务端发起） |
 | 敏感操作校验 | 无 | `sensitive {}` 路由插件，查库验证 |
 | Token 被盗检测 | 无 | Token Family Reuse Detection |
 | 强制下线 | 无 | WebSocket `auth_revoked` 推送 |
-| 密码修改后 | 旧 JWT 仍有效 14 天 | 旧 JWT 最多 20 分钟失效 + 敏感路由立即拦截 |
+| 密码修改后 | 旧 JWT 仍有效 14 天 | 旧 JWT 最多 3 分钟失效 + 敏感路由立即拦截 |
 | 依赖 | 无 | 无（不依赖 Redis） |
 
 ### 已移除的端点

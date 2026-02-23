@@ -18,6 +18,7 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
     jwtVerifier = JWT.require(Algorithm.HMAC256(tokenConfig.secret))
         .withAudience(tokenConfig.audience)
         .withIssuer(tokenConfig.domain)
+        .acceptLeeway(15) // 15秒容差：处理慢网络和时钟漂移（对 exp/iat/nbf 统一生效）
         .build()
 
     install(Authentication) {

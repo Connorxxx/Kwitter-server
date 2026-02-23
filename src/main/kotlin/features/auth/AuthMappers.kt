@@ -101,6 +101,12 @@ fun AuthError.toHttpError(): Pair<HttpStatusCode, ErrorResponse> = when (this) {
             message = "检测到异常登录活动，所有会话已失效，请重新登录"
         )
 
+    is AuthError.StaleRefreshToken ->
+        HttpStatusCode(409, "Conflict") to ErrorResponse(
+            code = "STALE_REFRESH_TOKEN",
+            message = "Token 已被并发请求轮换，请使用最新 token 重试"
+        )
+
     is AuthError.SessionRevoked ->
         HttpStatusCode.Unauthorized to ErrorResponse(
             code = "SESSION_REVOKED",

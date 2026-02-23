@@ -24,9 +24,9 @@
 
 ```kotlin
 data class AuthTokens(
-    val accessToken: String,      // JWT，20分钟有效
-    val refreshToken: String,     // Refresh Token，30天有效
-    val expiresIn: Long,          // JWT有效期毫秒数 (1200000)
+    val accessToken: String,      // JWT，3分钟有效（配合服务端 15s leeway，实际窗口 ~3:15）
+    val refreshToken: String,     // Refresh Token，14天有效
+    val expiresIn: Long,          // JWT有效期毫秒数 (180000)
     val obtainedAt: Long          // 获取时间戳（用于判断是否需要提前刷新）
 )
 ```
@@ -370,7 +370,9 @@ class TokenRefreshScheduler(
     private var refreshJob: Job? = null
 
     /**
-     * 在 JWT 过期前 2 分钟主动刷新
+     * 在 JWT 80% 生命周期时主动刷新
+     *
+     * 对于 3 分钟 JWT：80% = 2:24，留 ~36 秒 + 15 秒服务端 leeway 缓冲
      */
     fun scheduleRefresh() {
         refreshJob?.cancel()
@@ -379,9 +381,8 @@ class TokenRefreshScheduler(
         val obtainedAt = tokenStore.getObtainedAt() ?: return
         val now = System.currentTimeMillis()
 
-        // 计算距离过期还有多少毫秒
-        val expiresAt = obtainedAt + expiresIn
-        val refreshAt = expiresAt - 2 * 60 * 1000  // 提前2分钟
+        // 在 80% 生命周期时刷新（3分钟 JWT → 2:24 时刷新）
+        val refreshAt = obtainedAt + (expiresIn * 0.8).toLong()
 
         val delayMs = (refreshAt - now).coerceAtLeast(0)
 
@@ -447,7 +448,11 @@ suspend fun logout() {
   │   └── AUTH_FAILED → 显示"邮箱或密码错误"（仅登录页）
   │
   ├── 400 → 显示具体错误信息（INVALID_EMAIL等）
-  ├── 409 → 显示"邮箱已注册"
+  │
+  ├── 409 → 检查 error code
+  │   ├── USER_EXISTS → 显示"邮箱已注册"
+  │   └── STALE_REFRESH_TOKEN → 重读本地最新 token + 重试原请求
+  │
   └── 500 → 显示"服务器错误，请稍后重试"
 
 收到 WebSocket 消息
@@ -487,5 +492,6 @@ suspend fun logout() {
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 13 | 两个 tab 同时 refresh（间隔<10s） | 都成功（宽限期） |
+| 13 | 两个 tab 同时 refresh（间隔<10s） | 第一个成功，第二个返回 409 STALE_REFRESH_TOKEN |
 | 14 | 两个 tab 同时 refresh（间隔>10s） | 第二个失败 + family撤销 |
+| 15 | 收到 STALE_REFRESH_TOKEN 后重读本地 token 重试 | 使用最新 token 请求成功 |
