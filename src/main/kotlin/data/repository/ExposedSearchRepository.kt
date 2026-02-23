@@ -249,9 +249,15 @@ class ExposedSearchRepository(
 
     /**
      * 引用 search_vector 列（tsvector 类型）
+     * 使用原始 Expression 而非 registerColumn，避免重复注册导致 DuplicateColumnException
      */
-    private fun Table.searchVector(): Column<String> {
-        return varchar("search_vector", 0) // 长度参数被忽略（tsvector 是原生类型）
+    private fun Table.searchVector(): Expression<String> {
+        val tableName = this.tableName
+        return object : Expression<String>() {
+            override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+                queryBuilder.append("$tableName.search_vector")
+            }
+        }
     }
 
     /**
@@ -268,7 +274,7 @@ class ExposedSearchRepository(
     /**
      * ts_rank(search_vector, tsquery) - 计算相关性分数
      */
-    private fun tsRank(searchVector: Column<String>, tsquery: Expression<String>): Expression<Double> {
+    private fun tsRank(searchVector: Expression<String>, tsquery: Expression<String>): Expression<Double> {
         return CustomDoubleFunction(
             functionName = "ts_rank",
             expr1 = searchVector,
