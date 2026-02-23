@@ -60,6 +60,32 @@ class NotifyNewMessageUseCase(
         }
     }
 
+    suspend fun notifyMessagesRead(conversationId: ConversationId, readByUserId: UserId) {
+        try {
+            val conversation = messageRepository.findConversationById(conversationId) ?: return
+
+            // Notify the other participant (the message sender)
+            val recipientId = if (conversation.participant1Id == readByUserId)
+                conversation.participant2Id else conversation.participant1Id
+
+            val event = NotificationEvent.MessagesRead(
+                conversationId = conversationId.value,
+                readByUserId = readByUserId.value,
+                timestamp = System.currentTimeMillis()
+            )
+            notificationRepository.notifyMessagesRead(recipientId, event)
+
+            logger.info(
+                "Notified messages read: recipientId={}, conversationId={}, readByUserId={}",
+                recipientId.value, conversationId.value, readByUserId.value
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Failed to notify messages read: conversationId={}", conversationId.value, e)
+        }
+    }
+
     suspend fun notifyMessageRecalled(messageId: MessageId) {
         try {
             val message = messageRepository.findMessageById(messageId) ?: return

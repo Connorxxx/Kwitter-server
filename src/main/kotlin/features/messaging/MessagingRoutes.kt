@@ -182,6 +182,17 @@ fun Route.messagingRoutes(
                         call.respond(status, body)
                     },
                     ifRight = {
+                        // Async notification: tell the other participant messages were read
+                        appScope.launch {
+                            try {
+                                notifyNewMessageUseCase.notifyMessagesRead(convId, userId)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                logger.error("Failed to notify messages read", e)
+                            }
+                        }
+
                         call.respond(
                             HttpStatusCode.OK,
                             MarkReadResponse(
