@@ -769,9 +769,46 @@ fun TypingIndicator(isOtherUserTyping: Boolean) {
 
 **注意**: 收到 `typing_indicator` 后，客户端应启动一个超时计时器（如 5 秒）。如果 5 秒内没有再次收到 `typing_indicator(isTyping=true)`，自动隐藏打字状态。这样即使 `stop_typing` 消息丢失也不会一直显示打字中。
 
-### 9.6 在线状态 [v2]
+### 9.6 在线状态 [v2.1]
 
-#### 接收在线状态变更
+#### 连接时序
+
+WebSocket 建连成功后，服务端按以下顺序下发事件：
+
+```
+1. connected                               ← 连接确认
+2. presence_snapshot                        ← 会话对端在线状态快照（新增）
+3. user_presence_changed(isOnline=true)     ← 广播给所有在线用户
+```
+
+客户端应先用快照初始化在线状态 Map，再用后续增量事件覆盖。
+
+#### 接收在线状态快照（新增）
+
+连接成功后，服务端会**单播**一个 `presence_snapshot` 给当前用户，包含该用户所有会话对端的在线状态：
+
+```json
+{
+  "type": "presence_snapshot",
+  "data": {
+    "users": [
+      { "userId": "user-uuid-1", "isOnline": true, "timestamp": 1707600000000 },
+      { "userId": "user-uuid-2", "isOnline": false, "timestamp": 1707600000000 }
+    ]
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `data.users` | `Array` | 当前用户所有会话对端的在线状态列表 |
+| `data.users[].userId` | `String` | 对端用户 ID |
+| `data.users[].isOnline` | `Boolean` | 是否在线 |
+| `data.users[].timestamp` | `Long` | 服务端生成快照的时间戳（ms） |
+
+**客户端处理**：遍历 `data.users`，批量写入在线状态 Map。
+
+#### 接收在线状态变更（增量）
 
 当有用户上线或下线时，WebSocket 会收到：
 
@@ -786,6 +823,8 @@ fun TypingIndicator(isOtherUserTyping: Boolean) {
 }
 ```
 
+此事件与之前完全一致，无变更。
+
 #### 在线状态实现建议
 
 ```kotlin
@@ -794,6 +833,12 @@ class PresenceManager {
     private val _onlineUsers = mutableStateMapOf<String, Boolean>()
     val onlineUsers: Map<String, Boolean> = _onlineUsers
 
+    // 快照：批量初始化
+    fun handlePresenceSnapshot(users: List<PresenceUser>) {
+        users.forEach { _onlineUsers[it.userId] = it.isOnline }
+    }
+
+    // 增量：单个更新
     fun handlePresenceEvent(userId: String, isOnline: Boolean) {
         _onlineUsers[userId] = isOnline
     }
@@ -818,22 +863,26 @@ fun OnlineIndicator(userId: String, presenceManager: PresenceManager) {
 
 ```typescript
 // Web - 在线状态管理
-const onlineUsers = new Set<string>();
+const onlineUsers = new Map<string, boolean>();
 
-function handlePresenceChange(data: { userId: string; isOnline: boolean }) {
-  if (data.isOnline) {
-    onlineUsers.add(data.userId);
-  } else {
-    onlineUsers.delete(data.userId);
+// 快照：批量初始化
+function handlePresenceSnapshot(users: { userId: string; isOnline: boolean }[]) {
+  for (const user of users) {
+    onlineUsers.set(user.userId, user.isOnline);
   }
-  // 触发 UI 更新
+  updateOnlineStatus();
+}
+
+// 增量：单个更新
+function handlePresenceChange(data: { userId: string; isOnline: boolean }) {
+  onlineUsers.set(data.userId, data.isOnline);
   updateOnlineStatus();
 }
 ```
 
 **注意**:
-- 在线状态是当前连接 WebSocket 时的快照，首次连接时不会收到所有在线用户列表
-- 客户端可在打开对话时将对方默认标记为「未知」，收到 `user_presence_changed` 事件后更新
+- 连接成功后，服务端会先下发 `presence_snapshot` 快照，客户端应优先处理快照再消费增量事件
+- 旧版客户端如果不识别 `presence_snapshot`，忽略即可，不影响现有功能（向后兼容）
 - 多设备场景：用户从手机和电脑同时登录，只有当所有设备都断开连接后才会广播「下线」
 
 ### 9.7 客户端统一消息处理
@@ -881,6 +930,11 @@ override fun onMessage(webSocket: WebSocket, text: String) {
             }
         }
 
+        "presence_snapshot" -> {
+            val data = json.decodeFromString<PresenceSnapshotEvent>(message.dataJson)
+            presenceManager.handlePresenceSnapshot(data.users)
+        }
+
         "user_presence_changed" -> {
             val data = json.decodeFromString<UserPresenceEvent>(message.dataJson)
             presenceManager.handlePresenceEvent(data.userId, data.isOnline)
@@ -908,6 +962,9 @@ ws.onmessage = (event) => {
       break;
     case 'typing_indicator':
       handleTypingIndicator(message.data);
+      break;
+    case 'presence_snapshot':
+      handlePresenceSnapshot(message.data.users);
       break;
     case 'user_presence_changed':
       handlePresenceChange(message.data);

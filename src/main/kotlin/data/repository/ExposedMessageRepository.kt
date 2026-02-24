@@ -19,6 +19,19 @@ import java.util.*
 class ExposedMessageRepository : MessageRepository {
     private val logger = LoggerFactory.getLogger(ExposedMessageRepository::class.java)
 
+    override suspend fun findConversationPeerIds(userId: UserId): List<UserId> = dbQuery {
+        ConversationsTable.selectAll()
+            .where {
+                (ConversationsTable.participant1Id eq userId.value) or
+                    (ConversationsTable.participant2Id eq userId.value)
+            }
+            .map { row ->
+                val p1 = row[ConversationsTable.participant1Id]
+                val p2 = row[ConversationsTable.participant2Id]
+                UserId(if (p1 == userId.value) p2 else p1)
+            }
+    }
+
     override suspend fun findOrCreateConversation(userId1: UserId, userId2: UserId): Conversation = dbQuery {
         val (p1, p2) = Conversation.canonicalParticipants(userId1, userId2)
 

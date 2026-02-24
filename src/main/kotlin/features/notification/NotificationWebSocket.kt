@@ -11,10 +11,22 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("NotificationWebSocket")
+private val snapshotJsonCodec = Json { encodeDefaults = true }
+
+@Serializable
+private data class PresenceSnapshotMessage(val type: String, val data: PresenceSnapshotData)
+
+@Serializable
+private data class PresenceSnapshotData(val users: List<PresenceSnapshotUser>)
+
+@Serializable
+private data class PresenceSnapshotUser(val userId: String, val isOnline: Boolean, val timestamp: Long)
 
 /**
  * WebSocket 通知端点
@@ -53,6 +65,35 @@ fun Route.notificationWebSocket(
             try {
                 // 发送连接成功消息
                 send(Frame.Text("""{"type":"connected","userId":"${userId.value}"}"""))
+
+                // 发送在线状态快照（修复：后连接用户看不到先连接用户在线的问题）
+                try {
+                    val peerIds = messageRepository.findConversationPeerIds(userId)
+                    if (peerIds.isNotEmpty()) {
+                        val onlineStatus = connectionManager.getOnlineStatus(peerIds)
+                        val now = System.currentTimeMillis()
+                        val snapshotUsers = onlineStatus.map { (uid, online) ->
+                            PresenceSnapshotUser(
+                                userId = uid.value,
+                                isOnline = online,
+                                timestamp = now
+                            )
+                        }
+                        val snapshotJson = snapshotJsonCodec.encodeToString(
+                            PresenceSnapshotMessage(
+                                type = "presence_snapshot",
+                                data = PresenceSnapshotData(users = snapshotUsers)
+                            )
+                        )
+                        send(Frame.Text(snapshotJson))
+                        logger.info(
+                            "presence_snapshot_sent: userId={}, snapshotSize={}, conversationPeerCount={}",
+                            userId.value, snapshotUsers.count { it.isOnline }, peerIds.size
+                        )
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to send presence snapshot for user {}", userId.value, e)
+                }
 
                 // 广播上线状态
                 try {

@@ -4,6 +4,8 @@ import com.connor.domain.model.*
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
+    suspend fun findConversationPeerIds(userId: UserId): List<UserId>
+
     suspend fun findOrCreateConversation(userId1: UserId, userId2: UserId): Conversation
 
     suspend fun findConversationById(id: ConversationId): Conversation?
