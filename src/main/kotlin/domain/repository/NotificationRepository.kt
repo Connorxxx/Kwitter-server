@@ -74,6 +74,4 @@ interface NotificationRepository {
     suspend fun notifyMessageRecalled(recipientId: UserId, event: NotificationEvent.MessageRecalled)
 
     suspend fun notifyTypingIndicator(recipientId: UserId, event: NotificationEvent.TypingIndicator)
-
-    suspend fun notifyUserPresenceChanged(userId: UserId, event: NotificationEvent.UserPresenceChanged)
 }

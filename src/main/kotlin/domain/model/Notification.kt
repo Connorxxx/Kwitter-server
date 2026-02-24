@@ -114,19 +114,6 @@ sealed interface NotificationEvent {
         val isTyping: Boolean,
         val timestamp: Long
     ) : NotificationEvent
-
-    /**
-     * 用户在线状态变更事件
-     *
-     * 触发条件：用户上线/下线
-     * 推送对象：相关用户（关注者或对话参与者）
-     */
-    @Serializable
-    data class UserPresenceChanged(
-        val userId: String,
-        val isOnline: Boolean,
-        val timestamp: Long
-    ) : NotificationEvent
 }
 
 /**

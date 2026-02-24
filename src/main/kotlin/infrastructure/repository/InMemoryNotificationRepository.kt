@@ -166,26 +166,6 @@ class InMemoryNotificationRepository(
             logger.error("Failed to notify typing indicator: recipientId={}", recipientId.value, e)
         }
     }
-
-    override suspend fun notifyUserPresenceChanged(userId: UserId, event: NotificationEvent.UserPresenceChanged) {
-        try {
-            val message = NotificationMessage(
-                type = "user_presence_changed",
-                data = event
-            )
-
-            val jsonMessage = json.encodeToString(message)
-            // Broadcast to all online users (they can filter client-side)
-            connectionManager.broadcastToAll(jsonMessage)
-
-            logger.info(
-                "Broadcasted user presence change: userId={}, isOnline={}",
-                userId.value, event.isOnline
-            )
-        } catch (e: Exception) {
-            logger.error("Failed to broadcast user presence change: userId={}", userId.value, e)
-        }
-    }
 }
 
 /**

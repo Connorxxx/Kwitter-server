@@ -232,6 +232,41 @@ class WebSocketConnectionManager {
     }
 
     /**
+     * 发送消息给多个指定用户
+     *
+     * 用于在线状态变更等需要定向推送给一组用户的场景
+     *
+     * @param userIds 目标用户 ID 集合
+     * @param message JSON 消息
+     */
+    suspend fun sendToUsers(userIds: Collection<UserId>, message: String) {
+        var successCount = 0
+        val staleSessions = mutableSetOf<DefaultWebSocketSession>()
+
+        for (userId in userIds) {
+            val sessions = userSessions[userId] ?: continue
+            for (session in sessions) {
+                try {
+                    session.send(Frame.Text(message))
+                    successCount++
+                } catch (e: ClosedSendChannelException) {
+                    staleSessions.add(session)
+                } catch (e: Exception) {
+                    logger.error("Failed to send message to user: userId={}", userId.value, e)
+                    staleSessions.add(session)
+                }
+            }
+        }
+
+        staleSessions.forEach { removeUserSession(it) }
+
+        logger.debug(
+            "Sent to users: targetCount={}, success={}, cleaned={}",
+            userIds.size, successCount, staleSessions.size
+        )
+    }
+
+    /**
      * 获取在线用户数
      */
     fun getOnlineUserCount(): Int = userSessions.size

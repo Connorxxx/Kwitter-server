@@ -17,16 +17,31 @@ import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("NotificationWebSocket")
-private val snapshotJsonCodec = Json { encodeDefaults = true }
+private val presenceJson = Json { encodeDefaults = true }
+
+// ---- Presence wire-format DTOs (transport layer only) ----
 
 @Serializable
-private data class PresenceSnapshotMessage(val type: String, val data: PresenceSnapshotData)
+private data class PresenceUserState(
+    val userId: String,
+    val isOnline: Boolean,
+    val timestamp: Long
+)
 
 @Serializable
-private data class PresenceSnapshotData(val users: List<PresenceSnapshotUser>)
+private data class PresenceSnapshotPayload(val users: List<PresenceUserState>)
 
 @Serializable
-private data class PresenceSnapshotUser(val userId: String, val isOnline: Boolean, val timestamp: Long)
+private data class PresenceSnapshotMessage(
+    val type: String = "presence_snapshot",
+    val data: PresenceSnapshotPayload
+)
+
+@Serializable
+private data class PresenceChangedMessage(
+    val type: String = "user_presence_changed",
+    val data: PresenceUserState
+)
 
 /**
  * WebSocket 通知端点
@@ -36,9 +51,10 @@ private data class PresenceSnapshotUser(val userId: String, val isOnline: Boolea
  *
  * 功能：
  * 1. 建立 WebSocket 连接
- * 2. 处理客户端订阅消息
- * 3. 推送实时通知（含打字状态、在线状态）
- * 4. 自动清理断开的连接
+ * 2. Presence 协议：快照 + 增量（定向推送给对话对端）
+ * 3. 推送实时通知（打字状态等）
+ * 4. 处理客户端订阅消息
+ * 5. 自动清理断开的连接
  */
 fun Route.notificationWebSocket(
     connectionManager: WebSocketConnectionManager,
@@ -47,7 +63,6 @@ fun Route.notificationWebSocket(
 ) {
     authenticate("auth-jwt") {
         webSocket("/v1/notifications/ws") {
-            // 获取当前认证用户
             val principal = call.principal<UserPrincipal>()
 
             if (principal == null) {
@@ -58,58 +73,54 @@ fun Route.notificationWebSocket(
 
             val userId = UserId(principal.userId)
 
-            // 注册用户连接
+            // 检测是否为首个会话（上线广播仅在 0→1 时触发，与下线的 1→0 对称）
+            val isFirstSession = !connectionManager.isUserOnline(userId)
             connectionManager.addUserSession(userId, this)
-            logger.info("WebSocket connected: userId={}", userId.value)
+            logger.info("WebSocket connected: userId={}, firstSession={}", userId.value, isFirstSession)
 
             try {
-                // 发送连接成功消息
+                // 1. 确认连接
                 send(Frame.Text("""{"type":"connected","userId":"${userId.value}"}"""))
 
-                // 发送在线状态快照（修复：后连接用户看不到先连接用户在线的问题）
-                try {
-                    val peerIds = messageRepository.findConversationPeerIds(userId)
-                    if (peerIds.isNotEmpty()) {
-                        val onlineStatus = connectionManager.getOnlineStatus(peerIds)
-                        val now = System.currentTimeMillis()
-                        val snapshotUsers = onlineStatus.map { (uid, online) ->
-                            PresenceSnapshotUser(
-                                userId = uid.value,
-                                isOnline = online,
-                                timestamp = now
-                            )
-                        }
-                        val snapshotJson = snapshotJsonCodec.encodeToString(
-                            PresenceSnapshotMessage(
-                                type = "presence_snapshot",
-                                data = PresenceSnapshotData(users = snapshotUsers)
-                            )
-                        )
-                        send(Frame.Text(snapshotJson))
-                        logger.info(
-                            "presence_snapshot_sent: userId={}, snapshotSize={}, conversationPeerCount={}",
-                            userId.value, snapshotUsers.count { it.isOnline }, peerIds.size
-                        )
-                    }
+                // 2. 查询对话对端（snapshot 和 broadcast 共享同一组 peerIds）
+                val peerIds = try {
+                    messageRepository.findConversationPeerIds(userId)
                 } catch (e: Exception) {
-                    logger.error("Failed to send presence snapshot for user {}", userId.value, e)
+                    logger.error("Failed to query peers for userId={}, degrading to empty snapshot", userId.value, e)
+                    emptyList()
                 }
 
-                // 广播上线状态
-                try {
-                    notificationRepository.notifyUserPresenceChanged(
-                        userId,
-                        NotificationEvent.UserPresenceChanged(
-                            userId = userId.value,
-                            isOnline = true,
-                            timestamp = System.currentTimeMillis()
+                // 3. 发送 presence_snapshot（契约保证：每次连接必发，允许 users=[]）
+                val now = System.currentTimeMillis()
+                val onlineStatus = connectionManager.getOnlineStatus(peerIds)
+                val snapshot = PresenceSnapshotMessage(
+                    data = PresenceSnapshotPayload(
+                        users = onlineStatus.map { (uid, online) ->
+                            PresenceUserState(userId = uid.value, isOnline = online, timestamp = now)
+                        }
+                    )
+                )
+                send(Frame.Text(presenceJson.encodeToString(snapshot)))
+                logger.info(
+                    "presence_snapshot_sent: userId={}, peerCount={}, onlineCount={}",
+                    userId.value, peerIds.size, onlineStatus.count { it.value }
+                )
+
+                // 4. 通知对端本用户上线（仅首个会话，定向推送给对话对端）
+                if (isFirstSession && peerIds.isNotEmpty()) {
+                    val changedMsg = presenceJson.encodeToString(
+                        PresenceChangedMessage(
+                            data = PresenceUserState(userId = userId.value, isOnline = true, timestamp = now)
                         )
                     )
-                } catch (e: Exception) {
-                    logger.error("Failed to broadcast online status for user {}", userId.value, e)
+                    connectionManager.sendToUsers(peerIds, changedMsg)
+                    logger.info(
+                        "presence_online_broadcast: userId={}, peerCount={}",
+                        userId.value, peerIds.size
+                    )
                 }
 
-                // 处理客户端消息
+                // 5. 消息循环
                 for (frame in incoming) {
                     when (frame) {
                         is Frame.Text -> {
@@ -126,28 +137,35 @@ fun Route.notificationWebSocket(
                     }
                 }
             } catch (e: CancellationException) {
-                // 重新抛出取消异常，保持协程取消语义
                 logger.debug("WebSocket cancelled: userId={}", userId.value)
                 throw e
             } catch (e: Exception) {
                 logger.error("WebSocket error for user ${userId.value}", e)
             } finally {
-                // 清理连接和所有订阅
                 connectionManager.removeUserSession(this)
 
-                // 仅当用户所有会话都断开时才广播下线
+                // 最后一个会话断开 → 通知对端下线（与上线的 isFirstSession 对称）
                 if (!connectionManager.isUserOnline(userId)) {
                     try {
-                        notificationRepository.notifyUserPresenceChanged(
-                            userId,
-                            NotificationEvent.UserPresenceChanged(
-                                userId = userId.value,
-                                isOnline = false,
-                                timestamp = System.currentTimeMillis()
+                        val peerIds = messageRepository.findConversationPeerIds(userId)
+                        if (peerIds.isNotEmpty()) {
+                            val changedMsg = presenceJson.encodeToString(
+                                PresenceChangedMessage(
+                                    data = PresenceUserState(
+                                        userId = userId.value,
+                                        isOnline = false,
+                                        timestamp = System.currentTimeMillis()
+                                    )
+                                )
                             )
-                        )
+                            connectionManager.sendToUsers(peerIds, changedMsg)
+                            logger.info(
+                                "presence_offline_broadcast: userId={}, peerCount={}",
+                                userId.value, peerIds.size
+                            )
+                        }
                     } catch (e: Exception) {
-                        logger.error("Failed to broadcast offline status for user {}", userId.value, e)
+                        logger.error("Failed to broadcast offline: userId={}", userId.value, e)
                     }
                 }
 
@@ -163,6 +181,7 @@ fun Route.notificationWebSocket(
  * 支持的消息类型：
  * - subscribe_post: 订阅 Post 更新
  * - unsubscribe_post: 取消订阅 Post
+ * - typing / stop_typing: 打字状态
  * - ping: 心跳保活
  */
 private suspend fun handleClientMessage(
@@ -217,7 +236,6 @@ private suspend fun handleClientMessage(
                     return
                 }
 
-                // Determine the partner
                 val partnerId = if (conversation.participant1Id == userId)
                     conversation.participant2Id else conversation.participant1Id
 
@@ -244,7 +262,6 @@ private suspend fun handleClientMessage(
             }
         }
     } catch (e: CancellationException) {
-        // 重新抛出取消异常
         throw e
     } catch (e: Exception) {
         logger.error("Failed to parse or handle client message: userId={}", userId.value, e)

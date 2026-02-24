@@ -70,10 +70,9 @@
 ├─────────────────────────────────────────────────────────────┤
 │  - NoOpPushNotificationService (FCM stub)                   │
 │  - InMemoryNotificationRepository                           │
-│    (+notifyMessageRecalled, +notifyTypingIndicator, [MOD v2]│
-│     +notifyUserPresenceChanged)                             │
+│    (+notifyMessageRecalled, +notifyTypingIndicator) [MOD v2]│
 │  - WebSocketConnectionManager                               │
-│    (+isUserOnline, +getOnlineStatus)               [MOD v2] │
+│    (+isUserOnline, +getOnlineStatus, +sendToUsers)  [MOD v2]│
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -93,7 +92,8 @@
 │    ← "messages_read"            推给发送者                  │
 │    ← "message_recalled"         推给对方           [NEW v2] │
 │    ← "typing_indicator"         推给对话伙伴       [NEW v2] │
-│    ← "user_presence_changed"    广播               [NEW v2] │
+│    ← "user_presence_changed"    定向推对话对端     [MOD v3] │
+│    ← "presence_snapshot"        连接时必发快照     [MOD v3] │
 │    → "typing" / "stop_typing"   客户端发送         [NEW v2] │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -180,13 +180,15 @@ if (recipient.dmPermission == DmPermission.MUTUAL_FOLLOW) {
 
 **性能考量**: 每次 typing 事件需查 conversation 表获取对方 ID。如果频率过高可在 WebSocket handler 层做客户端限流（建议客户端每 3 秒发一次 typing，停止输入 3 秒后发 stop_typing）。
 
-### 9. 在线状态广播策略
+### 9. 在线状态策略 [MOD v3]
 
-**当前方案**: 用户连接/断开 WebSocket 时向所有在线用户广播 `user_presence_changed` 事件。
+**当前方案**: Presence 不经过领域通知层，直接在 WebSocket 连接生命周期中处理。
 
-**仅当所有设备断开时才广播下线**: 一个用户可能有多个 WebSocket 连接（多设备），仅当 `connectionManager.isUserOnline(userId)` 返回 false 时才广播下线事件。
-
-**未来优化**: 改为只推送给关注者或对话参与者，减少广播量。
+- **快照**(`presence_snapshot`)：每次 WebSocket 连接必发，包含所有对话对端的在线状态（可为空列表）。
+- **增量**(`user_presence_changed`)：定向推送给对话对端，不广播全量。
+- **上线广播**：仅首个会话建立时触发（0→1 转换）。
+- **下线广播**：仅最后一个会话断开时触发（1→0 转换）。
+- 连接时序保证：`connected` → `presence_snapshot` → `user_presence_changed(online)`。
 
 ---
 
@@ -426,7 +428,7 @@ sealed interface MessageError {
 }
 ```
 
-### user_presence_changed [NEW v2]（广播给所有在线用户）
+### user_presence_changed [MOD v3]（定向推送给对话对端）
 
 ```json
 {
@@ -435,6 +437,20 @@ sealed interface MessageError {
     "userId": "user-uuid",
     "isOnline": true,
     "timestamp": 1707600000000
+  }
+}
+```
+
+### presence_snapshot [MOD v3]（连接时必发）
+
+```json
+{
+  "type": "presence_snapshot",
+  "data": {
+    "users": [
+      { "userId": "user-uuid-1", "isOnline": true, "timestamp": 1707600000000 },
+      { "userId": "user-uuid-2", "isOnline": false, "timestamp": 1707600000000 }
+    ]
   }
 }
 ```
@@ -503,8 +519,8 @@ sealed interface MessageError {
 | `domain/model/Conversation.kt` | Message 新增 `replyToMessageId`, `deletedAt`, `recalledAt` 字段 + computed properties |
 | `domain/failure/MessageErrors.kt` | 新增 4 个错误变体 |
 | `domain/repository/MessageRepository.kt` | 新增 3 个方法 |
-| `domain/repository/NotificationRepository.kt` | 新增 `notifyMessageRecalled`, `notifyTypingIndicator`, `notifyUserPresenceChanged` |
-| `domain/model/Notification.kt` | 新增 `MessageRecalled`, `TypingIndicator`, `UserPresenceChanged` 事件 |
+| `domain/repository/NotificationRepository.kt` | 新增 `notifyMessageRecalled`, `notifyTypingIndicator`；移除 `notifyUserPresenceChanged`（presence 移至 transport 层） |
+| `domain/model/Notification.kt` | 新增 `MessageRecalled`, `TypingIndicator` 事件；移除 `UserPresenceChanged`（presence 非领域事件） |
 | `domain/usecase/SendMessageUseCase.kt` | DM 权限检查 + replyToMessageId 传递 |
 | `domain/usecase/NotifyNewMessageUseCase.kt` | 新增 `notifyMessageRecalled()` 方法；构造函数新增 `messageRepository` 依赖 |
 | `infrastructure/repository/InMemoryNotificationRepository.kt` | 实现 3 个新通知方法 |
