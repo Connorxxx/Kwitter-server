@@ -14,18 +14,33 @@ import org.koin.ktor.ext.inject
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
+private fun Application.readConfig(
+    configPath: String,
+    envName: String,
+    defaultValue: String? = null
+): String {
+    val envValue = System.getenv(envName)?.trim()?.takeIf { it.isNotEmpty() }
+    if (envValue != null) return envValue
+
+    val configValue = environment.config.propertyOrNull(configPath)?.getString()?.trim()?.takeIf { it.isNotEmpty() }
+    if (configValue != null) return configValue
+
+    return defaultValue
+        ?: error("Missing configuration: '$configPath' or environment variable '$envName'")
+}
+
 fun Application.module() {
-    // 从 application.yaml 读取 JWT 配置
+    // 环境变量优先，其次回退到 application.yaml，便于 Docker 部署
     val tokenConfig = TokenConfig(
-        domain = environment.config.property("jwt.domain").getString(),
-        audience = environment.config.property("jwt.audience").getString(),
-        secret = environment.config.property("jwt.secret").getString(),
-        realm = environment.config.property("jwt.realm").getString()
+        domain = readConfig("jwt.domain", "JWT_DOMAIN"),
+        audience = readConfig("jwt.audience", "JWT_AUDIENCE"),
+        secret = readConfig("jwt.secret", "JWT_SECRET"),
+        realm = readConfig("jwt.realm", "JWT_REALM")
     )
 
-    val dbUrl = environment.config.property("storage.jdbcUrl").getString()
-    val dbUser = environment.config.property("storage.user").getString()
-    val dbPassword = environment.config.property("storage.password").getString()
+    val dbUrl = readConfig("storage.jdbcUrl", "DB_JDBC_URL")
+    val dbUser = readConfig("storage.user", "DB_USER")
+    val dbPassword = readConfig("storage.password", "DB_PASSWORD")
 
     DatabaseFactory.init(DatabaseConfig(dbUrl, dbUser, dbPassword))
 

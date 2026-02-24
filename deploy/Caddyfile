@@ -1,0 +1,5 @@
+https://{$DOMAIN} {
+    tls /certs/fullchain.pem /certs/privkey.pem
+    encode gzip zstd
+    reverse_proxy app:8080
+}

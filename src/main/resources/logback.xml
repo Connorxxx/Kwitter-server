@@ -36,6 +36,6 @@
     <!-- 根日志级别 -->
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
-        <!-- <appender-ref ref="FILE"/> --> <!-- 取消注释以启用文件日志 -->
+        <appender-ref ref="FILE"/>
     </root>
 </configuration>
