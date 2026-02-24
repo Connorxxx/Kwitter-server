@@ -485,7 +485,7 @@ when (response.statusCode) {
 ## 📚 相关文档
 
 - [设计文档](./user-profile-design.md) - 架构设计和技术决策
-- [实施文档](./user-profile-implementation.md) - 详细实施指南
+- [ADR-0001](./ADR-0001-historical-decisions.md) - 历史迁移决策结论（Auth + User Profile）
 - [本文档] - 集成完成报告和测试指南
 
 ---
