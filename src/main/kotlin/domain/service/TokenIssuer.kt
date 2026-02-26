@@ -5,5 +5,5 @@ package com.connor.domain.service
  * Domain defines the contract; infrastructure provides JWT implementation.
  */
 interface TokenIssuer {
-    fun generate(userId: String, displayName: String, username: String): String
+    fun generate(userId: Long, displayName: String, username: String): String
 }

@@ -16,7 +16,7 @@ sealed interface PostError {
     // === 业务规则错误 ===
     data class PostNotFound(val postId: PostId) : PostError
     data class ParentPostNotFound(val parentId: PostId) : PostError
-    data class Unauthorized(val userId: String, val action: String) : PostError // 无权限操作（如删除他人 Post）
+    data class Unauthorized(val userId: Long, val action: String) : PostError // 无权限操作（如删除他人 Post）
 
     // === 基础设施错误（可选，根据需要添加）===
     data class MediaUploadFailed(val reason: String) : PostError

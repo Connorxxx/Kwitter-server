@@ -8,9 +8,9 @@ import io.ktor.http.*
 
 fun ConversationDetail.toResponse(): ConversationResponse {
     return ConversationResponse(
-        id = conversation.id.value.toString(),
+        id = conversation.id.value,
         otherUser = ConversationUserDto(
-            id = otherUser.id.value.toString(),
+            id = otherUser.id.value,
             displayName = otherUser.displayName.value,
             username = otherUser.username.value,
             avatarUrl = otherUser.avatarUrl
@@ -23,9 +23,9 @@ fun ConversationDetail.toResponse(): ConversationResponse {
 
 fun Message.toResponse(): MessageResponse {
     return MessageResponse(
-        id = id.value.toString(),
-        conversationId = conversationId.value.toString(),
-        senderId = senderId.value.toString(),
+        id = id.value,
+        conversationId = conversationId.value,
+        senderId = senderId.value,
         content = when {
             isRecalled -> ""
             isDeleted -> ""
@@ -35,7 +35,7 @@ fun Message.toResponse(): MessageResponse {
             isRecalled || isDeleted -> null
             else -> imageUrl
         },
-        replyToMessageId = replyToMessageId?.value?.toString(),
+        replyToMessageId = replyToMessageId?.value,
         readAt = readAt,
         deletedAt = deletedAt,
         recalledAt = recalledAt,

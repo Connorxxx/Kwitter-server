@@ -23,7 +23,7 @@ private val presenceJson = Json { encodeDefaults = true }
 
 @Serializable
 private data class PresenceUserState(
-    val userId: String,
+    val userId: Long,
     val isOnline: Boolean,
     val timestamp: Long
 )
@@ -71,7 +71,7 @@ fun Route.notificationWebSocket(
                 return@webSocket
             }
 
-            val userId = UserId(principal.userId.toLong())
+            val userId = UserId(principal.userId)
 
             // 检测是否为首个会话（上线广播仅在 0→1 时触发，与下线的 1→0 对称）
             val isFirstSession = !connectionManager.isUserOnline(userId)
@@ -80,7 +80,7 @@ fun Route.notificationWebSocket(
 
             try {
                 // 1. 确认连接
-                send(Frame.Text("""{"type":"connected","userId":"${userId.value}"}"""))
+                send(Frame.Text("""{"type":"connected","userId":${userId.value}}"""))
 
                 // 2. 查询对话对端（snapshot 和 broadcast 共享同一组 peerIds）
                 val peerIds = try {
@@ -96,7 +96,7 @@ fun Route.notificationWebSocket(
                 val snapshot = PresenceSnapshotMessage(
                     data = PresenceSnapshotPayload(
                         users = onlineStatus.map { (uid, online) ->
-                            PresenceUserState(userId = uid.value.toString(), isOnline = online, timestamp = now)
+                            PresenceUserState(userId = uid.value, isOnline = online, timestamp = now)
                         }
                     )
                 )
@@ -110,7 +110,7 @@ fun Route.notificationWebSocket(
                 if (isFirstSession && peerIds.isNotEmpty()) {
                     val changedMsg = presenceJson.encodeToString(
                         PresenceChangedMessage(
-                            data = PresenceUserState(userId = userId.value.toString(), isOnline = true, timestamp = now)
+                            data = PresenceUserState(userId = userId.value, isOnline = true, timestamp = now)
                         )
                     )
                     connectionManager.sendToUsers(peerIds, changedMsg)
@@ -152,7 +152,7 @@ fun Route.notificationWebSocket(
                             val changedMsg = presenceJson.encodeToString(
                                 PresenceChangedMessage(
                                     data = PresenceUserState(
-                                        userId = userId.value.toString(),
+                                        userId = userId.value,
                                         isOnline = false,
                                         timestamp = System.currentTimeMillis()
                                     )
@@ -204,8 +204,8 @@ private suspend fun handleClientMessage(
                     return
                 }
 
-                connectionManager.subscribeToPost(userId, PostId(postId.toLong()), session)
-                session.send(Frame.Text("""{"type":"subscribed","postId":"$postId"}"""))
+                connectionManager.subscribeToPost(userId, PostId(postId), session)
+                session.send(Frame.Text("""{"type":"subscribed","postId":$postId}"""))
                 logger.debug("User subscribed to post: userId={}, postId={}", userId.value, postId)
             }
 
@@ -216,8 +216,8 @@ private suspend fun handleClientMessage(
                     return
                 }
 
-                connectionManager.unsubscribeFromPost(PostId(postId.toLong()), session)
-                session.send(Frame.Text("""{"type":"unsubscribed","postId":"$postId"}"""))
+                connectionManager.unsubscribeFromPost(PostId(postId), session)
+                session.send(Frame.Text("""{"type":"unsubscribed","postId":$postId}"""))
                 logger.debug("User unsubscribed from post: userId={}, postId={}", userId.value, postId)
             }
 
@@ -229,7 +229,7 @@ private suspend fun handleClientMessage(
                 }
 
                 val isTyping = message.type == "typing"
-                val convId = com.connor.domain.model.ConversationId(conversationId.toLong())
+                val convId = com.connor.domain.model.ConversationId(conversationId)
                 val conversation = messageRepository.findConversationById(convId)
                 if (conversation == null) {
                     session.send(Frame.Text("""{"type":"error","message":"Conversation not found"}"""))
@@ -241,7 +241,7 @@ private suspend fun handleClientMessage(
 
                 val event = NotificationEvent.TypingIndicator(
                     conversationId = conversationId,
-                    userId = userId.value.toString(),
+                    userId = userId.value,
                     isTyping = isTyping,
                     timestamp = System.currentTimeMillis()
                 )
@@ -272,3 +272,4 @@ private suspend fun handleClientMessage(
         }
     }
 }
+

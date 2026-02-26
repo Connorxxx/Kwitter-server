@@ -10,8 +10,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WebSocketClientMessageDto(
     val type: String,
-    val postId: String? = null,
-    val conversationId: String? = null
+    val postId: Long? = null,
+    val conversationId: Long? = null
 )
 
 /**
@@ -23,7 +23,7 @@ data class WebSocketClientMessageDto(
 data class WebSocketServerMessageDto(
     val type: String,
     val data: String? = null,
-    val postId: String? = null,
-    val userId: String? = null,
+    val postId: Long? = null,
+    val userId: Long? = null,
     val message: String? = null
 )

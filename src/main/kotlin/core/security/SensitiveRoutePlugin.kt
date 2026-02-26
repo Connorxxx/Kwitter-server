@@ -37,7 +37,7 @@ fun Route.sensitive(
         onCall { call ->
             val principal = call.principal<UserPrincipal>() ?: return@onCall
 
-            val user = userRepository.findById(UserId(principal.userId.toLong())).getOrNull()
+            val user = userRepository.findById(UserId(principal.userId)).getOrNull()
 
             if (user == null) {
                 logger.warn("Sensitive route: user not found, userId={}", principal.userId)
@@ -73,3 +73,4 @@ fun Route.sensitive(
     install(sensitivePlugin)
     build()
 }
+

@@ -6,17 +6,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SendMessageRequest(
-    val recipientId: String,
+    val recipientId: Long,
     val content: String,
     val imageUrl: String? = null,
-    val replyToMessageId: String? = null
+    val replyToMessageId: Long? = null
 )
 
 // ========== Response DTOs ==========
 
 @Serializable
 data class ConversationResponse(
-    val id: String,
+    val id: Long,
     val otherUser: ConversationUserDto,
     val lastMessage: MessageResponse?,
     val unreadCount: Int,
@@ -25,7 +25,7 @@ data class ConversationResponse(
 
 @Serializable
 data class ConversationUserDto(
-    val id: String,
+    val id: Long,
     val displayName: String,
     val username: String,
     val avatarUrl: String? = null
@@ -33,12 +33,12 @@ data class ConversationUserDto(
 
 @Serializable
 data class MessageResponse(
-    val id: String,
-    val conversationId: String,
-    val senderId: String,
+    val id: Long,
+    val conversationId: Long,
+    val senderId: Long,
     val content: String,
     val imageUrl: String?,
-    val replyToMessageId: String?,
+    val replyToMessageId: Long?,
     val readAt: Long?,
     val deletedAt: Long?,
     val recalledAt: Long?,
@@ -49,18 +49,18 @@ data class MessageResponse(
 data class ConversationListResponse(
     val conversations: List<ConversationResponse>,
     val hasMore: Boolean,
-    val nextCursor: String? = null
+    val nextCursor: Long? = null
 )
 
 @Serializable
 data class MessageListResponse(
     val messages: List<MessageResponse>,
     val hasMore: Boolean,
-    val nextCursor: String? = null
+    val nextCursor: Long? = null
 )
 
 @Serializable
 data class MarkReadResponse(
-    val conversationId: String,
+    val conversationId: Long,
     val readAt: Long
 )

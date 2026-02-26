@@ -24,7 +24,7 @@ fun LoginRequest.toCommand() = com.connor.domain.usecase.LoginCommand(
  * Domain Model -> HTTP Response DTO
  */
 fun User.toResponse(tokenPair: TokenPair) = UserResponse(
-    id = this.id.value.toString(),
+    id = this.id.value,
     email = this.email.value,
     username = this.username.value,
     displayName = this.displayName.value,

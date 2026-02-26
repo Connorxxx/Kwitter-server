@@ -25,8 +25,8 @@ class NotifyNewMessageUseCase(
         try {
             // 1. In-app WebSocket notification
             val event = NotificationEvent.NewMessageReceived(
-                messageId = messageId.value.toString(),
-                conversationId = conversationId.value.toString(),
+                messageId = messageId.value,
+                conversationId = conversationId.value,
                 senderDisplayName = senderDisplayName,
                 senderUsername = senderUsername,
                 contentPreview = contentPreview,
@@ -69,8 +69,8 @@ class NotifyNewMessageUseCase(
                 conversation.participant2Id else conversation.participant1Id
 
             val event = NotificationEvent.MessagesRead(
-                conversationId = conversationId.value.toString(),
-                readByUserId = readByUserId.value.toString(),
+                conversationId = conversationId.value,
+                readByUserId = readByUserId.value,
                 timestamp = System.currentTimeMillis()
             )
             notificationRepository.notifyMessagesRead(recipientId, event)
@@ -96,9 +96,9 @@ class NotifyNewMessageUseCase(
                 conversation.participant2Id else conversation.participant1Id
 
             val event = NotificationEvent.MessageRecalled(
-                messageId = messageId.value.toString(),
-                conversationId = message.conversationId.value.toString(),
-                recalledByUserId = message.senderId.value.toString(),
+                messageId = messageId.value,
+                conversationId = message.conversationId.value,
+                recalledByUserId = message.senderId.value,
                 timestamp = System.currentTimeMillis()
             )
             notificationRepository.notifyMessageRecalled(recipientId, event)

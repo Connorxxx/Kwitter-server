@@ -80,8 +80,8 @@ class RefreshTokenUseCase(
      * 登录/注册时创建初始 token pair
      */
     suspend fun createInitialTokenPair(userId: UserId, displayName: String, username: String): TokenPair {
-        val familyId = SnowflakeIdGenerator.nextId().toString()
-        val accessToken = tokenIssuer.generate(userId.value.toString(), displayName, username)
+        val familyId = SnowflakeIdGenerator.nextId()
+        val accessToken = tokenIssuer.generate(userId.value, displayName, username)
         val refreshToken = createAndSaveRefreshToken(userId, familyId)
 
         return TokenPair(
@@ -144,13 +144,13 @@ class RefreshTokenUseCase(
         return AuthError.TokenFamilyReused.left()
     }
 
-    private suspend fun issueNewTokenPair(userId: UserId, familyId: String): Either<AuthError, TokenPair> {
+    private suspend fun issueNewTokenPair(userId: UserId, familyId: Long): Either<AuthError, TokenPair> {
         // 查询用户最新信息以生成新 JWT
         val user = userRepository.findById(userId).getOrNull()
             ?: return AuthError.RefreshTokenNotFound.left()
 
         val accessToken = tokenIssuer.generate(
-            userId = user.id.value.toString(),
+            userId = user.id.value,
             displayName = user.displayName.value,
             username = user.username.value
         )
@@ -163,12 +163,12 @@ class RefreshTokenUseCase(
         ).right()
     }
 
-    private suspend fun createAndSaveRefreshToken(userId: UserId, familyId: String): String {
+    private suspend fun createAndSaveRefreshToken(userId: UserId, familyId: Long): String {
         val rawToken = tokenHasher.generateToken()
         val tokenHash = tokenHasher.hashToken(rawToken)
 
         val refreshToken = RefreshToken(
-            id = SnowflakeIdGenerator.nextId().toString(),
+            id = SnowflakeIdGenerator.nextId(),
             tokenHash = tokenHash,
             userId = userId,
             familyId = familyId,

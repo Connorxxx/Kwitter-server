@@ -48,7 +48,7 @@ fun Route.likeRoutes(
                 return@post
             }
 
-            val result = likePostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
+            val result = likePostUseCase(UserId(principal.userId), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -63,7 +63,7 @@ fun Route.likeRoutes(
                         try {
                             broadcastPostLikedUseCase.execute(
                                 postId = PostId(postId.toLong()),
-                                likedByUserId = UserId(principal.userId.toLong()),
+                                likedByUserId = UserId(principal.userId),
                                 likedByDisplayName = principal.displayName,
                                 likedByUsername = principal.username,
                                 newLikeCount = stats.likeCount
@@ -99,7 +99,7 @@ fun Route.likeRoutes(
                 return@delete
             }
 
-            val result = unlikePostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
+            val result = unlikePostUseCase(UserId(principal.userId), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -137,3 +137,4 @@ private fun LikeError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> = wh
         message = "服务器错误: $reason"
     )
 }
+

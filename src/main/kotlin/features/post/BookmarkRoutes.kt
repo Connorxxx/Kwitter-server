@@ -49,7 +49,7 @@ fun Route.bookmarkRoutes(
                 return@post
             }
 
-            val result = bookmarkPostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
+            val result = bookmarkPostUseCase(UserId(principal.userId), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -81,7 +81,7 @@ fun Route.bookmarkRoutes(
                 return@delete
             }
 
-            val result = unbookmarkPostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
+            val result = unbookmarkPostUseCase(UserId(principal.userId), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -108,10 +108,17 @@ fun Route.bookmarkRoutes(
                 return@get
             }
 
-            val userId = call.parameters["userId"] ?: run {
+            val userIdParam = call.parameters["userId"] ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ApiErrorResponse(code = "MISSING_USER_ID", message = "缺少 userId 参数")
+                )
+                return@get
+            }
+            val userId = userIdParam.toLongOrNull() ?: run {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiErrorResponse(code = "INVALID_USER_ID", message = "userId 必须是 Long")
                 )
                 return@get
             }
@@ -133,10 +140,10 @@ fun Route.bookmarkRoutes(
                 logger.info("查询用户收藏列表: userId=$userId, limit=$limit, offset=$offset")
 
                 // 使用当前认证用户的 ID
-                val currentUserId = UserId(principal.userId.toLong())
+                val currentUserId = UserId(principal.userId)
 
                 // 调用 Use Case
-                val bookmarkItems = getUserBookmarksWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
+                val bookmarkItems = getUserBookmarksWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
                 val duration = System.currentTimeMillis() - startTime
 
                 // 检查是否有错误
@@ -218,3 +225,4 @@ private fun BookmarkError.toHttpError(): Pair<HttpStatusCode, ApiErrorResponse> 
         message = "服务器错误: $reason"
     )
 }
+

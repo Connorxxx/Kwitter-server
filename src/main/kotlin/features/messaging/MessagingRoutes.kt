@@ -46,7 +46,7 @@ fun Route.messagingRoutes(
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
                 val conversations = getConversationsUseCase(userId, limit, offset).toList()
 
                 val hasMore = conversations.size > limit
@@ -72,14 +72,14 @@ fun Route.messagingRoutes(
                 }
 
                 val request = call.receive<SendMessageRequest>()
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
 
                 val cmd = SendMessageCommand(
                     senderId = userId,
-                    recipientId = UserId(request.recipientId.toLong()),
+                    recipientId = UserId(request.recipientId),
                     content = request.content,
                     imageUrl = request.imageUrl,
-                    replyToMessageId = request.replyToMessageId?.let { MessageId(it.toLong()) }
+                    replyToMessageId = request.replyToMessageId?.let(::MessageId)
                 )
 
                 val result = sendMessageUseCase(cmd)
@@ -93,7 +93,7 @@ fun Route.messagingRoutes(
                         // Async notification (non-blocking)
                         appScope.launch {
                             try {
-                                val recipientId = UserId(request.recipientId.toLong())
+                                val recipientId = UserId(request.recipientId)
                                 notifyNewMessageUseCase.execute(
                                     recipientId = recipientId,
                                     messageId = sendResult.message.id,
@@ -132,7 +132,7 @@ fun Route.messagingRoutes(
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
                 val beforeId = call.request.queryParameters["beforeId"]?.toLongOrNull()?.let { MessageId(it) }
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
 
                 val result = getMessagesUseCase(ConversationId(conversationId.toLong()), userId, limit, offset, beforeId)
 
@@ -175,7 +175,7 @@ fun Route.messagingRoutes(
                     return@put
                 }
 
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
                 val convId = ConversationId(conversationId.toLong())
 
                 val result = markConversationReadUseCase(convId, userId)
@@ -200,7 +200,7 @@ fun Route.messagingRoutes(
                         call.respond(
                             HttpStatusCode.OK,
                             MarkReadResponse(
-                                conversationId = conversationId,
+                                conversationId = convId.value,
                                 readAt = System.currentTimeMillis()
                             )
                         )
@@ -225,7 +225,7 @@ fun Route.messagingRoutes(
                     return@delete
                 }
 
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
                 val result = deleteMessageUseCase(MessageId(messageId.toLong()), userId)
 
                 result.fold(
@@ -254,7 +254,7 @@ fun Route.messagingRoutes(
                     return@put
                 }
 
-                val userId = UserId(principal.userId.toLong())
+                val userId = UserId(principal.userId)
                 val msgId = MessageId(messageId.toLong())
                 val result = recallMessageUseCase(msgId, userId)
 
@@ -275,10 +275,11 @@ fun Route.messagingRoutes(
                             }
                         }
 
-                        call.respond(HttpStatusCode.OK, mapOf("messageId" to messageId, "recalled" to true))
+                        call.respond(HttpStatusCode.OK, mapOf("messageId" to msgId.value, "recalled" to true))
                     }
                 )
             }
         }
     }
 }
+

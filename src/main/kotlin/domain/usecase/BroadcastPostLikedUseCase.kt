@@ -43,8 +43,8 @@ class BroadcastPostLikedUseCase(
     ) {
         try {
             val event = NotificationEvent.PostLiked(
-                postId = postId.value.toString(),
-                likedByUserId = likedByUserId.value.toString(),
+                postId = postId.value,
+                likedByUserId = likedByUserId.value,
                 likedByDisplayName = likedByDisplayName,
                 likedByUsername = likedByUsername,
                 newLikeCount = newLikeCount,

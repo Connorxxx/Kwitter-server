@@ -50,7 +50,7 @@ fun Route.userRoutes(
                     return@get
                 }
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 val result = getUserProfileUseCase(UserId(userId.toLong()), currentUserId)
                 result.fold(
@@ -74,7 +74,7 @@ fun Route.userRoutes(
                     return@get
                 }
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 // 解析 Username
                 val usernameResult = Username(usernameStr)
@@ -111,7 +111,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 val items = getUserFollowingUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
 
@@ -154,7 +154,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 val items = getUserFollowersUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
 
@@ -198,7 +198,7 @@ fun Route.userRoutes(
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
                 val beforeId = call.request.queryParameters["beforeId"]?.toLongOrNull()?.let { PostId(it) }
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 val postItems = getUserPostsWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId, beforeId).toList()
 
@@ -254,7 +254,7 @@ fun Route.userRoutes(
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
                 val beforeId = call.request.queryParameters["beforeId"]?.toLongOrNull()?.let { PostId(it) }
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 val replyItems = getUserRepliesWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId, beforeId).toList()
 
@@ -310,7 +310,7 @@ fun Route.userRoutes(
                 val limit = rawLimit.coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 // TODO: 后期添加隐私检查
                 // if (targetUser.likesPrivacy == Private && currentUserId != userId) {
@@ -373,7 +373,7 @@ fun Route.userRoutes(
                 val request = call.receive<UpdateProfileRequest>()
 
                 val command = UpdateProfileCommand(
-                    userId = UserId(userId.toLong()),
+                    userId = UserId(userId),
                     username = request.username,
                     displayName = request.displayName,
                     bio = request.bio,
@@ -412,7 +412,7 @@ fun Route.userRoutes(
                                 val contentType = part.contentType?.toString() ?: ""
                                 val bytes = part.provider().readRemaining().readByteArray()
 
-                                val result = uploadAvatarUseCase(UserId(userId.toLong()), contentType, bytes)
+                                val result = uploadAvatarUseCase(UserId(userId), contentType, bytes)
                                 result.fold(
                                     ifLeft = { error ->
                                         val (status, body) = error.toHttpError()
@@ -456,7 +456,7 @@ fun Route.userRoutes(
                     return@delete
                 }
 
-                val result = deleteAvatarUseCase(UserId(userId.toLong()))
+                val result = deleteAvatarUseCase(UserId(userId))
                 result.fold(
                     ifLeft = { error ->
                         val (status, body) = error.toHttpError()
@@ -484,7 +484,7 @@ fun Route.userRoutes(
                     return@post
                 }
 
-                val result = followUserUseCase(UserId(followerId.toLong()), UserId(followingId.toLong()))
+                val result = followUserUseCase(UserId(followerId), UserId(followingId.toLong()))
                 result.fold(
                     ifLeft = { error ->
                         val (status, body) = error.toHttpError()
@@ -512,7 +512,7 @@ fun Route.userRoutes(
                     return@delete
                 }
 
-                val result = unfollowUserUseCase(UserId(followerId.toLong()), UserId(followingId.toLong()))
+                val result = unfollowUserUseCase(UserId(followerId), UserId(followingId.toLong()))
                 result.fold(
                     ifLeft = { error ->
                         val (status, body) = error.toHttpError()
@@ -540,7 +540,7 @@ fun Route.userRoutes(
                     return@post
                 }
 
-                val result = blockUserUseCase(UserId(blockerId.toLong()), UserId(blockedId.toLong()))
+                val result = blockUserUseCase(UserId(blockerId), UserId(blockedId.toLong()))
                 result.fold(
                     ifLeft = { error ->
                         val (status, body) = error.toHttpError()
@@ -568,7 +568,7 @@ fun Route.userRoutes(
                     return@delete
                 }
 
-                val result = unblockUserUseCase(UserId(blockerId.toLong()), UserId(blockedId.toLong()))
+                val result = unblockUserUseCase(UserId(blockerId), UserId(blockedId.toLong()))
                 result.fold(
                     ifLeft = { error ->
                         val (status, body) = error.toHttpError()
@@ -582,3 +582,4 @@ fun Route.userRoutes(
         }
     }
 }
+

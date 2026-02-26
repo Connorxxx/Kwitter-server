@@ -16,8 +16,8 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class NewPostCreated(
-        val postId: String,
-        val authorId: String,
+        val postId: Long,
+        val authorId: Long,
         val authorDisplayName: String,
         val authorUsername: String,
         val content: String,
@@ -32,8 +32,8 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class PostLiked(
-        val postId: String,
-        val likedByUserId: String,
+        val postId: Long,
+        val likedByUserId: Long,
         val likedByDisplayName: String,
         val likedByUsername: String,
         val newLikeCount: Int,
@@ -48,11 +48,11 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class PostCommented(
-        val postId: String,
-        val commentedByUserId: String,
+        val postId: Long,
+        val commentedByUserId: Long,
         val commentedByDisplayName: String,
         val commentedByUsername: String,
-        val commentId: String,
+        val commentId: Long,
         val commentPreview: String,
         val timestamp: Long
     ) : NotificationEvent
@@ -65,8 +65,8 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class NewMessageReceived(
-        val messageId: String,
-        val conversationId: String,
+        val messageId: Long,
+        val conversationId: Long,
         val senderDisplayName: String,
         val senderUsername: String,
         val contentPreview: String,
@@ -81,8 +81,8 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class MessagesRead(
-        val conversationId: String,
-        val readByUserId: String,
+        val conversationId: Long,
+        val readByUserId: Long,
         val timestamp: Long
     ) : NotificationEvent
 
@@ -94,9 +94,9 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class MessageRecalled(
-        val messageId: String,
-        val conversationId: String,
-        val recalledByUserId: String,
+        val messageId: Long,
+        val conversationId: Long,
+        val recalledByUserId: Long,
         val timestamp: Long
     ) : NotificationEvent
 
@@ -109,8 +109,8 @@ sealed interface NotificationEvent {
      */
     @Serializable
     data class TypingIndicator(
-        val conversationId: String,
-        val userId: String,
+        val conversationId: Long,
+        val userId: Long,
         val isTyping: Boolean,
         val timestamp: Long
     ) : NotificationEvent

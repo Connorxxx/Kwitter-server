@@ -9,10 +9,10 @@ package com.connor.domain.model
  * - 这是 OAuth2 Refresh Token Rotation 的标配安全机制
  */
 data class RefreshToken(
-    val id: String,
+    val id: Long,
     val tokenHash: String,
     val userId: UserId,
-    val familyId: String,
+    val familyId: Long,
     val expiresAt: Long,
     val isRevoked: Boolean = false,
     val revokedAt: Long? = null,

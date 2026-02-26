@@ -54,7 +54,7 @@ fun Route.postRoutes(
                 logger.info("查询时间线: limit=$limit, offset=$offset, beforeId=${beforeId?.value}")
 
                 // 获取当前用户ID（如果已认证）
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                 // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                 val timelineItems = getTimelineWithStatusUseCase(limit, offset, currentUserId, beforeId).toList()
@@ -130,7 +130,7 @@ fun Route.postRoutes(
                     logger.info("查询 Post 详情: postId=$postId")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 UseCase（包含详情+交互状态的完整查询，遵循Hex架构）
                     val result = getPostDetailWithStatusUseCase(
@@ -184,7 +184,7 @@ fun Route.postRoutes(
                     logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset, afterId=${afterId?.value}")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                     val replyItems = getRepliesWithStatusUseCase(PostId(postId.toLong()), limit, offset, currentUserId, afterId).toList()
@@ -264,7 +264,7 @@ fun Route.postRoutes(
                     logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
                     val postItems = getUserPostsWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
@@ -349,7 +349,7 @@ fun Route.postRoutes(
                     )
 
                     // 先解析请求为命令（检查 MediaType 有效性）
-                    val commandOrError = request.toCommand(UserId(userId.toLong()))
+                    val commandOrError = request.toCommand(UserId(userId))
                     val duration = System.currentTimeMillis() - startTime
 
                     commandOrError.fold(
@@ -443,7 +443,7 @@ fun Route.postRoutes(
                 try {
                     logger.info("删除 Post 请求: userId=$userId, postId=$postId")
 
-                    val result = deletePostUseCase(PostId(postId.toLong()), UserId(userId.toLong()))
+                    val result = deletePostUseCase(PostId(postId.toLong()), UserId(userId))
                     val duration = System.currentTimeMillis() - startTime
 
                     result.fold(
@@ -467,3 +467,4 @@ fun Route.postRoutes(
         }
     }
 }
+

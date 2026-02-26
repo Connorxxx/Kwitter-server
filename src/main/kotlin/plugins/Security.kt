@@ -27,12 +27,12 @@ fun Application.configureSecurity(tokenConfig: TokenConfig) {
 
             verifier { jwtVerifier }
             validate { credential ->
-                val userId = credential.payload.getClaim("id").asString()
+                val userId = credential.payload.getClaim("id").asLong()
                 val displayName = credential.payload.getClaim("displayName").asString()
                 val username = credential.payload.getClaim("username").asString()
                 val issuedAt = credential.payload.issuedAt?.time ?: 0L
 
-                if (!userId.isNullOrBlank() && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
+                if (userId != null && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
                     UserPrincipal(userId, displayName, username, issuedAt)
                 } else {
                     null
@@ -63,12 +63,12 @@ fun ApplicationCall.tryResolvePrincipal(): UserPrincipal? {
 
     return try {
         val decoded = jwtVerifier.verify(token)
-        val userId = decoded.getClaim("id").asString()
+        val userId = decoded.getClaim("id").asLong()
         val displayName = decoded.getClaim("displayName").asString()
         val username = decoded.getClaim("username").asString()
         val issuedAt = decoded.issuedAt?.time ?: 0L
 
-        if (!userId.isNullOrBlank() && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
+        if (userId != null && !displayName.isNullOrBlank() && !username.isNullOrBlank()) {
             UserPrincipal(userId, displayName, username, issuedAt)
         } else {
             null

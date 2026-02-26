@@ -65,7 +65,7 @@ fun Route.searchRoutes(
                     )
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchPostsUseCase(query, sort, limit + 1, offset, currentUserId).toList()
@@ -142,7 +142,7 @@ fun Route.searchRoutes(
                     logger.info("搜索 Replies: query='$query', limit=$limit, offset=$offset")
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchRepliesUseCase(query, limit + 1, offset, currentUserId).toList()
@@ -218,7 +218,7 @@ fun Route.searchRoutes(
                     logger.info("搜索用户: query='$query', limit=$limit, offset=$offset")
 
                     // 获取当前用户 ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let(::UserId)
 
                     // 调用 Use Case（拉取 limit + 1 条用于判断 hasMore）
                     val searchResults = searchUsersUseCase(query, UserSearchSort.RELEVANCE, limit + 1, offset, currentUserId).toList()
@@ -265,3 +265,4 @@ fun Route.searchRoutes(
             }
     }
 }
+

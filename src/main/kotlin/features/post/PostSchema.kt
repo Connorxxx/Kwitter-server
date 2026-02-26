@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 data class CreatePostRequest(
     val content: String,
     val mediaUrls: List<MediaDto> = emptyList(), // 最多 4 个
-    val parentId: String? = null // null = 顶层 Post，非 null = 回复
+    val parentId: Long? = null // null = 顶层 Post，非 null = 回复
 )
 
 /**
@@ -30,10 +30,10 @@ data class MediaDto(
  */
 @Serializable
 data class PostDetailResponse(
-    val id: String,
+    val id: Long,
     val content: String,
     val media: List<MediaDto>,
-    val parentId: String?,
+    val parentId: Long?,
     val isTopLevelPost: Boolean, // 明确标记是否为顶层 Post
     val createdAt: Long,
     val updatedAt: Long,
@@ -50,7 +50,7 @@ data class PostDetailResponse(
  */
 @Serializable
 data class PostSummaryResponse(
-    val id: String,
+    val id: Long,
     val content: String,
     val author: AuthorDto,
     val createdAt: Long
@@ -61,7 +61,7 @@ data class PostSummaryResponse(
  */
 @Serializable
 data class AuthorDto(
-    val id: String,
+    val id: Long,
     val displayName: String,
     val avatarUrl: String? = null
 )
@@ -85,5 +85,5 @@ data class PostListResponse(
     val posts: List<PostDetailResponse>,
     val hasMore: Boolean,
     val total: Int? = null, // 可选的总数（某些场景不需要）
-    val nextCursor: String? = null // 最后一条记录的 snowflake ID，用于 cursor 分页
+    val nextCursor: Long? = null // 最后一条记录的 snowflake ID，用于 cursor 分页
 )

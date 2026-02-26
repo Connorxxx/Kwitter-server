@@ -22,7 +22,7 @@ data class RefreshRequest(
 
 @Serializable
 data class UserResponse(
-    val id: String,
+    val id: Long,
     val email: String,
     val username: String,
     val displayName: String,

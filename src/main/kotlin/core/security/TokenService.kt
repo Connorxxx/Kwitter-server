@@ -17,7 +17,7 @@ class TokenService(
      * 包含 issuedAt 声明，用于敏感路由校验 passwordChangedAt > issuedAt
      * 配合服务端 15 秒 leeway，实际有效窗口 ~3:15
      */
-    override fun generate(userId: String, displayName: String, username: String): String {
+    override fun generate(userId: Long, displayName: String, username: String): String {
         val now = System.currentTimeMillis()
         return JWT.create()
             .withAudience(config.audience)

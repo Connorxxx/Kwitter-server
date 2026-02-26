@@ -61,7 +61,7 @@ class InMemoryNotificationRepository(
             )
 
             val jsonMessage = json.encodeToString(message)
-            val postId = PostId(event.postId.toLong())
+            val postId = PostId(event.postId)
             connectionManager.sendToPostSubscribers(postId, jsonMessage)
 
             logger.info(
@@ -82,7 +82,7 @@ class InMemoryNotificationRepository(
             )
 
             val jsonMessage = json.encodeToString(message)
-            val postId = PostId(event.postId.toLong())
+            val postId = PostId(event.postId)
             connectionManager.sendToPostSubscribers(postId, jsonMessage)
 
             logger.info("Notified post commented: postId={}, commentId={}", event.postId, event.commentId)

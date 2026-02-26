@@ -51,7 +51,7 @@ fun CreatePostRequest.toCommand(authorId: UserId): Either<PostError, CreatePostC
         authorId = authorId,
         content = this.content,
         mediaUrls = mediaUrls,
-        parentId = this.parentId?.let { PostId(it.toLong()) }
+        parentId = this.parentId?.let(::PostId)
     ).right()
 }
 
@@ -65,10 +65,10 @@ fun PostDetail.toResponse(
     isBookmarkedByCurrentUser: Boolean? = null
 ): PostDetailResponse {
     return PostDetailResponse(
-        id = post.id.value.toString(),
+        id = post.id.value,
         content = post.content.value,
         media = post.media.map { it.toDto() },
-        parentId = post.parentId?.value?.toString(),
+        parentId = post.parentId?.value,
         isTopLevelPost = post.parentId == null,
         createdAt = post.createdAt,
         updatedAt = post.updatedAt,
@@ -85,7 +85,7 @@ fun PostDetail.toResponse(
  */
 fun Post.toSummaryResponse(author: User): PostSummaryResponse {
     return PostSummaryResponse(
-        id = id.value.toString(),
+        id = id.value,
         content = content.value,
         author = author.toAuthorDto(),
         createdAt = createdAt
@@ -107,7 +107,7 @@ fun MediaAttachment.toDto(): MediaDto {
  */
 fun User.toAuthorDto(): AuthorDto {
     return AuthorDto(
-        id = id.value.toString(),
+        id = id.value,
         displayName = displayName.value,
         avatarUrl = avatarUrl
     )

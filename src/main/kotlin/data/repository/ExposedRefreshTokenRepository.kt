@@ -43,7 +43,7 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
         }
     }
 
-    override suspend fun revokeFamily(familyId: String): Unit = dbQuery {
+    override suspend fun revokeFamily(familyId: Long): Unit = dbQuery {
         val now = System.currentTimeMillis()
         val count = RefreshTokensTable.update({ RefreshTokensTable.familyId eq familyId }) {
             it[isRevoked] = true
@@ -82,7 +82,7 @@ class ExposedRefreshTokenRepository : RefreshTokenRepository {
         affected > 0
     }
 
-    override suspend fun findLatestRevokedInFamily(familyId: String): RefreshToken? = dbQuery {
+    override suspend fun findLatestRevokedInFamily(familyId: Long): RefreshToken? = dbQuery {
         RefreshTokensTable.selectAll()
             .where {
                 (RefreshTokensTable.familyId eq familyId) and (RefreshTokensTable.isRevoked eq true)

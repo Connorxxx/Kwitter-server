@@ -20,7 +20,7 @@ class DeletePostUseCase(
 
         if (post.authorId != requestingUserId) {
             logger.warn("无权删除: postId=${postId.value}, authorId=${post.authorId.value}, requestingUserId=${requestingUserId.value}")
-            raise(PostError.Unauthorized(requestingUserId.value.toString(), "delete"))
+            raise(PostError.Unauthorized(requestingUserId.value, "delete"))
         }
 
         postRepository.delete(postId).bind()

@@ -7,7 +7,7 @@ package com.connor.core.security
  * issuedAt 用于敏感路由校验：如果 passwordChangedAt > issuedAt，则token无效
  */
 data class UserPrincipal(
-    val userId: String,
+    val userId: Long,
     val displayName: String,
     val username: String,
     val issuedAt: Long = 0
