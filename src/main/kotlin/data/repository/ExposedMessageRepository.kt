@@ -172,13 +172,17 @@ class ExposedMessageRepository : MessageRepository {
     override fun findMessagesByConversation(
         conversationId: ConversationId,
         limit: Int,
-        offset: Int
+        offset: Int,
+        beforeId: MessageId?
     ): Flow<Message> = flow {
         val messages = dbQuery {
             MessagesTable.selectAll()
-                .where { MessagesTable.conversationId eq conversationId.value }
-                .orderBy(MessagesTable.createdAt to SortOrder.DESC)
-                .limit(limit + 1).offset(offset.toLong())
+                .where {
+                    val base = MessagesTable.conversationId eq conversationId.value
+                    if (beforeId != null) base and (MessagesTable.id less beforeId.value) else base
+                }
+                .orderBy(MessagesTable.id to SortOrder.DESC)
+                .let { if (beforeId != null) it.limit(limit + 1) else it.limit(limit + 1).offset(offset.toLong()) }
                 .map { it.toMessage() }
         }
 

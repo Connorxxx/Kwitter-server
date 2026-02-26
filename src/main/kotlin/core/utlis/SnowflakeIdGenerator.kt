@@ -33,7 +33,7 @@ object SnowflakeIdGenerator {
     // 高 52 bits = timestamp, 低 12 bits = sequence
     private val state = AtomicLong(0L)
 
-    fun nextId(): String {
+    fun nextId(): Long {
         while (true) {
             val now = System.currentTimeMillis()
             val elapsed = now - EPOCH
@@ -64,10 +64,9 @@ object SnowflakeIdGenerator {
         }
     }
 
-    private fun formatId(timestamp: Long, sequence: Long): String {
-        val id = (timestamp shl TIMESTAMP_SHIFT) or
+    private fun formatId(timestamp: Long, sequence: Long): Long {
+        return (timestamp shl TIMESTAMP_SHIFT) or
             (workerId shl WORKER_ID_SHIFT) or
             sequence
-        return id.toString()
     }
 }

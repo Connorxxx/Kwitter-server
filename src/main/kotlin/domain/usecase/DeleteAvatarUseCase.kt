@@ -3,7 +3,6 @@ package com.connor.domain.usecase
 import arrow.core.Either
 import arrow.core.raise.either
 import com.connor.domain.failure.UserError
-import com.connor.domain.model.MediaId
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.MediaStorageRepository
 import com.connor.domain.repository.UserRepository
@@ -36,7 +35,7 @@ class DeleteAvatarUseCase(
         if (avatarUrl != null) {
             try {
                 val fileName = avatarUrl.substringAfterLast("/")
-                storageRepository.delete(MediaId(fileName))
+                storageRepository.delete(fileName)
             } catch (e: Exception) {
                 logger.warn("Failed to delete avatar file: $avatarUrl", e)
             }

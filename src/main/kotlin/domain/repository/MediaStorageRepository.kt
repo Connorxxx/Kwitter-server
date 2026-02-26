@@ -2,7 +2,6 @@ package com.connor.domain.repository
 
 import arrow.core.Either
 import com.connor.domain.failure.MediaError
-import com.connor.domain.model.MediaId
 import com.connor.domain.model.UploadedMedia
 
 /**
@@ -26,8 +25,8 @@ interface MediaStorageRepository {
     /**
      * 删除已上传的媒体文件
      *
-     * @param mediaId 媒体ID
+     * @param fileName 文件名
      * @return Either<MediaError, Unit> 删除结果或错误
      */
-    suspend fun delete(mediaId: MediaId): Either<MediaError, Unit>
+    suspend fun delete(fileName: String): Either<MediaError, Unit>
 }

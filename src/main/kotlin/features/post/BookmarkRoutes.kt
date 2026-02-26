@@ -49,7 +49,7 @@ fun Route.bookmarkRoutes(
                 return@post
             }
 
-            val result = bookmarkPostUseCase(UserId(principal.userId), PostId(postId))
+            val result = bookmarkPostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -81,7 +81,7 @@ fun Route.bookmarkRoutes(
                 return@delete
             }
 
-            val result = unbookmarkPostUseCase(UserId(principal.userId), PostId(postId))
+            val result = unbookmarkPostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -133,10 +133,10 @@ fun Route.bookmarkRoutes(
                 logger.info("查询用户收藏列表: userId=$userId, limit=$limit, offset=$offset")
 
                 // 使用当前认证用户的 ID
-                val currentUserId = UserId(principal.userId)
+                val currentUserId = UserId(principal.userId.toLong())
 
                 // 调用 Use Case
-                val bookmarkItems = getUserBookmarksWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
+                val bookmarkItems = getUserBookmarksWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
                 val duration = System.currentTimeMillis() - startTime
 
                 // 检查是否有错误

@@ -4,7 +4,7 @@ package com.connor.domain.model
  * Bookmark ID - 类型安全的标识符
  */
 @JvmInline
-value class BookmarkId(val value: String)
+value class BookmarkId(val value: Long)
 
 /**
  * Bookmark - 收藏聚合根

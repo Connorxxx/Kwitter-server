@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.connor.domain.failure.MediaError
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.model.MediaId
 import com.connor.domain.model.MediaType
 import com.connor.domain.model.MediaUrl
@@ -67,7 +68,7 @@ class FileSystemMediaStorageRepository(
                 val mediaUrl = MediaUrl.unsafe(publicUrl)
                 val mediaType = inferMediaType(fileName)
                 val uploaded = UploadedMedia(
-                    id = MediaId(fileName),
+                    id = MediaId(SnowflakeIdGenerator.nextId()),
                     url = mediaUrl,
                     type = mediaType,
                     fileSize = filePath.length(),
@@ -89,7 +90,7 @@ class FileSystemMediaStorageRepository(
 
             // 构建上传结果
             val uploaded = UploadedMedia(
-                id = MediaId(fileName), // 使用文件名作为媒体 ID
+                id = MediaId(SnowflakeIdGenerator.nextId()), // 使用文件名作为媒体 ID
                 url = mediaUrl,
                 type = mediaType,
                 fileSize = file.size.toLong(),
@@ -115,10 +116,8 @@ class FileSystemMediaStorageRepository(
      * @param mediaId 媒体 ID（在文件系统实现中就是文件名）
      * @return Either<MediaError, Unit> 删除结果或错误
      */
-    override suspend fun delete(mediaId: MediaId): Either<MediaError, Unit> {
+    override suspend fun delete(fileName: String): Either<MediaError, Unit> {
         return try {
-            val fileName = mediaId.value
-
             // 验证文件名安全性
             if (!isValidFileName(fileName)) {
                 return MediaError.InvalidFileName(fileName).left()
@@ -143,7 +142,7 @@ class FileSystemMediaStorageRepository(
             logger.info("Media deleted successfully: fileName=$fileName")
             Unit.right()
         } catch (e: Exception) {
-            logger.error("Failed to delete media: mediaId=${mediaId.value}", e)
+            logger.error("Failed to delete media: fileName=$fileName", e)
             MediaError.DeleteFailed(e.message ?: "Unknown error").left()
         }
     }

@@ -5,7 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.connor.domain.failure.AuthError
 
-@JvmInline value class UserId(val value: String)
+@JvmInline value class UserId(val value: Long)
 
 @JvmInline
 value class Email private constructor(val value: String) {

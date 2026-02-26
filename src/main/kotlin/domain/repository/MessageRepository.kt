@@ -14,7 +14,7 @@ interface MessageRepository {
 
     suspend fun saveMessage(message: Message): Message
 
-    fun findMessagesByConversation(conversationId: ConversationId, limit: Int = 50, offset: Int = 0): Flow<Message>
+    fun findMessagesByConversation(conversationId: ConversationId, limit: Int = 50, offset: Int = 0, beforeId: MessageId? = null): Flow<Message>
 
     suspend fun markConversationAsRead(conversationId: ConversationId, userId: UserId)
 

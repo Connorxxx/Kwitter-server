@@ -46,7 +46,7 @@ fun Route.messagingRoutes(
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
 
-                val userId = UserId(principal.userId)
+                val userId = UserId(principal.userId.toLong())
                 val conversations = getConversationsUseCase(userId, limit, offset).toList()
 
                 val hasMore = conversations.size > limit
@@ -72,14 +72,14 @@ fun Route.messagingRoutes(
                 }
 
                 val request = call.receive<SendMessageRequest>()
-                val userId = UserId(principal.userId)
+                val userId = UserId(principal.userId.toLong())
 
                 val cmd = SendMessageCommand(
                     senderId = userId,
-                    recipientId = UserId(request.recipientId),
+                    recipientId = UserId(request.recipientId.toLong()),
                     content = request.content,
                     imageUrl = request.imageUrl,
-                    replyToMessageId = request.replyToMessageId?.let { MessageId(it) }
+                    replyToMessageId = request.replyToMessageId?.let { MessageId(it.toLong()) }
                 )
 
                 val result = sendMessageUseCase(cmd)
@@ -93,7 +93,7 @@ fun Route.messagingRoutes(
                         // Async notification (non-blocking)
                         appScope.launch {
                             try {
-                                val recipientId = UserId(request.recipientId)
+                                val recipientId = UserId(request.recipientId.toLong())
                                 notifyNewMessageUseCase.execute(
                                     recipientId = recipientId,
                                     messageId = sendResult.message.id,
@@ -131,9 +131,10 @@ fun Route.messagingRoutes(
 
                 val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 50).coerceIn(1, 100)
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
-                val userId = UserId(principal.userId)
+                val beforeId = call.request.queryParameters["beforeId"]?.toLongOrNull()?.let { MessageId(it) }
+                val userId = UserId(principal.userId.toLong())
 
-                val result = getMessagesUseCase(ConversationId(conversationId), userId, limit, offset)
+                val result = getMessagesUseCase(ConversationId(conversationId.toLong()), userId, limit, offset, beforeId)
 
                 result.fold(
                     ifLeft = { error ->
@@ -144,12 +145,15 @@ fun Route.messagingRoutes(
                         val messages = messagesFlow.toList()
                         val hasMore = messages.size > limit
                         val items = if (hasMore) messages.take(limit) else messages
+                        val messageResponses = items.map { it.toResponse() }
+                        val nextCursor = if (hasMore) messageResponses.lastOrNull()?.id else null
 
                         call.respond(
                             HttpStatusCode.OK,
                             MessageListResponse(
-                                messages = items.map { it.toResponse() },
-                                hasMore = hasMore
+                                messages = messageResponses,
+                                hasMore = hasMore,
+                                nextCursor = nextCursor
                             )
                         )
                     }
@@ -171,8 +175,8 @@ fun Route.messagingRoutes(
                     return@put
                 }
 
-                val userId = UserId(principal.userId)
-                val convId = ConversationId(conversationId)
+                val userId = UserId(principal.userId.toLong())
+                val convId = ConversationId(conversationId.toLong())
 
                 val result = markConversationReadUseCase(convId, userId)
 
@@ -221,8 +225,8 @@ fun Route.messagingRoutes(
                     return@delete
                 }
 
-                val userId = UserId(principal.userId)
-                val result = deleteMessageUseCase(MessageId(messageId), userId)
+                val userId = UserId(principal.userId.toLong())
+                val result = deleteMessageUseCase(MessageId(messageId.toLong()), userId)
 
                 result.fold(
                     ifLeft = { error ->
@@ -250,8 +254,8 @@ fun Route.messagingRoutes(
                     return@put
                 }
 
-                val userId = UserId(principal.userId)
-                val msgId = MessageId(messageId)
+                val userId = UserId(principal.userId.toLong())
+                val msgId = MessageId(messageId.toLong())
                 val result = recallMessageUseCase(msgId, userId)
 
                 result.fold(

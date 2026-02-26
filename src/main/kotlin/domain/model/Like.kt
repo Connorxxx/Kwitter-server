@@ -4,7 +4,7 @@ package com.connor.domain.model
  * Like ID - 类型安全的标识符
  */
 @JvmInline
-value class LikeId(val value: String)
+value class LikeId(val value: Long)
 
 /**
  * Like - 点赞聚合根

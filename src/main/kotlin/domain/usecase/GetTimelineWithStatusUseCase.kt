@@ -51,13 +51,14 @@ class GetTimelineWithStatusUseCase(
     operator fun invoke(
         limit: Int = 20,
         offset: Int = 0,
-        currentUserId: UserId? = null
+        currentUserId: UserId? = null,
+        beforeId: PostId? = null
     ): Flow<Either<TimelineError, TimelineItem>> = flow {
-        logger.info("查询时间线及交互状态: limit=$limit, offset=$offset, userId=${currentUserId?.value}")
+        logger.info("查询时间线及交互状态: limit=$limit, offset=$offset, beforeId=${beforeId?.value}, userId=${currentUserId?.value}")
 
         // 1. 收集所有时间线 Posts（必须在 flow 块中用 collect）
         val posts = mutableListOf<PostDetail>()
-        postRepository.findTimeline(limit, offset).collect { post ->
+        postRepository.findTimeline(limit, offset, beforeId).collect { post ->
             posts.add(post)
         }
 

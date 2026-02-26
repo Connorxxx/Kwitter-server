@@ -4,7 +4,7 @@ package com.connor.domain.model
  * 媒体 ID - 类型安全的标识符
  */
 @JvmInline
-value class MediaId(val value: String)
+value class MediaId(val value: Long)
 
 /**
  * 已上传的媒体信息 - 存储操作返回的结果

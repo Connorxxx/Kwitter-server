@@ -9,7 +9,7 @@ import com.connor.domain.failure.PostError
  * Post ID - 类型安全的标识符
  */
 @JvmInline
-value class PostId(val value: String)
+value class PostId(val value: Long)
 
 /**
  * 媒体类型

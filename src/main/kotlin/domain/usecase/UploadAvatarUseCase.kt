@@ -4,7 +4,6 @@ import arrow.core.Either
 import arrow.core.raise.either
 import com.connor.domain.failure.UserError
 import com.connor.domain.model.AvatarConfig
-import com.connor.domain.model.MediaId
 import com.connor.domain.model.UserId
 import com.connor.domain.repository.MediaStorageRepository
 import com.connor.domain.repository.UserRepository
@@ -65,7 +64,7 @@ class UploadAvatarUseCase(
         if (oldAvatarUrl != null && oldAvatarUrl != newAvatarUrl) {
             try {
                 val oldFileName = oldAvatarUrl.substringAfterLast("/")
-                storageRepository.delete(MediaId(oldFileName))
+                storageRepository.delete(oldFileName)
             } catch (e: Exception) {
                 logger.warn("Failed to delete old avatar: $oldAvatarUrl", e)
             }

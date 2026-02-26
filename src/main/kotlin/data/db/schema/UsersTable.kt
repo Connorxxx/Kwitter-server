@@ -6,7 +6,7 @@ import org.jetbrains.exposed.v1.core.Table
 object UsersTable : Table("users") {
     // 对应 Domain 的 UserId。
     // 在 DB 里我们存为 String (varchar)，长度根据你选的 ID 算法定，雪花算法通常 20 位够了
-    val id = varchar("id", 36)
+    val id = long("id")
 
     // 对应 Domain 的 Email。加 uniqueIndex 确保数据库层面的唯一性约束
     val email = varchar("email", 128).uniqueIndex()

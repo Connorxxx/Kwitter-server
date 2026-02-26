@@ -1,6 +1,5 @@
 package com.connor.data.db.schema
 
-import org.jetbrains.exposed.v1.core.Index
 import org.jetbrains.exposed.v1.core.Table
 
 /**
@@ -13,10 +12,10 @@ import org.jetbrains.exposed.v1.core.Table
  */
 object FollowsTable : Table("follows") {
     // 关注者 ID（外键引用 users）
-    val followerId = varchar("follower_id", 36).references(UsersTable.id)
+    val followerId = long("follower_id").references(UsersTable.id)
 
     // 被关注者 ID（外键引用 users）
-    val followingId = varchar("following_id", 36).references(UsersTable.id)
+    val followingId = long("following_id").references(UsersTable.id)
 
     // 关注时间
     val createdAt = long("created_at")

@@ -80,8 +80,8 @@ class RefreshTokenUseCase(
      * 登录/注册时创建初始 token pair
      */
     suspend fun createInitialTokenPair(userId: UserId, displayName: String, username: String): TokenPair {
-        val familyId = SnowflakeIdGenerator.nextId()
-        val accessToken = tokenIssuer.generate(userId.value, displayName, username)
+        val familyId = SnowflakeIdGenerator.nextId().toString()
+        val accessToken = tokenIssuer.generate(userId.value.toString(), displayName, username)
         val refreshToken = createAndSaveRefreshToken(userId, familyId)
 
         return TokenPair(
@@ -150,7 +150,7 @@ class RefreshTokenUseCase(
             ?: return AuthError.RefreshTokenNotFound.left()
 
         val accessToken = tokenIssuer.generate(
-            userId = user.id.value,
+            userId = user.id.value.toString(),
             displayName = user.displayName.value,
             username = user.username.value
         )
@@ -168,7 +168,7 @@ class RefreshTokenUseCase(
         val tokenHash = tokenHasher.hashToken(rawToken)
 
         val refreshToken = RefreshToken(
-            id = SnowflakeIdGenerator.nextId(),
+            id = SnowflakeIdGenerator.nextId().toString(),
             tokenHash = tokenHash,
             userId = userId,
             familyId = familyId,

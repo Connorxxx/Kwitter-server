@@ -48,13 +48,15 @@ data class MessageResponse(
 @Serializable
 data class ConversationListResponse(
     val conversations: List<ConversationResponse>,
-    val hasMore: Boolean
+    val hasMore: Boolean,
+    val nextCursor: String? = null
 )
 
 @Serializable
 data class MessageListResponse(
     val messages: List<MessageResponse>,
-    val hasMore: Boolean
+    val hasMore: Boolean,
+    val nextCursor: String? = null
 )
 
 @Serializable

@@ -52,13 +52,14 @@ class GetRepliesWithStatusUseCase(
         parentId: PostId,
         limit: Int = 20,
         offset: Int = 0,
-        currentUserId: UserId? = null
+        currentUserId: UserId? = null,
+        afterId: PostId? = null
     ): Flow<Either<ReplyError, ReplyItem>> = flow {
-        logger.info("查询回复列表及交互状态: parentId=${parentId.value}, limit=$limit, offset=$offset, userId=${currentUserId?.value}")
+        logger.info("查询回复列表及交互状态: parentId=${parentId.value}, limit=$limit, offset=$offset, afterId=${afterId?.value}, userId=${currentUserId?.value}")
 
         // 1. 收集所有回复 Posts（必须在 flow 块中用 collect）
         val replies = mutableListOf<PostDetail>()
-        postRepository.findReplies(parentId, limit, offset).collect { reply ->
+        postRepository.findReplies(parentId, limit, offset, afterId).collect { reply ->
             replies.add(reply)
         }
 

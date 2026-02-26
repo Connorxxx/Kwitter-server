@@ -54,9 +54,10 @@ class GetUserRepliesWithStatusUseCase(
         authorId: UserId,
         limit: Int = 20,
         offset: Int = 0,
-        currentUserId: UserId? = null
+        currentUserId: UserId? = null,
+        beforeId: PostId? = null
     ): Flow<Either<UserReplyError, UserReplyItem>> = flow {
-        logger.info("查询用户回复及交互状态: authorId=${authorId.value}, limit=$limit, offset=$offset, currentUserId=${currentUserId?.value}")
+        logger.info("查询用户回复及交互状态: authorId=${authorId.value}, limit=$limit, offset=$offset, beforeId=${beforeId?.value}, currentUserId=${currentUserId?.value}")
 
         // 1. 先验证目标用户是否存在
         val userExistsResult = userRepository.findById(authorId)
@@ -68,7 +69,7 @@ class GetUserRepliesWithStatusUseCase(
 
         // 2. 收集所有用户回复（必须在 flow 块中用 collect）
         val replies = mutableListOf<PostDetail>()
-        postRepository.findRepliesByAuthor(authorId, limit, offset).collect { reply ->
+        postRepository.findRepliesByAuthor(authorId, limit, offset, beforeId).collect { reply ->
             replies.add(reply)
         }
 

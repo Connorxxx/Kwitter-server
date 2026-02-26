@@ -84,5 +84,6 @@ data class StatsDto(
 data class PostListResponse(
     val posts: List<PostDetailResponse>,
     val hasMore: Boolean,
-    val total: Int? = null // 可选的总数（某些场景不需要）
+    val total: Int? = null, // 可选的总数（某些场景不需要）
+    val nextCursor: String? = null // 最后一条记录的 snowflake ID，用于 cursor 分页
 )

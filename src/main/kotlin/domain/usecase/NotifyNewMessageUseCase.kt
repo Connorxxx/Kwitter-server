@@ -25,8 +25,8 @@ class NotifyNewMessageUseCase(
         try {
             // 1. In-app WebSocket notification
             val event = NotificationEvent.NewMessageReceived(
-                messageId = messageId.value,
-                conversationId = conversationId.value,
+                messageId = messageId.value.toString(),
+                conversationId = conversationId.value.toString(),
                 senderDisplayName = senderDisplayName,
                 senderUsername = senderUsername,
                 contentPreview = contentPreview,
@@ -41,8 +41,8 @@ class NotifyNewMessageUseCase(
                 body = contentPreview,
                 data = mapOf(
                     "type" to "new_message",
-                    "conversationId" to conversationId.value,
-                    "messageId" to messageId.value
+                    "conversationId" to conversationId.value.toString(),
+                    "messageId" to messageId.value.toString()
                 )
             )
 
@@ -69,8 +69,8 @@ class NotifyNewMessageUseCase(
                 conversation.participant2Id else conversation.participant1Id
 
             val event = NotificationEvent.MessagesRead(
-                conversationId = conversationId.value,
-                readByUserId = readByUserId.value,
+                conversationId = conversationId.value.toString(),
+                readByUserId = readByUserId.value.toString(),
                 timestamp = System.currentTimeMillis()
             )
             notificationRepository.notifyMessagesRead(recipientId, event)
@@ -96,9 +96,9 @@ class NotifyNewMessageUseCase(
                 conversation.participant2Id else conversation.participant1Id
 
             val event = NotificationEvent.MessageRecalled(
-                messageId = messageId.value,
-                conversationId = message.conversationId.value,
-                recalledByUserId = message.senderId.value,
+                messageId = messageId.value.toString(),
+                conversationId = message.conversationId.value.toString(),
+                recalledByUserId = message.senderId.value.toString(),
                 timestamp = System.currentTimeMillis()
             )
             notificationRepository.notifyMessageRecalled(recipientId, event)

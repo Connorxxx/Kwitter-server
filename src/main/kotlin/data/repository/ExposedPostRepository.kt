@@ -147,19 +147,19 @@ class ExposedPostRepository : PostRepository {
         detail.right()
     }
 
-    override fun findByAuthor(authorId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+    override fun findByAuthor(authorId: UserId, limit: Int, offset: Int, beforeId: PostId?): Flow<PostDetail> = flow {
         val details = dbQuery {
-            logger.debug("查询用户 Posts: authorId=${authorId.value}, limit=$limit, offset=$offset")
+            logger.debug("查询用户 Posts: authorId=${authorId.value}, limit=$limit, offset=$offset, beforeId=${beforeId?.value}")
 
             // 查询顶层 Posts（不包括回复）- 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
                 .where {
-                    (PostsTable.authorId eq authorId.value) and
-                            (PostsTable.parentId.isNull())
+                    val base = (PostsTable.authorId eq authorId.value) and (PostsTable.parentId.isNull())
+                    if (beforeId != null) base and (PostsTable.id less beforeId.value) else base
                 }
-                .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                .limit(limit + 1).offset(offset.toLong())
+                .orderBy(PostsTable.id to SortOrder.DESC)
+                .let { if (beforeId != null) it.limit(limit + 1) else it.limit(limit + 1).offset(offset.toLong()) }
 
             val rows = query.toList()
 
@@ -175,19 +175,19 @@ class ExposedPostRepository : PostRepository {
         }
     }
 
-    override fun findRepliesByAuthor(authorId: UserId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+    override fun findRepliesByAuthor(authorId: UserId, limit: Int, offset: Int, beforeId: PostId?): Flow<PostDetail> = flow {
         val details = dbQuery {
-            logger.debug("查询用户回复: authorId=${authorId.value}, limit=$limit, offset=$offset")
+            logger.debug("查询用户回复: authorId=${authorId.value}, limit=$limit, offset=$offset, beforeId=${beforeId?.value}")
 
             // 查询回复（只包括有 parentId 的 Posts）- 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
                 .where {
-                    (PostsTable.authorId eq authorId.value) and
-                            (PostsTable.parentId.isNotNull())
+                    val base = (PostsTable.authorId eq authorId.value) and (PostsTable.parentId.isNotNull())
+                    if (beforeId != null) base and (PostsTable.id less beforeId.value) else base
                 }
-                .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                .limit(limit + 1).offset(offset.toLong())
+                .orderBy(PostsTable.id to SortOrder.DESC)
+                .let { if (beforeId != null) it.limit(limit + 1) else it.limit(limit + 1).offset(offset.toLong()) }
 
             val rows = query.toList()
 
@@ -203,16 +203,19 @@ class ExposedPostRepository : PostRepository {
         }
     }
 
-    override fun findReplies(parentId: PostId, limit: Int, offset: Int): Flow<PostDetail> = flow {
+    override fun findReplies(parentId: PostId, limit: Int, offset: Int, afterId: PostId?): Flow<PostDetail> = flow {
         val details = dbQuery {
-            logger.debug("查询回复: parentId=${parentId.value}, limit=$limit, offset=$offset")
+            logger.debug("查询回复: parentId=${parentId.value}, limit=$limit, offset=$offset, afterId=${afterId?.value}")
 
             // 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
-                .where { PostsTable.parentId eq parentId.value }
-                .orderBy(PostsTable.createdAt to SortOrder.ASC) // 回复按时间正序
-                .limit(limit + 1).offset(offset.toLong())
+                .where {
+                    val base = PostsTable.parentId eq parentId.value
+                    if (afterId != null) base and (PostsTable.id greater afterId.value) else base
+                }
+                .orderBy(PostsTable.id to SortOrder.ASC) // 回复按时间正序
+                .let { if (afterId != null) it.limit(limit + 1) else it.limit(limit + 1).offset(offset.toLong()) }
 
             val rows = query.toList()
 
@@ -228,16 +231,19 @@ class ExposedPostRepository : PostRepository {
         }
     }
 
-    override fun findTimeline(limit: Int, offset: Int): Flow<PostDetail> = flow {
+    override fun findTimeline(limit: Int, offset: Int, beforeId: PostId?): Flow<PostDetail> = flow {
         val details = dbQuery {
-            logger.debug("查询时间线: limit=$limit, offset=$offset")
+            logger.debug("查询时间线: limit=$limit, offset=$offset, beforeId=${beforeId?.value}")
 
             // 查询所有顶层 Posts（不包括回复）- 多查询 1 条用于判断 hasMore
             val query = (PostsTable innerJoin UsersTable)
                 .select(PostsTable.columns + UsersTable.columns)
-                .where { PostsTable.parentId.isNull() }
-                .orderBy(PostsTable.createdAt to SortOrder.DESC)
-                .limit(limit + 1).offset(offset.toLong())
+                .where {
+                    val base = PostsTable.parentId.isNull()
+                    if (beforeId != null) base and (PostsTable.id less beforeId.value) else base
+                }
+                .orderBy(PostsTable.id to SortOrder.DESC)
+                .let { if (beforeId != null) it.limit(limit + 1) else it.limit(limit + 1).offset(offset.toLong()) }
 
             val rows = query.toList()
 

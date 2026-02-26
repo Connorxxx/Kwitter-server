@@ -17,7 +17,7 @@ import io.ktor.http.*
  */
 fun User.toDto(): UserDto {
     return UserDto(
-        id = id.value,
+        id = id.value.toString(),
         username = username.value,
         displayName = displayName.value,
         bio = bio.value,

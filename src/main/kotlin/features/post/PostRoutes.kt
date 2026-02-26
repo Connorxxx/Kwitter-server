@@ -48,15 +48,16 @@ fun Route.postRoutes(
             val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
             val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
             val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)  // 不允许负数
+            val beforeId = call.request.queryParameters["beforeId"]?.toLongOrNull()?.let { PostId(it) }
 
             try {
-                logger.info("查询时间线: limit=$limit, offset=$offset")
+                logger.info("查询时间线: limit=$limit, offset=$offset, beforeId=${beforeId?.value}")
 
                 // 获取当前用户ID（如果已认证）
-                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
+                val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
 
                 // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
-                val timelineItems = getTimelineWithStatusUseCase(limit, offset, currentUserId).toList()
+                val timelineItems = getTimelineWithStatusUseCase(limit, offset, currentUserId, beforeId).toList()
                 val duration = System.currentTimeMillis() - startTime
 
                 // 检查是否有错误
@@ -96,11 +97,14 @@ fun Route.postRoutes(
                     )
                 }
 
+                val nextCursor = if (hasMore) postsResponse.lastOrNull()?.id else null
+
                 call.respond(
                     HttpStatusCode.OK,
                     PostListResponse(
                         posts = postsResponse,
-                        hasMore = hasMore
+                        hasMore = hasMore,
+                        nextCursor = nextCursor
                     )
                 )
 
@@ -126,11 +130,11 @@ fun Route.postRoutes(
                     logger.info("查询 Post 详情: postId=$postId")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
 
                     // 调用 UseCase（包含详情+交互状态的完整查询，遵循Hex架构）
                     val result = getPostDetailWithStatusUseCase(
-                        postId = PostId(postId),
+                        postId = PostId(postId.toLong()),
                         currentUserId = currentUserId
                     )
                     val duration = System.currentTimeMillis() - startTime
@@ -174,15 +178,16 @@ fun Route.postRoutes(
                 val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 20
                 val limit = rawLimit.coerceIn(1, 100)  // 下限 1，上限 100
                 val offset = (call.request.queryParameters["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
+                val afterId = call.request.queryParameters["afterId"]?.toLongOrNull()?.let { PostId(it) }
 
                 try {
-                    logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset")
+                    logger.info("查询回复列表: postId=$postId, limit=$limit, offset=$offset, afterId=${afterId?.value}")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
-                    val replyItems = getRepliesWithStatusUseCase(PostId(postId), limit, offset, currentUserId).toList()
+                    val replyItems = getRepliesWithStatusUseCase(PostId(postId.toLong()), limit, offset, currentUserId, afterId).toList()
                     val duration = System.currentTimeMillis() - startTime
 
                     // 检查是否有错误
@@ -222,11 +227,14 @@ fun Route.postRoutes(
                         )
                     }
 
+                    val nextCursor = if (hasMore) repliesResponse.lastOrNull()?.id else null
+
                     call.respond(
                         HttpStatusCode.OK,
                         PostListResponse(
                             posts = repliesResponse,
-                            hasMore = hasMore
+                            hasMore = hasMore,
+                            nextCursor = nextCursor
                         )
                     )
 
@@ -256,10 +264,10 @@ fun Route.postRoutes(
                     logger.info("查询用户 Posts: userId=$userId, limit=$limit, offset=$offset")
 
                     // 获取当前用户ID（如果已认证）
-                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it) }
+                    val currentUserId = call.tryResolvePrincipal()?.userId?.let { UserId(it.toLong()) }
 
                     // 调用 Use Case（业务编排在 UseCase 层，Route 只做协议转换）
-                    val postItems = getUserPostsWithStatusUseCase(UserId(userId), limit, offset, currentUserId).toList()
+                    val postItems = getUserPostsWithStatusUseCase(UserId(userId.toLong()), limit, offset, currentUserId).toList()
                     val duration = System.currentTimeMillis() - startTime
 
                     // 检查是否有错误
@@ -341,7 +349,7 @@ fun Route.postRoutes(
                     )
 
                     // 先解析请求为命令（检查 MediaType 有效性）
-                    val commandOrError = request.toCommand(UserId(userId))
+                    val commandOrError = request.toCommand(UserId(userId.toLong()))
                     val duration = System.currentTimeMillis() - startTime
 
                     commandOrError.fold(
@@ -435,7 +443,7 @@ fun Route.postRoutes(
                 try {
                     logger.info("删除 Post 请求: userId=$userId, postId=$postId")
 
-                    val result = deletePostUseCase(PostId(postId), UserId(userId))
+                    val result = deletePostUseCase(PostId(postId.toLong()), UserId(userId.toLong()))
                     val duration = System.currentTimeMillis() - startTime
 
                     result.fold(

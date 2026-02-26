@@ -45,8 +45,8 @@ class BroadcastPostCreatedUseCase(
     ) {
         try {
             val event = NotificationEvent.NewPostCreated(
-                postId = postId.value,
-                authorId = authorId.value,
+                postId = postId.value.toString(),
+                authorId = authorId.value.toString(),
                 authorDisplayName = authorDisplayName,
                 authorUsername = authorUsername,
                 content = content,

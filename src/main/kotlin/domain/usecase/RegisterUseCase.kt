@@ -48,7 +48,7 @@ class RegisterUseCase(
 
             // 4. 生成默认 username（使用 userId 前 8 位，确保唯一）
             val userId = UserId(SnowflakeIdGenerator.nextId())
-            val defaultUsername = "user_${userId.value.takeLast(8)}"
+            val defaultUsername = "user_${userId.value.toString().takeLast(8)}"
             val username = Username.unsafe(defaultUsername)
             logger.debug("生成默认 username: ${username.value}")
 

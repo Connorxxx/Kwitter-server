@@ -54,9 +54,10 @@ class GetUserPostsWithStatusUseCase(
         authorId: UserId,
         limit: Int = 20,
         offset: Int = 0,
-        currentUserId: UserId? = null
+        currentUserId: UserId? = null,
+        beforeId: PostId? = null
     ): Flow<Either<UserPostError, UserPostItem>> = flow {
-        logger.info("查询用户Posts及交互状态: authorId=${authorId.value}, limit=$limit, offset=$offset, currentUserId=${currentUserId?.value}")
+        logger.info("查询用户Posts及交互状态: authorId=${authorId.value}, limit=$limit, offset=$offset, beforeId=${beforeId?.value}, currentUserId=${currentUserId?.value}")
 
         // 1. 先验证目标用户是否存在
         val userExistsResult = userRepository.findById(authorId)
@@ -68,7 +69,7 @@ class GetUserPostsWithStatusUseCase(
 
         // 2. 收集所有用户Posts（必须在 flow 块中用 collect）
         val posts = mutableListOf<PostDetail>()
-        postRepository.findByAuthor(authorId, limit, offset).collect { post ->
+        postRepository.findByAuthor(authorId, limit, offset, beforeId).collect { post ->
             posts.add(post)
         }
 

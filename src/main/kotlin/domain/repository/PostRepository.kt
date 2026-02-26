@@ -44,7 +44,7 @@ interface PostRepository {
      * @param offset 偏移量
      * @return Flow<PostDetail> 流式返回，方便分页和性能优化
      */
-    fun findByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+    fun findByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0, beforeId: PostId? = null): Flow<PostDetail>
 
     /**
      * 获取用户的所有回复（只包括回复，不包括顶层 Posts）
@@ -52,7 +52,7 @@ interface PostRepository {
      * @param offset 偏移量
      * @return Flow<PostDetail> 流式返回，方便分页和性能优化
      */
-    fun findRepliesByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+    fun findRepliesByAuthor(authorId: UserId, limit: Int = 20, offset: Int = 0, beforeId: PostId? = null): Flow<PostDetail>
 
     /**
      * 获取某个 Post 的所有回复
@@ -60,7 +60,7 @@ interface PostRepository {
      * @param offset 偏移量
      * @return Flow<PostDetail> 流式返回
      */
-    fun findReplies(parentId: PostId, limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+    fun findReplies(parentId: PostId, limit: Int = 20, offset: Int = 0, afterId: PostId? = null): Flow<PostDetail>
 
     /**
      * 获取时间线（全站最新 Posts，不包括回复）
@@ -70,7 +70,7 @@ interface PostRepository {
      * @param offset 偏移量
      * @return Flow<PostDetail> 流式返回
      */
-    fun findTimeline(limit: Int = 20, offset: Int = 0): Flow<PostDetail>
+    fun findTimeline(limit: Int = 20, offset: Int = 0, beforeId: PostId? = null): Flow<PostDetail>
 
     /**
      * 删除 Post（软删除或硬删除由实现决定）

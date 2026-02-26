@@ -11,18 +11,18 @@ import org.jetbrains.exposed.v1.core.Table
  * - 媒体附件单独存储在 MediaTable 中（1:N 关系）
  */
 object PostsTable : Table("posts") {
-    // Post ID (UUID)
-    val id = varchar("id", 36)
+    // Post ID
+    val id = long("id")
 
     // 作者 ID（外键指向 users 表）
-    val authorId = varchar("author_id", 36)
+    val authorId = long("author_id")
         .references(UsersTable.id)
 
     // Post 内容（280 字符限制）
     val content = varchar("content", 280)
 
     // 父 Post ID（null = 顶层 Post，非 null = 回复）
-    val parentId = varchar("parent_id", 36)
+    val parentId = long("parent_id")
         .references(PostsTable.id)
         .nullable()
 
@@ -56,10 +56,10 @@ object PostsTable : Table("posts") {
  */
 object MediaTable : Table("media") {
     // 媒体 ID
-    val id = varchar("id", 36)
+    val id = long("id")
 
     // 所属 Post ID（外键）
-    val postId = varchar("post_id", 36)
+    val postId = long("post_id")
         .references(PostsTable.id)
 
     // 媒体 URL
@@ -83,14 +83,14 @@ object MediaTable : Table("media") {
  */
 object LikesTable : Table("likes") {
     // 点赞 ID
-    val id = varchar("id", 36)
+    val id = long("id")
 
     // 用户 ID（外键）
-    val userId = varchar("user_id", 36)
+    val userId = long("user_id")
         .references(UsersTable.id)
 
     // Post ID（外键）
-    val postId = varchar("post_id", 36)
+    val postId = long("post_id")
         .references(PostsTable.id)
 
     // 创建时间
@@ -113,14 +113,14 @@ object LikesTable : Table("likes") {
  */
 object BookmarksTable : Table("bookmarks") {
     // 收藏 ID
-    val id = varchar("id", 36)
+    val id = long("id")
 
     // 用户 ID（外键）
-    val userId = varchar("user_id", 36)
+    val userId = long("user_id")
         .references(UsersTable.id)
 
     // Post ID（外键）
-    val postId = varchar("post_id", 36)
+    val postId = long("post_id")
         .references(PostsTable.id)
 
     // 创建时间

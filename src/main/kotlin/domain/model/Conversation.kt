@@ -6,10 +6,10 @@ import arrow.core.right
 import com.connor.domain.failure.MessageError
 
 @JvmInline
-value class ConversationId(val value: String)
+value class ConversationId(val value: Long)
 
 @JvmInline
-value class MessageId(val value: String)
+value class MessageId(val value: Long)
 
 @JvmInline
 value class MessageContent private constructor(val value: String) {

@@ -48,7 +48,7 @@ fun Route.likeRoutes(
                 return@post
             }
 
-            val result = likePostUseCase(UserId(principal.userId), PostId(postId))
+            val result = likePostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
@@ -62,8 +62,8 @@ fun Route.likeRoutes(
                     appScope.launch {
                         try {
                             broadcastPostLikedUseCase.execute(
-                                postId = PostId(postId),
-                                likedByUserId = UserId(principal.userId),
+                                postId = PostId(postId.toLong()),
+                                likedByUserId = UserId(principal.userId.toLong()),
                                 likedByDisplayName = principal.displayName,
                                 likedByUsername = principal.username,
                                 newLikeCount = stats.likeCount
@@ -99,7 +99,7 @@ fun Route.likeRoutes(
                 return@delete
             }
 
-            val result = unlikePostUseCase(UserId(principal.userId), PostId(postId))
+            val result = unlikePostUseCase(UserId(principal.userId.toLong()), PostId(postId.toLong()))
 
             result.fold(
                 ifLeft = { error ->
