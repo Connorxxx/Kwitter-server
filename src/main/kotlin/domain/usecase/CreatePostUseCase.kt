@@ -4,9 +4,9 @@ import arrow.core.Either
 import arrow.core.raise.either
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.*
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.repository.PostRepository
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 /**
  * 创建 Post 的业务逻辑
@@ -60,7 +60,7 @@ class CreatePostUseCase(
             }
 
             // 5. 创建 Post 实体
-            val postId = PostId(UUID.randomUUID().toString())
+            val postId = PostId(SnowflakeIdGenerator.nextId())
             val post = Post(
                 id = postId,
                 authorId = cmd.authorId,

@@ -8,13 +8,13 @@ import com.connor.data.db.schema.MessagesTable
 import com.connor.data.db.schema.UsersTable
 import com.connor.data.db.mapping.toDomain
 import com.connor.domain.model.*
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.jdbc.*
 import org.slf4j.LoggerFactory
-import java.util.*
 
 class ExposedMessageRepository : MessageRepository {
     private val logger = LoggerFactory.getLogger(ExposedMessageRepository::class.java)
@@ -50,7 +50,7 @@ class ExposedMessageRepository : MessageRepository {
         }
 
         // Create new
-        val conversationId = ConversationId(UUID.randomUUID().toString())
+        val conversationId = ConversationId(SnowflakeIdGenerator.nextId())
         val now = System.currentTimeMillis()
 
         ConversationsTable.insert {

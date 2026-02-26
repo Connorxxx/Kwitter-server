@@ -5,10 +5,10 @@ import arrow.core.raise.either
 import arrow.core.raise.ensure
 import com.connor.domain.failure.MessageError
 import com.connor.domain.model.*
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.repository.MessageRepository
 import com.connor.domain.repository.UserRepository
 import org.slf4j.LoggerFactory
-import java.util.*
 
 data class SendMessageCommand(
     val senderId: UserId,
@@ -64,7 +64,7 @@ class SendMessageUseCase(
 
             // 7. Save message
             val message = Message(
-                id = MessageId(UUID.randomUUID().toString()),
+                id = MessageId(SnowflakeIdGenerator.nextId()),
                 conversationId = conversation.id,
                 senderId = cmd.senderId,
                 content = content,

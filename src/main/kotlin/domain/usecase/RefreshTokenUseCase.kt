@@ -11,9 +11,9 @@ import com.connor.domain.repository.UserRepository
 import com.connor.domain.service.AuthTokenConfig
 import com.connor.domain.service.SessionNotifier
 import com.connor.domain.service.TokenHasher
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.service.TokenIssuer
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 /**
  * Token 刷新结果
@@ -80,7 +80,7 @@ class RefreshTokenUseCase(
      * 登录/注册时创建初始 token pair
      */
     suspend fun createInitialTokenPair(userId: UserId, displayName: String, username: String): TokenPair {
-        val familyId = UUID.randomUUID().toString()
+        val familyId = SnowflakeIdGenerator.nextId()
         val accessToken = tokenIssuer.generate(userId.value, displayName, username)
         val refreshToken = createAndSaveRefreshToken(userId, familyId)
 
@@ -168,7 +168,7 @@ class RefreshTokenUseCase(
         val tokenHash = tokenHasher.hashToken(rawToken)
 
         val refreshToken = RefreshToken(
-            id = UUID.randomUUID().toString(),
+            id = SnowflakeIdGenerator.nextId(),
             tokenHash = tokenHash,
             userId = userId,
             familyId = familyId,

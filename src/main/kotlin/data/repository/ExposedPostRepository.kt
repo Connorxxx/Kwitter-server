@@ -17,6 +17,7 @@ import com.connor.domain.failure.BookmarkError
 import com.connor.domain.failure.LikeError
 import com.connor.domain.failure.PostError
 import com.connor.domain.model.*
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.repository.PostRepository
 import com.connor.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +28,6 @@ import org.jetbrains.exposed.v1.core.minus
 import org.jetbrains.exposed.v1.core.plus
 import org.jetbrains.exposed.v1.jdbc.*
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 /**
  * Post Repository 的 Exposed 实现
@@ -60,7 +60,7 @@ class ExposedPostRepository : PostRepository {
             // 2. 插入媒体附件
             post.media.forEach { media ->
                 MediaTable.insert {
-                    it[id] = UUID.randomUUID().toString()
+                    it[id] = SnowflakeIdGenerator.nextId()
                     it[postId] = post.id.value
                     it[url] = media.url.value
                     it[type] = media.type.name
@@ -365,7 +365,7 @@ class ExposedPostRepository : PostRepository {
 
             // 3. 插入 Like 记录
             LikesTable.insert {
-                it[id] = UUID.randomUUID().toString()
+                it[id] = SnowflakeIdGenerator.nextId()
                 it[LikesTable.userId] = userId.value
                 it[LikesTable.postId] = postId.value
                 it[createdAt] = System.currentTimeMillis()
@@ -529,7 +529,7 @@ class ExposedPostRepository : PostRepository {
 
             // 3. 插入 Bookmark 记录
             BookmarksTable.insert {
-                it[id] = UUID.randomUUID().toString()
+                it[id] = SnowflakeIdGenerator.nextId()
                 it[BookmarksTable.userId] = userId.value
                 it[BookmarksTable.postId] = postId.value
                 it[createdAt] = System.currentTimeMillis()

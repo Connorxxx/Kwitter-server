@@ -9,10 +9,10 @@ import com.connor.domain.model.Email
 import com.connor.domain.model.User
 import com.connor.domain.model.UserId
 import com.connor.domain.model.Username
+import com.connor.core.utlis.SnowflakeIdGenerator
 import com.connor.domain.repository.UserRepository
 import com.connor.domain.service.PasswordHasher
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 class RegisterUseCase(
     private val userRepository: UserRepository,
@@ -47,8 +47,8 @@ class RegisterUseCase(
             logger.debug("密码强度验证通过")
 
             // 4. 生成默认 username（使用 userId 前 8 位，确保唯一）
-            val userId = UserId(UUID.randomUUID().toString())
-            val defaultUsername = "user_${userId.value.substring(0, 8)}"
+            val userId = UserId(SnowflakeIdGenerator.nextId())
+            val defaultUsername = "user_${userId.value.takeLast(8)}"
             val username = Username.unsafe(defaultUsername)
             logger.debug("生成默认 username: ${username.value}")
 
