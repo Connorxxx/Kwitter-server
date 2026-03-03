@@ -37,6 +37,15 @@ class InMemoryNotificationRepository(
         }
     }
 
+    override suspend fun notifyPostUnliked(event: NotificationEvent.PostUnliked) {
+        try {
+            connectionManager.sendToPostSubscribers(PostId(event.postId), "post_unliked", json.encodeToString(event))
+            logger.info("Notified post unliked: postId={}, newLikeCount={}", event.postId, event.newLikeCount)
+        } catch (e: Exception) {
+            logger.error("Failed to notify post unliked: postId={}", event.postId, e)
+        }
+    }
+
     override suspend fun notifyPostCommented(event: NotificationEvent.PostCommented) {
         try {
             connectionManager.sendToPostSubscribers(PostId(event.postId), "post_commented", json.encodeToString(event))

@@ -7,6 +7,7 @@ import com.connor.domain.failure.LikeError
 import com.connor.domain.model.PostId
 import com.connor.domain.model.UserId
 import com.connor.domain.usecase.BroadcastPostLikedUseCase
+import com.connor.domain.usecase.BroadcastPostUnlikedUseCase
 import com.connor.domain.usecase.LikePostUseCase
 import com.connor.domain.usecase.UnlikePostUseCase
 import io.ktor.http.HttpStatusCode
@@ -26,6 +27,7 @@ fun Route.likeRoutes(
     likePostUseCase: LikePostUseCase,
     unlikePostUseCase: UnlikePostUseCase,
     broadcastPostLikedUseCase: BroadcastPostLikedUseCase,
+    broadcastPostUnlikedUseCase: BroadcastPostUnlikedUseCase,
     appScope: ApplicationCoroutineScope
 ) {
     // 认证路由
@@ -108,6 +110,22 @@ fun Route.likeRoutes(
                 },
                 ifRight = { stats ->
                     logger.info("用户 ${principal.userId} 取消点赞 Post $postId")
+
+                    // 异步触发实时通知（使用应用级协程作用域）
+                    appScope.launch {
+                        try {
+                            broadcastPostUnlikedUseCase.execute(
+                                postId = PostId(postId.toLong()),
+                                unlikedByUserId = UserId(principal.userId),
+                                newLikeCount = stats.likeCount
+                            )
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            logger.error("Failed to broadcast post unliked", e)
+                        }
+                    }
+
                     call.respond(HttpStatusCode.OK, mapOf("stats" to stats.toDto()))
                 }
             )

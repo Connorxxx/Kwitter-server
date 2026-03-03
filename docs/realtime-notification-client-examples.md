@@ -64,6 +64,14 @@ id: 11
 data: {"postId":123,"likedByUserId":789,"likedByDisplayName":"Jane","likedByUsername":"jane","newLikeCount":42,"timestamp":1707600000000}
 ```
 
+#### 5.1 Post 被取消点赞
+
+```
+event: post_unliked
+id: 12
+data: {"postId":123,"unlikedByUserId":789,"newLikeCount":41,"isLiked":false,"timestamp":1707600000000}
+```
+
 #### 6. 新私信
 
 ```
@@ -180,6 +188,7 @@ class NotificationService(
         when (eventType) {
             "new_post" -> parseData<NotificationEvent.NewPostCreated>(data)?.let { _notificationEvents.emit(it) }
             "post_liked" -> parseData<NotificationEvent.PostLiked>(data)?.let { _notificationEvents.emit(it) }
+            "post_unliked" -> parseData<NotificationEvent.PostUnliked>(data)?.let { _notificationEvents.emit(it) }
             "new_message" -> parseData<NotificationEvent.NewMessage>(data)?.let { _notificationEvents.emit(it) }
             "messages_read" -> parseData<NotificationEvent.MessagesRead>(data)?.let { _notificationEvents.emit(it) }
             "message_recalled" -> parseData<NotificationEvent.MessageRecalled>(data)?.let { _notificationEvents.emit(it) }
@@ -249,6 +258,10 @@ class NotificationClient {
 
         this.eventSource.addEventListener('post_liked', (e) => {
             this.handlePostLiked(JSON.parse(e.data));
+        });
+
+        this.eventSource.addEventListener('post_unliked', (e) => {
+            this.handlePostUnliked(JSON.parse(e.data));
         });
 
         this.eventSource.addEventListener('new_message', (e) => {
@@ -330,6 +343,7 @@ class NotificationClient {
     // 事件处理器
     private handleNewPost(data: any) { /* UI 更新 */ }
     private handlePostLiked(data: any) { /* 更新点赞数 */ }
+    private handlePostUnliked(data: any) { /* 更新点赞数 */ }
     private handleNewMessage(data: any) { /* 显示新消息 */ }
     private handleMessagesRead(data: any) { /* 更新已读状态 */ }
     private handleMessageRecalled(data: any) { /* 标记消息撤回 */ }
@@ -474,6 +488,26 @@ override fun observePostLikedEvents(postId: Long): Flow<NotificationEvent.PostLi
                 notificationService.unsubscribeFromPost(postId)
             }
         }.filterIsInstance()
+
+// 订阅取消点赞事件
+override fun observePostUnlikedEvents(postId: Long): Flow<NotificationEvent.PostUnliked> =
+    notificationService.notificationEvents
+        .onStart { notificationService.subscribeToPost(postId) }
+        .onCompletion {
+            withContext(NonCancellable) {
+                notificationService.unsubscribeFromPost(postId)
+            }
+        }.filterIsInstance()
+
+// 合并订阅点赞/取消点赞事件（推荐）
+override fun observePostLikeChanges(postId: Long): Flow<NotificationEvent> =
+    notificationService.notificationEvents
+        .onStart { notificationService.subscribeToPost(postId) }
+        .onCompletion {
+            withContext(NonCancellable) {
+                notificationService.unsubscribeFromPost(postId)
+            }
+        }.filter { it is NotificationEvent.PostLiked || it is NotificationEvent.PostUnliked }
 ```
 
 ### 3. 打字状态（带 debounce）

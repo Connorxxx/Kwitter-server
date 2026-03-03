@@ -13,6 +13,7 @@
 │    - NotificationEvent (密封接口)                           │
 │      - NewPostCreated                                       │
 │      - PostLiked                                            │
+│      - PostUnliked                                          │
 │      - PostCommented                                        │
 │    - NotificationTarget (订阅目标)                          │
 │                                                             │
@@ -20,6 +21,7 @@
 │    - NotificationRepository                                │
 │      - broadcastNewPost()                                  │
 │      - notifyPostLiked()                                   │
+│      - notifyPostUnliked()                                 │
 │      - notifyNewMessage()                                  │
 │      - notifyMessagesRead()                                │
 │      - notifyMessageRecalled()                             │
@@ -28,6 +30,7 @@
 │  Use Cases:                                                │
 │    - BroadcastPostCreatedUseCase                           │
 │    - BroadcastPostLikedUseCase                             │
+│    - BroadcastPostUnlikedUseCase                           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -104,6 +107,11 @@ data: {"users":[{"userId":789,"isOnline":true,"timestamp":1709000000}]}
 - **推送对象**: 当前正在查看该 Post 详情页的所有用户
 - **推送内容**: 更新的点赞数 + 点赞用户信息
 
+### 2.1 Post 取消点赞推送
+- **触发条件**: 用户取消点赞某个 Post
+- **推送对象**: 当前正在查看该 Post 详情页的所有用户
+- **推送内容**: 更新的点赞数 + `isLiked=false`
+
 ### 3. 订阅管理
 - **页面订阅**: 客户端打开 Post 详情页时，调用 REST 端点订阅
 - **页面取消订阅**: 客户端离开页面时，调用 REST 端点取消订阅
@@ -130,6 +138,12 @@ sealed interface NotificationEvent {
         val postId: Long, val likedByUserId: Long,
         val likedByDisplayName: String, val likedByUsername: String,
         val newLikeCount: Int, val timestamp: Long
+    ) : NotificationEvent
+
+    data class PostUnliked(
+        val postId: Long, val unlikedByUserId: Long,
+        val newLikeCount: Int, val isLiked: Boolean = false,
+        val timestamp: Long
     ) : NotificationEvent
 
     data class PostCommented(...) : NotificationEvent
@@ -160,6 +174,7 @@ sealed interface NotificationTarget {
 interface NotificationRepository {
     suspend fun broadcastNewPost(event: NotificationEvent.NewPostCreated)
     suspend fun notifyPostLiked(event: NotificationEvent.PostLiked)
+    suspend fun notifyPostUnliked(event: NotificationEvent.PostUnliked)
     suspend fun notifyPostCommented(event: NotificationEvent.PostCommented)
     suspend fun notifyNewMessage(recipientId: UserId, event: NotificationEvent.NewMessageReceived)
     suspend fun notifyMessagesRead(recipientId: UserId, event: NotificationEvent.MessagesRead)
@@ -315,6 +330,17 @@ result.onRight { stats ->
 }
 ```
 
+### UnlikePostUseCase
+
+```kotlin
+// 取消点赞成功后，异步推送给 Post 订阅者
+result.onRight { stats ->
+    appScope.launch {
+        broadcastPostUnlikedUseCase.execute(...)
+    }
+}
+```
+
 ---
 
 ## 性能和扩展性考虑
@@ -409,8 +435,10 @@ curl -X DELETE -H "Authorization: Bearer <token>" \
 ### Use Cases
 - [x] BroadcastPostCreatedUseCase
 - [x] BroadcastPostLikedUseCase
+- [x] BroadcastPostUnlikedUseCase
 - [x] 修改 CreatePostUseCase 集成通知
 - [x] 修改 LikePostUseCase 集成通知
+- [x] 修改 UnlikePostUseCase 集成通知
 
 ### Transport Layer
 - [x] SSE stream endpoint (`/v1/notifications/stream`)

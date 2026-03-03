@@ -851,24 +851,22 @@ route("posts/{postId}/like") {
 ### 1. 通知系统
 
 当用户点赞某个 Post 时：
-- 向 Post 作者发送通知
-- 通知内容："{user.displayName} 赞了你的帖子"
-- 实现方式：在 LikePostUseCase 中注入 NotificationService
+- 向订阅该 Post 的用户发送 `post_liked` SSE 实时通知
+- 包含最新点赞数和点赞用户信息
+- 实现：`BroadcastPostLikedUseCase`，在 `LikeRoutes` 中异步调用
+
+当用户取消点赞某个 Post 时：
+- 向订阅该 Post 的用户发送 `post_unliked` SSE 实时通知
+- 包含最新点赞数和 `isLiked=false`
+- 实现：`BroadcastPostUnlikedUseCase`，在 `LikeRoutes` 中异步调用
 
 ```kotlin
 class LikePostUseCase(
-    private val postRepository: PostRepository,
-    private val notificationService: NotificationService
+    private val postRepository: PostRepository
 ) {
     suspend fun execute(userId: UserId, postId: PostId): Either<LikeError, PostStats> {
-        val result = postRepository.likePost(userId, postId)
-
-        result.onRight { stats ->
-            // 异步发送通知
-            notificationService.notifyPostLiked(userId, postId)
-        }
-
-        return result
+        return postRepository.likePost(userId, postId)
+        // 点赞成功后，由 LikeRoutes 异步调用 BroadcastPostLikedUseCase 推送 SSE 通知
     }
 }
 ```
@@ -898,11 +896,12 @@ class LikePostUseCase(
 - 批量收藏：一次请求收藏多个 Post
 - 减少网络请求数
 
-### 6. Like 动画和实时更新
+### 6. Like 实时更新（已实现）
 
-- SSE 推送 Like 数变化
-- 客户端实时更新 UI
-- 改进用户体验
+- 点赞时推送 `post_liked` SSE 事件给订阅者
+- 取消点赞时推送 `post_unliked` SSE 事件给订阅者
+- 客户端实时更新 UI（点赞数 + 按钮状态）
+- 详见 `realtime-notification-design.md`
 
 ---
 

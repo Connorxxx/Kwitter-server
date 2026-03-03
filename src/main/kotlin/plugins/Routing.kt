@@ -48,6 +48,7 @@ fun Application.configureRouting() {
     // Notification Use Cases
     val broadcastPostCreatedUseCase by inject<BroadcastPostCreatedUseCase>()
     val broadcastPostLikedUseCase by inject<BroadcastPostLikedUseCase>()
+    val broadcastPostUnlikedUseCase by inject<BroadcastPostUnlikedUseCase>()
 
     // Search Use Cases
     val searchPostsUseCase by inject<SearchPostsUseCase>()
@@ -115,7 +116,7 @@ fun Application.configureRouting() {
         // ========== 公开路由 - 不需要认证 ==========
         authRoutes(registerUseCase, loginUseCase, refreshTokenUseCase)
         postRoutes(createPostUseCase, deletePostUseCase, getPostUseCase, getTimelineWithStatusUseCase, getRepliesUseCase, getRepliesWithStatusUseCase, getUserPostsUseCase, getUserPostsWithStatusUseCase, getPostDetailWithStatusUseCase, broadcastPostCreatedUseCase, appScope)
-        likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, appScope)
+        likeRoutes(likePostUseCase, unlikePostUseCase, broadcastPostLikedUseCase, broadcastPostUnlikedUseCase, appScope)
         bookmarkRoutes(bookmarkPostUseCase, unbookmarkPostUseCase, getUserBookmarksUseCase, getUserBookmarksWithStatusUseCase)
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase, blockUserUseCase, unblockUserUseCase)

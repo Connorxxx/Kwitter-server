@@ -8,6 +8,7 @@
 - SSE 事件流：`GET /v1/notifications/stream`（单向推送）
 - 新 Post 创建时全局广播通知
 - Post 点赞时推送给订阅者
+- Post 取消点赞时推送给订阅者
 - 客户端通过 REST 端点订阅/取消订阅特定 Post
 - 私信通知：新消息、已读回执、消息撤回
 - 打字状态通过 REST 端点发送
@@ -46,6 +47,7 @@ Transport Layer (SSE stream + REST 命令端点)
 - `NotificationEvent` 密封接口：定义各种通知事件
   - `NewPostCreated`: 新 Post 创建事件
   - `PostLiked`: Post 点赞事件
+  - `PostUnliked`: Post 取消点赞事件
   - `PostCommented`: Post 评论事件
   - `NewMessageReceived`: 新私信事件
   - `MessagesRead`: 消息已读事件
@@ -54,7 +56,7 @@ Transport Layer (SSE stream + REST 命令端点)
 - `NotificationTarget`: 推送目标定义
 
 #### `src/main/kotlin/domain/repository/NotificationRepository.kt`
-- `NotificationRepository` 接口：定义通知推送契约（7 个方法）
+- `NotificationRepository` 接口：定义通知推送契约（8 个方法）
 
 #### `src/main/kotlin/domain/service/SessionNotifier.kt`
 - `SessionNotifier` 接口：会话撤销通知端口
@@ -64,6 +66,9 @@ Transport Layer (SSE stream + REST 命令端点)
 
 #### `src/main/kotlin/domain/usecase/BroadcastPostLikedUseCase.kt`
 - 广播 Post 点赞事件 Use Case
+
+#### `src/main/kotlin/domain/usecase/BroadcastPostUnlikedUseCase.kt`
+- 广播 Post 取消点赞事件 Use Case
 
 ### 2. Infrastructure Layer
 
@@ -139,6 +144,7 @@ Accept: text/event-stream
 | `user_presence_changed` | 对端上线/下线增量事件 |
 | `new_post` | 新 Post 创建 |
 | `post_liked` | Post 被点赞 |
+| `post_unliked` | Post 被取消点赞 |
 | `post_commented` | Post 被评论 |
 | `new_message` | 收到新私信 |
 | `messages_read` | 消息已读回执 |
@@ -197,6 +203,23 @@ Accept: text/event-stream
    NotificationRepository.notifyPostLiked()
        ↓
    SseConnectionManager.sendToPostSubscribers(postId, "post_liked", data)
+       ↓
+   Subscribers receive SSE event
+   ```
+
+3. **Post 取消点赞**:
+   ```
+   User unlikes Post
+       ↓
+   UnlikePostUseCase.invoke()
+       ↓
+   Like removed, PostStats updated
+       ↓
+   BroadcastPostUnlikedUseCase.execute() (async)
+       ↓
+   NotificationRepository.notifyPostUnliked()
+       ↓
+   SseConnectionManager.sendToPostSubscribers(postId, "post_unliked", data)
        ↓
    Subscribers receive SSE event
    ```

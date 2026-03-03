@@ -41,6 +41,21 @@ sealed interface NotificationEvent {
     ) : NotificationEvent
 
     /**
+     * Post 取消点赞事件
+     *
+     * 触发条件：用户取消点赞某个 Post
+     * 推送对象：订阅该 Post 的所有用户
+     */
+    @Serializable
+    data class PostUnliked(
+        val postId: Long,
+        val unlikedByUserId: Long,
+        val newLikeCount: Int,
+        val isLiked: Boolean = false,
+        val timestamp: Long
+    ) : NotificationEvent
+
+    /**
      * Post 被评论/回复事件（未来扩展）
      *
      * 触发条件：用户回复某个 Post

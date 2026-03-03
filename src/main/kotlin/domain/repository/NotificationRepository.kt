@@ -39,6 +39,17 @@ interface NotificationRepository {
     suspend fun notifyPostLiked(event: NotificationEvent.PostLiked)
 
     /**
+     * 通知 Post 取消点赞
+     *
+     * 推送对象：订阅该 Post 的所有用户
+     * 业务规则：实时更新点赞数
+     * 失败处理：记录日志但不阻塞主流程
+     *
+     * @param event Post 取消点赞事件
+     */
+    suspend fun notifyPostUnliked(event: NotificationEvent.PostUnliked)
+
+    /**
      * 通知 Post 被评论/回复
      *
      * 推送对象：Post 作者和订阅该 Post 的用户

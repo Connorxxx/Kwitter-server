@@ -4,6 +4,7 @@ import com.connor.core.coroutine.ApplicationCoroutineScope
 import com.connor.domain.repository.NotificationRepository
 import com.connor.domain.usecase.BroadcastPostCreatedUseCase
 import com.connor.domain.usecase.BroadcastPostLikedUseCase
+import com.connor.domain.usecase.BroadcastPostUnlikedUseCase
 import com.connor.infrastructure.repository.InMemoryNotificationRepository
 import com.connor.infrastructure.sse.SseConnectionManager
 import org.koin.dsl.module
@@ -21,4 +22,5 @@ val notificationModule = module {
     // Use Cases: 通知广播
     single { BroadcastPostCreatedUseCase(get()) }
     single { BroadcastPostLikedUseCase(get()) }
+    single { BroadcastPostUnlikedUseCase(get()) }
 }
