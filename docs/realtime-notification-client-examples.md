@@ -2,207 +2,341 @@
 
 ## 概述
 
-本指南展示如何在客户端使用WebSocket实时通知功能，包括连接建立、消息订阅和处理。
+本指南展示如何在客户端使用 SSE (Server-Sent Events) 实时通知功能，包括 SSE 连接建立、事件处理和 REST 命令调用。
 
 ---
 
-## WebSocket 端点
+## SSE Stream 端点
 
 ```
-ws://localhost:8080/v1/notifications/ws
+GET http://localhost:8080/v1/notifications/stream
+Authorization: Bearer <jwt>
+Accept: text/event-stream
 ```
 
-**认证要求**: 必须携带有效的JWT Token
+**认证要求**: 必须携带有效的 JWT Token（标准 `Authorization` 头）
 
 ---
 
-## 连接建立
+## SSE 事件类型
 
-### JavaScript/TypeScript 示例
+### 服务端 → 客户端（SSE 事件流）
+
+所有事件通过 SSE `event` 字段区分类型，`data` 字段为 JSON 负载：
+
+#### 1. 连接成功
+
+```
+event: connected
+id: 1
+data: {"userId":123}
+```
+
+#### 2. 在线状态快照（每次连接必发）
+
+```
+event: presence_snapshot
+id: 2
+data: {"users":[{"userId":456,"isOnline":true,"timestamp":1707600000000}]}
+```
+
+#### 3. 在线状态变更（增量）
+
+```
+event: user_presence_changed
+id: 3
+data: {"userId":456,"isOnline":true,"timestamp":1707600000000}
+```
+
+#### 4. 新 Post 创建
+
+```
+event: new_post
+id: 10
+data: {"postId":123,"authorId":456,"authorDisplayName":"John","authorUsername":"john","content":"Hello!","createdAt":1707600000000}
+```
+
+#### 5. Post 被点赞
+
+```
+event: post_liked
+id: 11
+data: {"postId":123,"likedByUserId":789,"likedByDisplayName":"Jane","likedByUsername":"jane","newLikeCount":42,"timestamp":1707600000000}
+```
+
+#### 6. 新私信
+
+```
+event: new_message
+id: 20
+data: {"messageId":100,"conversationId":50,"senderDisplayName":"Alice","senderUsername":"alice","contentPreview":"Hey!","timestamp":1707600000000}
+```
+
+#### 7. 消息已读
+
+```
+event: messages_read
+id: 21
+data: {"conversationId":50,"readByUserId":456,"timestamp":1707600000000}
+```
+
+#### 8. 消息撤回
+
+```
+event: message_recalled
+id: 22
+data: {"messageId":100,"conversationId":50,"recalledByUserId":789,"timestamp":1707600000000}
+```
+
+#### 9. 打字状态
+
+```
+event: typing_indicator
+id: 23
+data: {"conversationId":50,"userId":456,"isTyping":true,"timestamp":1707600000000}
+```
+
+#### 10. 会话撤销
+
+```
+event: auth_revoked
+id: 99
+data: Session revoked by server
+```
+
+#### 11. 心跳（注释行）
+
+```
+:heartbeat
+```
+
+---
+
+## 客户端 → 服务端（REST 端点）
+
+| 操作 | 方法 | 路径 | 请求体 |
+|------|------|------|--------|
+| 订阅 Post | `POST` | `/v1/notifications/posts/{postId}/subscribe` | — |
+| 取消订阅 Post | `DELETE` | `/v1/notifications/posts/{postId}/subscribe` | — |
+| 发送打字状态 | `PUT` | `/v1/messaging/conversations/{conversationId}/typing` | `{"isTyping":true}` |
+
+Ping/pong 已消除 — SSE 心跳由服务端自动发送。
+
+---
+
+## Kotlin Multiplatform 客户端示例
+
+```kotlin
+class NotificationService(
+    private val httpClient: HttpClient,
+    private val baseUrl: String
+) {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    private val _notificationEvents = MutableSharedFlow<NotificationEvent>(extraBufferCapacity = 64)
+    val notificationEvents: SharedFlow<NotificationEvent> = _notificationEvents.asSharedFlow()
+
+    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
+    val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
+
+    private var connectionJob: Job? = null
+
+    fun connect(scope: CoroutineScope) {
+        disconnect()
+        connectionJob = scope.launch {
+            var retryCount = 0
+            while (isActive) {
+                _connectionState.value = ConnectionState.Connecting
+                try {
+                    httpClient.sse(
+                        urlString = "$baseUrl/v1/notifications/stream",
+                        showCommentEvents = false
+                    ) {
+                        _connectionState.value = ConnectionState.Connected
+                        retryCount = 0
+                        incoming.collect { event ->
+                            handleSseEvent(event.event, event.data)
+                        }
+                    }
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) { }
+
+                _connectionState.value = ConnectionState.Disconnected
+                if (!isActive) break
+                val delayMs = BACKOFF_DELAYS[retryCount.coerceAtMost(BACKOFF_DELAYS.lastIndex)]
+                delay(delayMs)
+                retryCount++
+            }
+        }
+    }
+
+    fun disconnect() {
+        connectionJob?.cancel()
+        connectionJob = null
+        _connectionState.value = ConnectionState.Disconnected
+    }
+
+    private suspend fun handleSseEvent(eventType: String?, data: String?) {
+        when (eventType) {
+            "new_post" -> parseData<NotificationEvent.NewPostCreated>(data)?.let { _notificationEvents.emit(it) }
+            "post_liked" -> parseData<NotificationEvent.PostLiked>(data)?.let { _notificationEvents.emit(it) }
+            "new_message" -> parseData<NotificationEvent.NewMessage>(data)?.let { _notificationEvents.emit(it) }
+            "messages_read" -> parseData<NotificationEvent.MessagesRead>(data)?.let { _notificationEvents.emit(it) }
+            "message_recalled" -> parseData<NotificationEvent.MessageRecalled>(data)?.let { _notificationEvents.emit(it) }
+            "typing_indicator" -> parseData<NotificationEvent.TypingIndicator>(data)?.let { _notificationEvents.emit(it) }
+            "presence_snapshot" -> parseData<NotificationEvent.PresenceSnapshot>(data)?.let { _notificationEvents.emit(it) }
+            "user_presence_changed" -> parseData<NotificationEvent.UserPresenceChanged>(data)?.let { _notificationEvents.emit(it) }
+            "auth_revoked" -> { /* handle force logout */ }
+            "connected", "subscribed", "unsubscribed" -> { /* ack */ }
+        }
+    }
+
+    // REST 命令
+    suspend fun subscribeToPost(postId: Long) {
+        httpClient.post("$baseUrl/v1/notifications/posts/$postId/subscribe")
+    }
+
+    suspend fun unsubscribeFromPost(postId: Long) {
+        httpClient.delete("$baseUrl/v1/notifications/posts/$postId/subscribe")
+    }
+
+    suspend fun sendTyping(conversationId: Long, isTyping: Boolean) {
+        httpClient.put("$baseUrl/v1/messaging/conversations/$conversationId/typing") {
+            contentType(ContentType.Application.Json)
+            setBody(TypingRequest(isTyping))
+        }
+    }
+
+    companion object {
+        val BACKOFF_DELAYS = longArrayOf(1000, 2000, 4000, 8000, 16000)
+    }
+}
+```
+
+---
+
+## JavaScript/TypeScript 客户端示例
 
 ```typescript
 class NotificationClient {
-    private ws: WebSocket | null = null;
+    private eventSource: EventSource | null = null;
     private token: string;
+    private reconnectAttempts = 0;
+    private maxReconnectAttempts = 5;
+    private reconnectDelay = 1000;
 
     constructor(token: string) {
         this.token = token;
     }
 
     connect() {
-        // 注意：WebSocket 不支持直接在构造函数中传递 headers
-        // 需要在 URL 中传递 token 或使用其他方式
-        const url = `ws://localhost:8080/v1/notifications/ws`;
+        // EventSource 不支持自定义头，需要使用 polyfill 或 fetch-based SSE
+        // 例如使用 eventsource 库 (npm install eventsource)
+        this.eventSource = new EventSource(
+            'http://localhost:8080/v1/notifications/stream',
+            { headers: { 'Authorization': `Bearer ${this.token}` } }
+        );
 
-        this.ws = new WebSocket(url);
+        // 按 event type 注册监听器
+        this.eventSource.addEventListener('connected', (e) => {
+            console.log('Connected:', JSON.parse(e.data));
+            this.reconnectAttempts = 0;
+        });
 
-        // 连接建立后，发送认证信息
-        this.ws.onopen = this.handleOpen.bind(this);
-        this.ws.onmessage = this.handleMessage.bind(this);
-        this.ws.onerror = this.handleError.bind(this);
-        this.ws.onclose = this.handleClose.bind(this);
-    }
+        this.eventSource.addEventListener('new_post', (e) => {
+            this.handleNewPost(JSON.parse(e.data));
+        });
 
-    private handleOpen(event: Event) {
-        console.log('WebSocket connected');
-        // Ktor WebSocket 会在 authenticate 中处理 JWT
-        // 连接成功后会收到 connected 消息
-    }
+        this.eventSource.addEventListener('post_liked', (e) => {
+            this.handlePostLiked(JSON.parse(e.data));
+        });
 
-    private handleMessage(event: MessageEvent) {
-        const message = JSON.parse(event.data);
-        this.processMessage(message);
-    }
+        this.eventSource.addEventListener('new_message', (e) => {
+            this.handleNewMessage(JSON.parse(e.data));
+        });
 
-    private handleError(event: Event) {
-        console.error('WebSocket error:', event);
-    }
+        this.eventSource.addEventListener('messages_read', (e) => {
+            this.handleMessagesRead(JSON.parse(e.data));
+        });
 
-    private handleClose(event: CloseEvent) {
-        console.log('WebSocket disconnected:', event.code, event.reason);
-        // 实现自动重连
-        setTimeout(() => this.connect(), 5000);
-    }
+        this.eventSource.addEventListener('message_recalled', (e) => {
+            this.handleMessageRecalled(JSON.parse(e.data));
+        });
 
-    private processMessage(message: any) {
-        switch (message.type) {
-            case 'connected':
-                console.log('Successfully authenticated as user:', message.userId);
-                break;
-            case 'new_post':
-                this.handleNewPost(message.data);
-                break;
-            case 'post_liked':
-                this.handlePostLiked(message.data);
-                break;
-            case 'post_commented':
-                this.handlePostCommented(message.data);
-                break;
-            case 'subscribed':
-                console.log('Subscribed to post:', message.postId);
-                break;
-            case 'unsubscribed':
-                console.log('Unsubscribed from post:', message.postId);
-                break;
-            case 'pong':
-                console.log('Pong received');
-                break;
-            case 'error':
-                console.error('Server error:', message.message);
-                break;
-            default:
-                console.warn('Unknown message type:', message.type);
-        }
-    }
+        this.eventSource.addEventListener('typing_indicator', (e) => {
+            this.handleTypingIndicator(JSON.parse(e.data));
+        });
 
-    subscribeToPost(postId: string) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
-                type: 'subscribe_post',
-                postId: postId
-            }));
-        }
-    }
+        this.eventSource.addEventListener('presence_snapshot', (e) => {
+            this.handlePresenceSnapshot(JSON.parse(e.data));
+        });
 
-    unsubscribeFromPost(postId: string) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
-                type: 'unsubscribe_post',
-                postId: postId
-            }));
-        }
-    }
+        this.eventSource.addEventListener('user_presence_changed', (e) => {
+            this.handlePresenceChanged(JSON.parse(e.data));
+        });
 
-    ping() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: 'ping' }));
-        }
+        this.eventSource.addEventListener('auth_revoked', (e) => {
+            this.handleAuthRevoked(e.data);
+        });
+
+        this.eventSource.onerror = () => {
+            console.error('SSE connection error');
+            this.eventSource?.close();
+            this.attemptReconnect();
+        };
     }
 
     disconnect() {
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
+        this.eventSource?.close();
+        this.eventSource = null;
+    }
+
+    private attemptReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+            setTimeout(() => {
+                this.reconnectAttempts++;
+                this.connect();
+            }, delay);
         }
     }
 
-    // ========== 事件处理器 ==========
-
-    private handleNewPost(data: any) {
-        console.log('New post created:', data);
-        // 在时间线顶部显示"有新内容"提示
-        showNewPostNotification({
-            postId: data.postId,
-            author: data.authorDisplayName,
-            username: data.authorUsername,
-            content: data.content,
-            createdAt: data.createdAt
+    // REST 命令
+    async subscribeToPost(postId: number) {
+        await fetch(`http://localhost:8080/v1/notifications/posts/${postId}/subscribe`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${this.token}` }
         });
     }
 
-    private handlePostLiked(data: any) {
-        console.log('Post liked:', data);
-        // 更新UI中的点赞数
-        updatePostLikeCount(data.postId, data.newLikeCount);
-
-        // 显示点赞动画
-        showLikeAnimation(data.postId, data.likedByDisplayName);
-    }
-
-    private handlePostCommented(data: any) {
-        console.log('Post commented:', data);
-        // 显示新评论通知
-        showNewCommentNotification({
-            postId: data.postId,
-            commenter: data.commentedByDisplayName,
-            commentId: data.commentId,
-            preview: data.commentPreview
+    async unsubscribeFromPost(postId: number) {
+        await fetch(`http://localhost:8080/v1/notifications/posts/${postId}/subscribe`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${this.token}` }
         });
     }
-}
 
-// ========== UI 辅助函数（示例） ==========
-
-function showNewPostNotification(postData: any) {
-    // 在页面顶部显示横幅
-    const banner = document.createElement('div');
-    banner.className = 'new-post-banner';
-    banner.innerHTML = `
-        <span>@${postData.username} 发布了新内容</span>
-        <button onclick="loadNewPosts()">查看</button>
-    `;
-    document.body.prepend(banner);
-}
-
-function updatePostLikeCount(postId: string, newCount: number) {
-    const likeCountElement = document.querySelector(`[data-post-id="${postId}"] .like-count`);
-    if (likeCountElement) {
-        likeCountElement.textContent = newCount.toString();
-
-        // 添加动画效果
-        likeCountElement.classList.add('count-updated');
-        setTimeout(() => {
-            likeCountElement.classList.remove('count-updated');
-        }, 500);
+    async sendTyping(conversationId: number, isTyping: boolean) {
+        await fetch(`http://localhost:8080/v1/messaging/conversations/${conversationId}/typing`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ isTyping })
+        });
     }
-}
 
-function showLikeAnimation(postId: string, userName: string) {
-    const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    if (postElement) {
-        const animation = document.createElement('div');
-        animation.className = 'like-animation';
-        animation.textContent = `${userName} 赞了这条内容`;
-        postElement.appendChild(animation);
-
-        setTimeout(() => animation.remove(), 3000);
-    }
-}
-
-function showNewCommentNotification(commentData: any) {
-    // 显示新评论通知
-    console.log('New comment:', commentData);
-    // 实现具体的UI更新逻辑
+    // 事件处理器
+    private handleNewPost(data: any) { /* UI 更新 */ }
+    private handlePostLiked(data: any) { /* 更新点赞数 */ }
+    private handleNewMessage(data: any) { /* 显示新消息 */ }
+    private handleMessagesRead(data: any) { /* 更新已读状态 */ }
+    private handleMessageRecalled(data: any) { /* 标记消息撤回 */ }
+    private handleTypingIndicator(data: any) { /* 显示/隐藏打字指示器 */ }
+    private handlePresenceSnapshot(data: any) { /* 初始化在线状态 */ }
+    private handlePresenceChanged(data: any) { /* 更新在线状态 */ }
+    private handleAuthRevoked(message: string) { /* 强制下线 */ }
 }
 ```
 
@@ -211,99 +345,43 @@ function showNewCommentNotification(commentData: any) {
 ## React 集成示例
 
 ```typescript
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 function useNotifications(token: string) {
-    const wsRef = useRef<WebSocket | null>(null);
+    const clientRef = useRef<NotificationClient | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [newPosts, setNewPosts] = useState<any[]>([]);
 
     useEffect(() => {
-        const ws = new WebSocket('ws://localhost:8080/v1/notifications/ws');
+        const client = new NotificationClient(token);
+        clientRef.current = client;
+        client.connect();
 
-        ws.onopen = () => {
-            console.log('WebSocket connected');
-            setIsConnected(true);
-        };
-
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-
-            switch (message.type) {
-                case 'new_post':
-                    setNewPosts(prev => [message.data, ...prev]);
-                    break;
-                case 'post_liked':
-                    // 更新状态
-                    break;
-            }
-        };
-
-        ws.onclose = () => {
-            console.log('WebSocket disconnected');
-            setIsConnected(false);
-        };
-
-        wsRef.current = ws;
+        // 连接状态由 SSE EventSource readyState 驱动
+        // 实际项目中可用 zustand/jotai 管理
 
         return () => {
-            ws.close();
+            client.disconnect();
         };
     }, [token]);
 
-    const subscribeToPost = (postId: string) => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.send(JSON.stringify({
-                type: 'subscribe_post',
-                postId
-            }));
-        }
-    };
+    const subscribeToPost = useCallback((postId: number) => {
+        clientRef.current?.subscribeToPost(postId);
+    }, []);
 
-    const unsubscribeFromPost = (postId: string) => {
-        if (wsRef.current && isConnected) {
-            wsRef.current.send(JSON.stringify({
-                type: 'unsubscribe_post',
-                postId
-            }));
-        }
-    };
+    const unsubscribeFromPost = useCallback((postId: number) => {
+        clientRef.current?.unsubscribeFromPost(postId);
+    }, []);
 
     return { isConnected, newPosts, subscribeToPost, unsubscribeFromPost };
 }
 
-// 在组件中使用
-function TimelinePage() {
-    const { isConnected, newPosts, subscribeToPost } = useNotifications(authToken);
-
-    return (
-        <div>
-            <div className="connection-status">
-                {isConnected ? '🟢 实时同步中' : '🔴 已断开'}
-            </div>
-
-            {newPosts.length > 0 && (
-                <button onClick={() => loadNewPosts()}>
-                    有 {newPosts.length} 条新内容
-                </button>
-            )}
-
-            {/* Timeline content */}
-        </div>
-    );
-}
-
-function PostDetailPage({ postId }: { postId: string }) {
+function PostDetailPage({ postId }: { postId: number }) {
     const { subscribeToPost, unsubscribeFromPost } = useNotifications(authToken);
 
     useEffect(() => {
-        // 进入页面时订阅
         subscribeToPost(postId);
-
-        // 离开页面时取消订阅
-        return () => {
-            unsubscribeFromPost(postId);
-        };
+        return () => { unsubscribeFromPost(postId); };
     }, [postId]);
 
     return <div>Post detail...</div>;
@@ -312,278 +390,107 @@ function PostDetailPage({ postId }: { postId: string }) {
 
 ---
 
-## Kotlin Multiplatform 客户端示例
+## 手动测试 (curl)
 
-```kotlin
-import io.ktor.client.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.websocket.*
-import kotlinx.coroutines.*
-import kotlinx.serialization.json.*
+### 连接 SSE 流
 
-class NotificationClient(
-    private val token: String,
-    private val onNewPost: (NewPostData) -> Unit,
-    private val onPostLiked: (PostLikedData) -> Unit
-) {
-    private val client = HttpClient {
-        install(WebSockets)
-    }
-
-    private var session: DefaultClientWebSocketSession? = null
-
-    suspend fun connect() {
-        client.webSocket(
-            host = "localhost",
-            port = 8080,
-            path = "/v1/notifications/ws"
-        ) {
-            session = this
-
-            // 发送认证（如果需要）
-            // send(Frame.Text("""{"token":"$token"}"""))
-
-            // 接收消息
-            for (frame in incoming) {
-                if (frame is Frame.Text) {
-                    val text = frame.readText()
-                    handleMessage(text)
-                }
-            }
-        }
-    }
-
-    private fun handleMessage(text: String) {
-        val json = Json { ignoreUnknownKeys = true }
-        val message = json.parseToJsonElement(text).jsonObject
-
-        when (message["type"]?.jsonPrimitive?.content) {
-            "new_post" -> {
-                // 解析并处理新 Post
-                onNewPost(parseNewPost(message))
-            }
-            "post_liked" -> {
-                // 解析并处理点赞事件
-                onPostLiked(parsePostLiked(message))
-            }
-        }
-    }
-
-    suspend fun subscribeToPost(postId: String) {
-        session?.send(Frame.Text("""{"type":"subscribe_post","postId":"$postId"}"""))
-    }
-
-    suspend fun unsubscribeFromPost(postId: String) {
-        session?.send(Frame.Text("""{"type":"unsubscribe_post","postId":"$postId"}"""))
-    }
-
-    fun disconnect() {
-        client.close()
-    }
-}
+```bash
+curl -N -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/stream
 ```
 
----
+**预期输出**:
+```
+event: connected
+id: 1
+data: {"userId":123}
 
-## 消息格式规范
+event: presence_snapshot
+id: 2
+data: {"users":[]}
 
-### 服务端 → 客户端
+:heartbeat
 
-#### 1. 连接成功
-
-```json
-{
-    "type": "connected",
-    "userId": "user-id-here"
-}
+:heartbeat
 ```
 
-#### 2. 新 Post 创建
+### Post 订阅
 
-```json
-{
-    "type": "new_post",
-    "data": {
-        "postId": "post-id",
-        "authorId": "author-id",
-        "authorDisplayName": "John Doe",
-        "authorUsername": "johndoe",
-        "content": "Hello, world!",
-        "createdAt": 1234567890
-    }
-}
+```bash
+# 订阅
+curl -X POST -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/posts/123/subscribe
+# → 200 OK
+
+# 取消订阅
+curl -X DELETE -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/posts/123/subscribe
+# → 204 No Content
 ```
 
-#### 3. Post 被点赞
+### 打字状态
 
-```json
-{
-    "type": "post_liked",
-    "data": {
-        "postId": "post-id",
-        "likedByUserId": "user-id",
-        "likedByDisplayName": "Jane Smith",
-        "likedByUsername": "janesmith",
-        "newLikeCount": 42,
-        "timestamp": 1234567890
-    }
-}
-```
-
-#### 4. Post 被评论（未来扩展）
-
-```json
-{
-    "type": "post_commented",
-    "data": {
-        "postId": "post-id",
-        "commentedByUserId": "user-id",
-        "commentedByDisplayName": "Alice",
-        "commentedByUsername": "alice",
-        "commentId": "comment-id",
-        "commentPreview": "Great post!",
-        "timestamp": 1234567890
-    }
-}
-```
-
-#### 5. 订阅确认
-
-```json
-{
-    "type": "subscribed",
-    "postId": "post-id"
-}
-```
-
-#### 6. 取消订阅确认
-
-```json
-{
-    "type": "unsubscribed",
-    "postId": "post-id"
-}
-```
-
-#### 7. Pong 响应
-
-```json
-{
-    "type": "pong"
-}
-```
-
-#### 8. 错误消息
-
-```json
-{
-    "type": "error",
-    "message": "Error description"
-}
-```
-
-### 客户端 → 服务端
-
-#### 1. 订阅 Post
-
-```json
-{
-    "type": "subscribe_post",
-    "postId": "post-id"
-}
-```
-
-#### 2. 取消订阅 Post
-
-```json
-{
-    "type": "unsubscribe_post",
-    "postId": "post-id"
-}
-```
-
-#### 3. 心跳
-
-```json
-{
-    "type": "ping"
-}
+```bash
+curl -X PUT -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"isTyping":true}' \
+  http://localhost:8080/v1/messaging/conversations/50/typing
+# → 204 No Content
 ```
 
 ---
 
 ## 最佳实践
 
-### 1. 自动重连
+### 1. 自动重连（指数退避）
 
-```typescript
-class RobustNotificationClient {
-    private reconnectAttempts = 0;
-    private maxReconnectAttempts = 5;
-    private reconnectDelay = 1000;
+SSE 原生支持 `Last-Event-ID` 自动重连。对于不支持的客户端，实现手动重连：
 
-    connect() {
-        this.ws = new WebSocket(this.url);
+```kotlin
+val BACKOFF_DELAYS = longArrayOf(1000, 2000, 4000, 8000, 16000)
 
-        this.ws.onclose = (event) => {
-            if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
-                console.log(`Reconnecting in ${delay}ms...`);
-
-                setTimeout(() => {
-                    this.reconnectAttempts++;
-                    this.connect();
-                }, delay);
-            }
-        };
-
-        this.ws.onopen = () => {
-            this.reconnectAttempts = 0; // 重置计数
-        };
-    }
-}
-```
-
-### 2. 心跳保活
-
-```typescript
-class NotificationClientWithHeartbeat {
-    private heartbeatInterval: any;
-
-    connect() {
-        this.ws = new WebSocket(this.url);
-
-        this.ws.onopen = () => {
-            // 每30秒发送一次心跳
-            this.heartbeatInterval = setInterval(() => {
-                this.ping();
-            }, 30000);
-        };
-
-        this.ws.onclose = () => {
-            clearInterval(this.heartbeatInterval);
-        };
-    }
-}
-```
-
-### 3. 订阅管理
-
-```typescript
-class SubscriptionManager {
-    private subscribedPosts = new Set<string>();
-
-    enterPostPage(postId: string) {
-        if (!this.subscribedPosts.has(postId)) {
-            this.notificationClient.subscribeToPost(postId);
-            this.subscribedPosts.add(postId);
+while (isActive) {
+    try {
+        httpClient.sse("$baseUrl/v1/notifications/stream") {
+            retryCount = 0
+            incoming.collect { /* handle */ }
         }
+    } catch (_: Exception) { }
+
+    delay(BACKOFF_DELAYS[retryCount.coerceAtMost(BACKOFF_DELAYS.lastIndex)])
+    retryCount++
+}
+```
+
+### 2. 订阅管理
+
+```kotlin
+// 进入 Post 详情页 → 订阅
+override fun observePostLikedEvents(postId: Long): Flow<NotificationEvent.PostLiked> =
+    notificationService.notificationEvents
+        .onStart { notificationService.subscribeToPost(postId) }
+        .onCompletion {
+            withContext(NonCancellable) {
+                notificationService.unsubscribeFromPost(postId)
+            }
+        }.filterIsInstance()
+```
+
+### 3. 打字状态（带 debounce）
+
+```kotlin
+fun onTextChanged(text: String) {
+    if (text.isNotEmpty() && !isCurrentlyTyping) {
+        isCurrentlyTyping = true
+        scope.launch { notificationService.sendTyping(conversationId, isTyping = true) }
     }
 
-    leavePostPage(postId: string) {
-        if (this.subscribedPosts.has(postId)) {
-            this.notificationClient.unsubscribeFromPost(postId);
-            this.subscribedPosts.delete(postId);
+    typingJob?.cancel()
+    typingJob = scope.launch {
+        delay(3000)
+        if (isCurrentlyTyping) {
+            isCurrentlyTyping = false
+            notificationService.sendTyping(conversationId, isTyping = false)
         }
     }
 }
@@ -593,37 +500,36 @@ class SubscriptionManager {
 
 ## 故障排查
 
-### 连接失败
+### SSE 连接失败
 
 - 检查 JWT Token 是否有效
-- 检查服务器是否启用 WebSocket 插件
-- 检查网络连接和防火墙设置
+- 检查服务端是否安装了 SSE 插件
+- 检查 `Accept: text/event-stream` 头（部分代理可能需要）
 
-### 消息丢失
+### 事件丢失
 
-- 实现消息确认机制
-- 在重连后拉取离线期间的更新
+- 确认 SSE 连接处于 `Connected` 状态
+- 重连后通过 REST API 拉取最新数据（SSE 当前不支持历史重放）
 
-### 性能问题
+### 命令失败
 
-- 限制订阅的 Post 数量
-- 实现消息节流（避免频繁更新）
-- 使用虚拟滚动优化长列表
+- REST 端点返回标准 HTTP 状态码，检查响应体中的错误信息
+- 确认 JWT Token 仍然有效
 
 ---
 
 ## 总结
 
-实时通知功能通过 WebSocket 提供低延迟的双向通信，支持：
+SSE + REST 方案相比之前的 WebSocket：
 
-- 新 Post 全局广播
-- Post 点赞实时更新
-- 灵活的订阅管理
+| 方面 | WebSocket (旧) | SSE + REST (新) |
+|------|---------------|----------------|
+| 推送方向 | 双向（实际主要单向） | 单向推送 + REST 命令 |
+| 认证 | 需要特殊处理 | 标准 `Authorization` 头 |
+| 重连 | 客户端自定义 | 原生 `Last-Event-ID` 支持 |
+| 代理/CDN | 需要特殊配置 | HTTP 原生，开箱即用 |
+| 心跳 | 客户端 ping + 服务端 pong | 服务端 `:heartbeat` 注释 |
+| 命令 | JSON 消息通过 WebSocket 帧 | REST 端点（HTTP 状态码、限流） |
+| 协议复杂度 | 帧协议 | 纯文本流 |
 
-客户端需要：
-1. 建立认证连接
-2. 处理各种事件类型
-3. 实现自动重连和心跳
-4. 管理订阅生命周期
-
-完整的服务端设计和实现请参考 `realtime-notification-design.md`。
+完整的服务端设计和实现请参考 `realtime-notification-design.md` 和 `realtime-notification-implementation-summary.md`。

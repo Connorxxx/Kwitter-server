@@ -5,8 +5,12 @@ import com.connor.core.http.ApiErrorResponse
 import com.connor.core.security.UserPrincipal
 import com.connor.domain.model.ConversationId
 import com.connor.domain.model.MessageId
+import com.connor.domain.model.NotificationEvent
 import com.connor.domain.model.UserId
+import com.connor.domain.repository.MessageRepository
+import com.connor.domain.repository.NotificationRepository
 import com.connor.domain.usecase.*
+import com.connor.features.notification.TypingRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -28,7 +32,9 @@ fun Route.messagingRoutes(
     notifyNewMessageUseCase: NotifyNewMessageUseCase,
     deleteMessageUseCase: DeleteMessageUseCase,
     recallMessageUseCase: RecallMessageUseCase,
-    appScope: ApplicationCoroutineScope
+    appScope: ApplicationCoroutineScope,
+    messageRepository: MessageRepository,
+    notificationRepository: NotificationRepository
 ) {
     authenticate("auth-jwt") {
         route("/v1/conversations") {
@@ -264,7 +270,7 @@ fun Route.messagingRoutes(
                         call.respond(status, body)
                     },
                     ifRight = {
-                        // Notify the other participant via WebSocket
+                        // Notify the other participant via SSE
                         appScope.launch {
                             try {
                                 notifyNewMessageUseCase.notifyMessageRecalled(msgId)
@@ -280,6 +286,43 @@ fun Route.messagingRoutes(
                 )
             }
         }
+
+        // PUT /v1/messaging/conversations/{conversationId}/typing
+        put("/v1/messaging/conversations/{conversationId}/typing") {
+            val principal = call.principal<UserPrincipal>() ?: run {
+                call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("UNAUTHORIZED", "未授权访问"))
+                return@put
+            }
+
+            val conversationId = call.parameters["conversationId"]?.toLongOrNull() ?: run {
+                call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("MISSING_PARAM", "缺少 conversationId 参数"))
+                return@put
+            }
+
+            val request = call.receive<TypingRequest>()
+            val userId = UserId(principal.userId)
+            val convId = ConversationId(conversationId)
+
+            val conversation = messageRepository.findConversationById(convId)
+            if (conversation == null) {
+                call.respond(HttpStatusCode.NotFound, ApiErrorResponse("NOT_FOUND", "Conversation not found"))
+                return@put
+            }
+
+            val partnerId = if (conversation.participant1Id == userId)
+                conversation.participant2Id else conversation.participant1Id
+
+            val event = NotificationEvent.TypingIndicator(
+                conversationId = conversationId,
+                userId = userId.value,
+                isTyping = request.isTyping,
+                timestamp = System.currentTimeMillis()
+            )
+
+            notificationRepository.notifyTypingIndicator(partnerId, event)
+            logger.trace("Typing indicator: userId={}, conversationId={}, isTyping={}", userId.value, conversationId, request.isTyping)
+
+            call.respond(HttpStatusCode.NoContent)
+        }
     }
 }
-

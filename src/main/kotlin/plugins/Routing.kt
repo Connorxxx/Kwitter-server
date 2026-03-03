@@ -15,8 +15,9 @@ import com.connor.features.post.postRoutes
 import com.connor.features.search.searchRoutes
 import com.connor.features.user.userRoutes
 import com.connor.features.messaging.messagingRoutes
-import com.connor.features.notification.notificationWebSocket
-import com.connor.infrastructure.websocket.WebSocketConnectionManager
+import com.connor.features.notification.notificationSse
+import com.connor.features.notification.notificationCommandRoutes
+import com.connor.infrastructure.sse.SseConnectionManager
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -96,8 +97,8 @@ fun Application.configureRouting() {
     val deleteMessageUseCase by inject<DeleteMessageUseCase>()
     val recallMessageUseCase by inject<RecallMessageUseCase>()
 
-    // WebSocket Connection Manager
-    val connectionManager by inject<WebSocketConnectionManager>()
+    // SSE Connection Manager
+    val sseConnectionManager by inject<SseConnectionManager>()
 
     // Repositories
     val userRepository by inject<UserRepository>()
@@ -119,10 +120,11 @@ fun Application.configureRouting() {
         mediaRoutes(uploadMediaUseCase)
         userRoutes(getUserProfileUseCase, updateUserProfileUseCase, followUserUseCase, unfollowUserUseCase, getUserFollowingUseCase, getUserFollowersUseCase, getUserPostsWithStatusUseCase, getUserRepliesWithStatusUseCase, getUserLikesWithStatusUseCase, uploadAvatarUseCase, deleteAvatarUseCase, blockUserUseCase, unblockUserUseCase)
         searchRoutes(searchPostsUseCase, searchRepliesUseCase, searchUsersUseCase)
-        messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, deleteMessageUseCase, recallMessageUseCase, appScope)
+        messagingRoutes(sendMessageUseCase, getConversationsUseCase, getMessagesUseCase, markConversationReadUseCase, notifyNewMessageUseCase, deleteMessageUseCase, recallMessageUseCase, appScope, messageRepository, notificationRepository)
 
-        // WebSocket 实时通知路由
-        notificationWebSocket(connectionManager, notificationRepository, messageRepository)
+        // SSE 实时通知路由
+        notificationSse(sseConnectionManager, notificationRepository, messageRepository)
+        notificationCommandRoutes(sseConnectionManager)
 
         // 健康检查
         get("/") { call.respondText("Twitter Clone API is running!") }

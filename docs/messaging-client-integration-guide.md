@@ -16,18 +16,18 @@
 - [ ] 实现对话列表（`GET /v1/conversations`），含下拉分页
 - [ ] 实现消息历史（`GET /v1/conversations/{id}/messages`），含滚动分页
 - [ ] 实现标记已读（`PUT /v1/conversations/{id}/read`），进入对话时调用
-- [ ] WebSocket 监听 `new_message` 事件，实时显示新消息
-- [ ] WebSocket 监听 `messages_read` 事件，更新已读状态
+- [ ] SSE 监听 `new_message` 事件，实时显示新消息
+- [ ] SSE 监听 `messages_read` 事件，更新已读状态
 
 ### 新增功能（v2）
 
 - [ ] 发送消息支持回复/引用（`replyToMessageId` 字段）
 - [ ] 实现消息删除（`DELETE /v1/messages/{id}`）
 - [ ] 实现消息撤回（`PUT /v1/messages/{id}/recall`），含 3 分钟倒计时 UI
-- [ ] WebSocket 监听 `message_recalled` 事件，实时更新 UI
-- [ ] WebSocket 发送 `typing` / `stop_typing` 事件
-- [ ] WebSocket 监听 `typing_indicator` 事件，显示打字状态
-- [ ] WebSocket 监听 `user_presence_changed` 事件，显示在线状态
+- [ ] SSE 监听 `message_recalled` 事件，实时更新 UI
+- [ ] 通过 REST `PUT /v1/messaging/conversations/{id}/typing` 发送打字状态
+- [ ] SSE 监听 `typing_indicator` 事件，显示打字状态
+- [ ] SSE 监听 `user_presence_changed` 事件，显示在线状态
 - [ ] 处理 `MessageResponse` 中的 `deletedAt` / `recalledAt` 字段（内容占位显示）
 
 ---
@@ -504,7 +504,7 @@ async function deleteMessage(messageId: string) {
 
 ## 8. 撤回消息 [v2]
 
-撤回自己发送的消息，仅限发送后 3 分钟内。撤回后双方都无法看到原始内容，并且对方会收到 WebSocket 实时通知。
+撤回自己发送的消息，仅限发送后 3 分钟内。撤回后双方都无法看到原始内容，并且对方会收到 SSE 实时通知。
 
 ### 请求
 
@@ -596,130 +596,109 @@ async function recallMessage(messageId: string) {
 
 ---
 
-## 9. 实时通知（WebSocket）
+## 9. 实时通知（SSE）
 
-私信通知通过已有的 WebSocket 通道推送，无需建立新连接。
+私信通知通过 SSE (Server-Sent Events) 通道推送，无需建立额外连接。
 
 ### 9.1 连接方式
 
 ```
-ws://host:port/v1/notifications/ws
-Authorization: Bearer <token>
+GET http://host:port/v1/notifications/stream
+Authorization: Bearer <jwt>
+Accept: text/event-stream
 ```
 
 ### 9.2 新消息通知
 
-当有人给你发私信时，WebSocket 会收到：
+当有人给你发私信时，SSE 流会收到：
 
-```json
-{
-  "type": "new_message",
-  "data": {
-    "messageId": "msg-uuid",
-    "conversationId": "conv-uuid",
-    "senderDisplayName": "Alice",
-    "senderUsername": "alice",
-    "contentPreview": "Hey, how's it going?",
-    "timestamp": 1707600000000
-  }
-}
+```
+event: new_message
+id: 20
+data: {"messageId":"msg-uuid","conversationId":"conv-uuid","senderDisplayName":"Alice","senderUsername":"alice","contentPreview":"Hey, how's it going?","timestamp":1707600000000}
 ```
 
 ### 9.3 已读回执通知
 
-当对方读了你的消息时，WebSocket 会收到：
+当对方读了你的消息时，SSE 流会收到：
 
-```json
-{
-  "type": "messages_read",
-  "data": {
-    "conversationId": "conv-uuid",
-    "readByUserId": "other-user-id",
-    "timestamp": 1707600100000
-  }
-}
+```
+event: messages_read
+id: 21
+data: {"conversationId":"conv-uuid","readByUserId":"other-user-id","timestamp":1707600100000}
 ```
 
 ### 9.4 消息撤回通知 [v2]
 
-当对方撤回了一条消息时，WebSocket 会收到：
+当对方撤回了一条消息时，SSE 流会收到：
 
-```json
-{
-  "type": "message_recalled",
-  "data": {
-    "messageId": "msg-uuid",
-    "conversationId": "conv-uuid",
-    "recalledByUserId": "sender-uuid",
-    "timestamp": 1707600000000
-  }
-}
+```
+event: message_recalled
+id: 22
+data: {"messageId":"msg-uuid","conversationId":"conv-uuid","recalledByUserId":"sender-uuid","timestamp":1707600000000}
 ```
 
 **客户端处理**: 收到此事件后，在本地消息列表中将对应消息标记为已撤回，将 content 清空并显示「对方撤回了一条消息」。
 
-### 9.5 打字状态指示器 [v2]
+### 9.5 打字状态指示器 [v3]
 
 #### 发送打字状态
 
-客户端在用户输入时，通过 WebSocket 发送打字事件：
+客户端通过 REST 端点发送打字状态：
 
-```json
-// 用户开始输入
-{"type": "typing", "conversationId": "conv-uuid"}
-
-// 用户停止输入
-{"type": "stop_typing", "conversationId": "conv-uuid"}
 ```
+PUT /v1/messaging/conversations/{conversationId}/typing
+Content-Type: application/json
+Authorization: Bearer <jwt>
+
+{"isTyping": true}
+```
+
+停止输入时发送 `{"isTyping": false}`。
 
 #### 接收打字状态
 
-当对方正在输入时，WebSocket 会收到：
+当对方正在输入时，SSE 流会收到：
 
-```json
-{
-  "type": "typing_indicator",
-  "data": {
-    "conversationId": "conv-uuid",
-    "userId": "other-user-id",
-    "isTyping": true,
-    "timestamp": 1707600000000
-  }
-}
+```
+event: typing_indicator
+id: 23
+data: {"conversationId":"conv-uuid","userId":"other-user-id","isTyping":true,"timestamp":1707600000000}
 ```
 
 #### 打字状态实现建议
 
 ```kotlin
 // Android - 发送打字状态（带 debounce）
-class ChatViewModel(private val conversationId: String) : ViewModel() {
+class ChatViewModel(private val conversationId: Long) : ViewModel() {
     private var typingJob: Job? = null
     private var isCurrentlyTyping = false
 
-    // 输入框文字变化时调用
     fun onTextChanged(text: String) {
         if (text.isNotEmpty() && !isCurrentlyTyping) {
             isCurrentlyTyping = true
-            webSocket.send("""{"type":"typing","conversationId":"$conversationId"}""")
+            viewModelScope.launch {
+                notificationService.sendTyping(conversationId, isTyping = true)
+            }
         }
 
-        // 重置停止输入计时器
         typingJob?.cancel()
         typingJob = viewModelScope.launch {
-            delay(3000) // 3 秒无输入 → 发送 stop_typing
+            delay(3000)
             if (isCurrentlyTyping) {
                 isCurrentlyTyping = false
-                webSocket.send("""{"type":"stop_typing","conversationId":"$conversationId"}""")
+                notificationService.sendTyping(conversationId, isTyping = false)
             }
         }
     }
 
-    // 发送消息后立即停止打字状态
     fun onMessageSent() {
         typingJob?.cancel()
         if (isCurrentlyTyping) {
             isCurrentlyTyping = false
-            webSocket.send("""{"type":"stop_typing","conversationId":"$conversationId"}""")
+            viewModelScope.launch {
+                notificationService.sendTyping(conversationId, isTyping = false)
+            }
         }
     }
 }
@@ -730,18 +709,25 @@ class ChatViewModel(private val conversationId: String) : ViewModel() {
 let typingTimer: NodeJS.Timeout | null = null;
 let isTyping = false;
 
-function onInputChange(text: string, conversationId: string) {
+async function onInputChange(text: string, conversationId: number) {
   if (text.length > 0 && !isTyping) {
     isTyping = true;
-    ws.send(JSON.stringify({ type: 'typing', conversationId }));
+    await fetch(`${BASE_URL}/v1/messaging/conversations/${conversationId}/typing`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isTyping: true })
+    });
   }
 
-  // 重置计时器
   if (typingTimer) clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
+  typingTimer = setTimeout(async () => {
     if (isTyping) {
       isTyping = false;
-      ws.send(JSON.stringify({ type: 'stop_typing', conversationId }));
+      await fetch(`${BASE_URL}/v1/messaging/conversations/${conversationId}/typing`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isTyping: false })
+      });
     }
   }, 3000);
 }
@@ -750,7 +736,6 @@ function onInputChange(text: string, conversationId: string) {
 #### 显示打字状态
 
 ```kotlin
-// Android - Compose UI
 @Composable
 fun TypingIndicator(isOtherUserTyping: Boolean) {
     AnimatedVisibility(visible = isOtherUserTyping) {
@@ -758,7 +743,6 @@ fun TypingIndicator(isOtherUserTyping: Boolean) {
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 三个跳动的圆点动画
             TypingDots()
             Spacer(modifier = Modifier.width(8.dp))
             Text("对方正在输入...", style = MaterialTheme.typography.bodySmall)
@@ -767,18 +751,18 @@ fun TypingIndicator(isOtherUserTyping: Boolean) {
 }
 ```
 
-**注意**: 收到 `typing_indicator` 后，客户端应启动一个超时计时器（如 5 秒）。如果 5 秒内没有再次收到 `typing_indicator(isTyping=true)`，自动隐藏打字状态。这样即使 `stop_typing` 消息丢失也不会一直显示打字中。
+**注意**: 收到 `typing_indicator` 后，客户端应启动一个超时计时器（如 5 秒）。如果 5 秒内没有再次收到 `typing_indicator(isTyping=true)`，自动隐藏打字状态。这样即使 `isTyping=false` 消息丢失也不会一直显示打字中。
 
 ### 9.6 在线状态 [v3]
 
 #### 连接时序
 
-WebSocket 建连成功后，服务端按以下顺序下发事件：
+SSE 建连成功后，服务端按以下顺序下发事件：
 
 ```
-1. connected                               ← 连接确认
-2. presence_snapshot                        ← 对话对端在线状态快照（保证必发，可为空）
-3. user_presence_changed(isOnline=true)     ← 仅首次上线时推送给对话对端
+1. event:connected                              ← 连接确认
+2. event:presence_snapshot                       ← 对话对端在线状态快照（保证必发，可为空）
+3. event:user_presence_changed(isOnline=true)    ← 仅首次上线时推送给对话对端
 ```
 
 客户端应先用快照初始化在线状态 Map，再用后续增量事件覆盖。
@@ -793,100 +777,41 @@ WebSocket 建连成功后，服务端按以下顺序下发事件：
 
 #### 接收在线状态快照
 
-连接成功后，服务端会**单播**一个 `presence_snapshot` 给当前用户，包含该用户所有会话对端的在线状态：
+连接成功后，服务端会**单播**一个 `presence_snapshot` 给当前用户：
 
-```json
-{
-  "type": "presence_snapshot",
-  "data": {
-    "users": [
-      { "userId": "user-uuid-1", "isOnline": true, "timestamp": 1707600000000 },
-      { "userId": "user-uuid-2", "isOnline": false, "timestamp": 1707600000000 }
-    ]
-  }
-}
 ```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `data.users` | `Array` | 当前用户所有会话对端的在线状态列表（可为空数组） |
-| `data.users[].userId` | `String` | 对端用户 ID |
-| `data.users[].isOnline` | `Boolean` | 是否在线 |
-| `data.users[].timestamp` | `Long` | 服务端生成快照的时间戳（ms） |
-
-**客户端处理**：收到后清空旧的在线状态 Map，再遍历 `data.users` 批量写入。
+event: presence_snapshot
+id: 2
+data: {"users":[{"userId":456,"isOnline":true,"timestamp":1707600000000},{"userId":789,"isOnline":false,"timestamp":1707600000000}]}
+```
 
 #### 接收在线状态变更（增量）
 
-当对话对端上线或下线时，WebSocket 会收到：
+当对话对端上线或下线时，SSE 流会收到：
 
-```json
-{
-  "type": "user_presence_changed",
-  "data": {
-    "userId": "user-uuid",
-    "isOnline": true,
-    "timestamp": 1707600000000
-  }
-}
 ```
-
-**v3 变更**：此事件不再广播给所有在线用户，仅推送给对话对端。线上格式不变，客户端无需修改解析逻辑。
+event: user_presence_changed
+id: 5
+data: {"userId":456,"isOnline":true,"timestamp":1707600000000}
+```
 
 #### 在线状态实现建议
 
 ```kotlin
-// Android - 维护在线用户集合
 class PresenceManager {
-    private val _onlineUsers = mutableStateMapOf<String, Boolean>()
-    val onlineUsers: Map<String, Boolean> = _onlineUsers
+    private val _onlineUsers = mutableStateMapOf<Long, Boolean>()
+    val onlineUsers: Map<Long, Boolean> = _onlineUsers
 
-    // 快照：清空旧状态，批量初始化（每次重连都会触发）
     fun handlePresenceSnapshot(users: List<PresenceUser>) {
         _onlineUsers.clear()
         users.forEach { _onlineUsers[it.userId] = it.isOnline }
     }
 
-    // 增量：单个更新
-    fun handlePresenceEvent(userId: String, isOnline: Boolean) {
+    fun handlePresenceEvent(userId: Long, isOnline: Boolean) {
         _onlineUsers[userId] = isOnline
     }
 
-    fun isOnline(userId: String): Boolean = _onlineUsers[userId] == true
-}
-
-// 在对话列表/聊天页面显示在线状态
-@Composable
-fun OnlineIndicator(userId: String, presenceManager: PresenceManager) {
-    val isOnline = presenceManager.isOnline(userId)
-    Box(
-        modifier = Modifier
-            .size(10.dp)
-            .background(
-                color = if (isOnline) Color.Green else Color.Gray,
-                shape = CircleShape
-            )
-    )
-}
-```
-
-```typescript
-// Web - 在线状态管理
-const onlineUsers = new Map<string, boolean>();
-
-// 快照：清空旧状态，批量初始化
-function handlePresenceSnapshot(users: { userId: string; isOnline: boolean }[]) {
-  onlineUsers.clear();
-  for (const user of users) {
-    onlineUsers.set(user.userId, user.isOnline);
-  }
-  updateOnlineStatus();
-}
-
-// 增量：单个更新
-function handlePresenceChange(data: { userId: string; isOnline: boolean }) {
-  onlineUsers.set(data.userId, data.isOnline);
-  updateOnlineStatus();
+    fun isOnline(userId: Long): Boolean = _onlineUsers[userId] == true
 }
 ```
 
@@ -897,89 +822,51 @@ function handlePresenceChange(data: { userId: string; isOnline: boolean }) {
 ### 9.7 客户端统一消息处理
 
 ```kotlin
-// Android - WebSocket 消息处理
-override fun onMessage(webSocket: WebSocket, text: String) {
-    val message = json.decodeFromString<WebSocketMessage>(text)
-
-    when (message.type) {
+// KMP - SSE 事件处理
+private suspend fun handleSseEvent(eventType: String?, data: String?) {
+    when (eventType) {
         "new_message" -> {
-            val data = json.decodeFromString<NewMessageEvent>(message.dataJson)
-
-            // 1. 如果当前在对话列表页 → 更新列表（置顶 + 更新预览 + 未读数+1）
-            conversationListState.updateConversation(data.conversationId, data)
-
-            // 2. 如果当前在该对话的聊天页 → 追加消息到底部 + 自动标记已读
-            if (currentConversationId == data.conversationId) {
-                chatState.appendMessage(data)
-                api.markAsRead(data.conversationId)
-            }
-
-            // 3. 如果在其他页面 → 显示通知横幅 / 更新未读 badge
-            showNotificationBadge(data.senderDisplayName, data.contentPreview)
+            val event = json.decodeFromString<NewMessageEvent>(data!!)
+            // 1. 如果当前在对话列表页 → 更新列表
+            // 2. 如果当前在该对话的聊天页 → 追加消息 + 标记已读
+            // 3. 如果在其他页面 → 显示通知横幅
         }
-
         "messages_read" -> {
-            val data = json.decodeFromString<MessagesReadEvent>(message.dataJson)
-            chatState.markMessagesAsRead(data.conversationId, data.timestamp)
+            val event = json.decodeFromString<MessagesReadEvent>(data!!)
+            chatState.markMessagesAsRead(event.conversationId, event.timestamp)
         }
-
         "message_recalled" -> {
-            val data = json.decodeFromString<MessageRecalledEvent>(message.dataJson)
-            // 更新本地消息列表：将对应消息标记为已撤回
-            chatState.markMessageAsRecalled(data.messageId)
-            // 如果在对话列表页，且该消息是最后一条消息，更新预览
-            conversationListState.updateLastMessageIfRecalled(data.conversationId, data.messageId)
+            val event = json.decodeFromString<MessageRecalledEvent>(data!!)
+            chatState.markMessageAsRecalled(event.messageId)
         }
-
         "typing_indicator" -> {
-            val data = json.decodeFromString<TypingIndicatorEvent>(message.dataJson)
-            // 仅当用户在该对话页面时显示打字状态
-            if (currentConversationId == data.conversationId) {
-                chatState.setOtherUserTyping(data.isTyping)
+            val event = json.decodeFromString<TypingIndicatorEvent>(data!!)
+            if (currentConversationId == event.conversationId) {
+                chatState.setOtherUserTyping(event.isTyping)
             }
         }
-
         "presence_snapshot" -> {
-            val data = json.decodeFromString<PresenceSnapshotEvent>(message.dataJson)
-            presenceManager.handlePresenceSnapshot(data.users)
+            val event = json.decodeFromString<PresenceSnapshotEvent>(data!!)
+            presenceManager.handlePresenceSnapshot(event.users)
         }
-
         "user_presence_changed" -> {
-            val data = json.decodeFromString<UserPresenceEvent>(message.dataJson)
-            presenceManager.handlePresenceEvent(data.userId, data.isOnline)
+            val event = json.decodeFromString<UserPresenceEvent>(data!!)
+            presenceManager.handlePresenceEvent(event.userId, event.isOnline)
         }
-
-        // ... 其他通知类型 (new_post, post_liked, etc.)
     }
 }
 ```
 
 ```typescript
-// Web - TypeScript
-ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
+// Web - EventSource 按类型注册监听器
+const eventSource = new EventSource(url, { headers: { 'Authorization': `Bearer ${token}` } });
 
-  switch (message.type) {
-    case 'new_message':
-      handleNewMessage(message.data);
-      break;
-    case 'messages_read':
-      handleMessagesRead(message.data);
-      break;
-    case 'message_recalled':
-      handleMessageRecalled(message.data);
-      break;
-    case 'typing_indicator':
-      handleTypingIndicator(message.data);
-      break;
-    case 'presence_snapshot':
-      handlePresenceSnapshot(message.data.users);
-      break;
-    case 'user_presence_changed':
-      handlePresenceChange(message.data);
-      break;
-  }
-};
+eventSource.addEventListener('new_message', (e) => handleNewMessage(JSON.parse(e.data)));
+eventSource.addEventListener('messages_read', (e) => handleMessagesRead(JSON.parse(e.data)));
+eventSource.addEventListener('message_recalled', (e) => handleMessageRecalled(JSON.parse(e.data)));
+eventSource.addEventListener('typing_indicator', (e) => handleTypingIndicator(JSON.parse(e.data)));
+eventSource.addEventListener('presence_snapshot', (e) => handlePresenceSnapshot(JSON.parse(e.data)));
+eventSource.addEventListener('user_presence_changed', (e) => handlePresenceChange(JSON.parse(e.data)));
 ```
 
 ---
@@ -1039,7 +926,7 @@ interface MarkReadResponse {
   readAt: number;
 }
 
-// ========== WebSocket Events (服务端 → 客户端) ==========
+// ========== SSE Events (服务端 → 客户端) ==========
 interface NewMessageEvent {
   messageId: string;
   conversationId: string;
@@ -1078,16 +965,10 @@ interface UserPresenceEvent {
   timestamp: number;
 }
 
-// ========== WebSocket Messages (客户端 → 服务端) ==========
-// [v2] 打字状态
-interface TypingMessage {
-  type: 'typing' | 'stop_typing';
-  conversationId: string;
-}
-
-// 心跳
-interface PingMessage {
-  type: 'ping';
+// ========== REST Commands (客户端 → 服务端) ==========
+// [v2] 打字状态: PUT /v1/messaging/conversations/{conversationId}/typing
+interface TypingRequest {
+  isTyping: boolean;
 }
 
 // Post 订阅
@@ -1165,7 +1046,7 @@ data class MarkReadResponse(
     val readAt: Long
 )
 
-// ========== WebSocket Events ==========
+// ========== SSE Events ==========
 @Serializable
 data class NewMessageEvent(
     val messageId: String,
@@ -1226,10 +1107,10 @@ Server:
   1. 检查 B 的 dmPermission（如果 MUTUAL_FOLLOW，验证互关）
   2. 创建 Conversation (A, B)     ← 自动
   3. 保存 Message                 ← 自动
-  4. 推送 WebSocket "new_message" 给 B  ← 异步
+  4. 推送 SSE "new_message" 给 B  ← 异步
 
 A ← 201 { id: "msg-1", conversationId: "conv-1", ... }
-B ← WS  { type: "new_message", data: { messageId: "msg-1", ... } }
+B ← SSE event: new_message, data: { messageId: "msg-1", ... }
 ```
 
 ### 12.2 回复消息
@@ -1245,7 +1126,7 @@ Server:
   2. 保存 Message (replyToMessageId = "msg-1")
   3. 推送给 A
 
-A ← WS { type: "new_message", data: { ... } }
+A ← SSE event: new_message, data: { ... }
 B ← 201 { ..., "replyToMessageId": "msg-1" }
 ```
 
@@ -1274,10 +1155,10 @@ Server:
   1. 校验 A 是发送者
   2. 校验未超过 3 分钟
   3. 设置 recalled_at
-  4. 推送 WebSocket "message_recalled" 给 B
+  4. 推送 SSE "message_recalled" 给 B
 
 A ← 200 { "messageId": "msg-2", "recalled": true }
-B ← WS  { type: "message_recalled", data: { messageId: "msg-2", ... } }
+B ← SSE event: message_recalled, data: { messageId: "msg-2", ... }
 ```
 
 ### 12.5 打字状态
@@ -1285,20 +1166,22 @@ B ← WS  { type: "message_recalled", data: { messageId: "msg-2", ... } }
 ```
 A 开始输入
 
-A → WS { "type": "typing", "conversationId": "conv-1" }
+A: PUT /v1/messaging/conversations/conv-1/typing
+   { "isTyping": true }
 
 Server:
   1. 查找 conv-1 的另一方（B）
   2. 推送 typing_indicator 给 B
 
-B ← WS { type: "typing_indicator", data: { isTyping: true, ... } }
+B ← SSE event: typing_indicator, data: { isTyping: true, ... }
 B 的 UI 显示 "A 正在输入..."
 
 A 停止输入 3 秒后
 
-A → WS { "type": "stop_typing", "conversationId": "conv-1" }
+A: PUT /v1/messaging/conversations/conv-1/typing
+   { "isTyping": false }
 
-B ← WS { type: "typing_indicator", data: { isTyping: false, ... } }
+B ← SSE event: typing_indicator, data: { isTyping: false, ... }
 B 的 UI 隐藏打字状态
 ```
 
@@ -1369,7 +1252,7 @@ B 的 UI 隐藏打字状态
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 13 | A 发送消息后 1 分钟内撤回 | 200，B 收到 `message_recalled` WebSocket 事件 |
+| 13 | A 发送消息后 1 分钟内撤回 | 200，B 收到 `message_recalled` SSE 事件 |
 | 14 | A 发送消息后 4 分钟撤回 | 400 `RECALL_TIME_EXPIRED` |
 | 15 | A 撤回 B 的消息 | 403 `NOT_MESSAGE_SENDER` |
 | 16 | A 对同一条消息撤回两次 | 409 `MESSAGE_ALREADY_RECALLED` |
@@ -1379,16 +1262,16 @@ B 的 UI 隐藏打字状态
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 18 | A 发送 typing 事件 | B 收到 `typing_indicator(isTyping=true)` |
-| 19 | A 发送 stop_typing 事件 | B 收到 `typing_indicator(isTyping=false)` |
-| 20 | A 发送 typing 到不存在的对话 | WebSocket 返回 error |
+| 18 | A 发送 typing 请求 | B 收到 `typing_indicator(isTyping=true)` |
+| 19 | A 发送 stop_typing 请求 | B 收到 `typing_indicator(isTyping=false)` |
+| 20 | A 发送 typing 到不存在的对话 | REST 返回 404 |
 
 ### 在线状态 [v2]
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 21 | A 连接 WebSocket | 广播 `user_presence_changed(isOnline=true)` |
-| 22 | A 断开最后一个 WebSocket 连接 | 广播 `user_presence_changed(isOnline=false)` |
+| 21 | A 连接 SSE | 广播 `user_presence_changed(isOnline=true)` |
+| 22 | A 断开最后一个 SSE 连接 | 广播 `user_presence_changed(isOnline=false)` |
 | 23 | A 有两个设备连接，断开一个 | 不广播下线（仍有一个设备在线） |
 
 ### DM 权限 [v2]
@@ -1414,6 +1297,6 @@ B 的 UI 隐藏打字状态
 
 | # | 测试场景 | 预期结果 |
 |---|---------|---------|
-| 33 | A 发消息，B 在线 | B 的 WebSocket 收到 `new_message` |
-| 34 | A 发消息，B 离线 | 无 WebSocket 推送（消息已持久化，B 上线后从 API 获取） |
-| 35 | A 标记已读 | B 的 WebSocket 收到 `messages_read` |
+| 33 | A 发消息，B 在线 | B 的 SSE 收到 `new_message` |
+| 34 | A 发消息，B 离线 | 无 SSE 推送（消息已持久化，B 上线后从 API 获取） |
+| 35 | A 标记已读 | B 的 SSE 收到 `messages_read` |

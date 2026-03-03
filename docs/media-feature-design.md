@@ -353,11 +353,11 @@ call.respond(HttpStatusCode.Created, MultiFileUploadResponse(uploadedFiles, erro
 - 单文件模式更稳定、更易于测试和调试
 - 客户端可以多次请求来完成批量上传
 
-### 6. 异步处理和 WebSocket 推送
+### 6. 异步处理和 SSE 推送
 
 ```kotlin
 // 支持大文件上传进度推送
-// 媒体处理完成后通过 WebSocket 通知客户端
+// 媒体处理完成后通过 SSE 通知客户端
 ```
 
 ---

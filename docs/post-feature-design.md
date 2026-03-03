@@ -108,7 +108,7 @@ data class PostDetail(
 **为何使用 `Flow` 而非 `List`？**
 - 流式处理，内存友好
 - 支持分页和增量加载
-- 未来可扩展为实时推送 (WebSocket/SSE)
+- 未来可扩展为实时推送 (SSE)
 
 **为何返回 `Either` 而非抛异常？**
 - 错误是业务规则的一部分 (PostNotFound 是预期的)
@@ -254,7 +254,7 @@ Client Response (JSON)
 
 ### 3. 实时通知
 - Repository 返回 `Flow<PostDetail>` 已支持流式数据
-- Transport 层可接入 WebSocket/SSE
+- Transport 层可接入 SSE
 
 ### 4. 推荐算法
 - `GetTimelineUseCase` 注入 `RecommendationService`

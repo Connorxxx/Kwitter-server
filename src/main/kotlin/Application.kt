@@ -7,7 +7,7 @@ import com.connor.data.db.DatabaseFactory
 import com.connor.plugins.configureRouting
 import com.connor.plugins.configureSecurity
 import com.connor.plugins.configureStatusPages
-import com.connor.plugins.configureWebSockets
+import com.connor.plugins.configureSSE
 import io.ktor.server.application.*
 import io.ktor.server.netty.EngineMain
 import org.koin.ktor.ext.inject
@@ -49,7 +49,7 @@ fun Application.module() {
     configureStatusPages()     // 2. 全局异常处理
     configureSerialization()   // 3. JSON 序列化
     configureSecurity(tokenConfig)  // 4. JWT 认证
-    configureWebSockets()      // 5. WebSocket 支持
+    configureSSE()             // 5. SSE 支持
     configureHTTP()            // 6. HTTP 配置（CORS 等）
     configureFrameworks(tokenConfig)  // 7. DI 框架
     configureRouting()         // 8. 路由（最后）

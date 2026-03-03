@@ -8,7 +8,7 @@ import com.connor.domain.model.UserId
  *
  * 职责：
  * - 定义通知推送的契约
- * - 隔离 Domain 层与 Infrastructure 层（WebSocket 实现）
+ * - 隔离 Domain 层与 Infrastructure 层（SSE 实现）
  * - 支持多种推送策略（广播、定向推送等）
  *
  * 实现：

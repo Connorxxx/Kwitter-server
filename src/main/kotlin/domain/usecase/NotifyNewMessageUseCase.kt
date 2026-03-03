@@ -23,7 +23,7 @@ class NotifyNewMessageUseCase(
         contentPreview: String
     ) {
         try {
-            // 1. In-app WebSocket notification
+            // 1. In-app SSE notification
             val event = NotificationEvent.NewMessageReceived(
                 messageId = messageId.value,
                 conversationId = conversationId.value,

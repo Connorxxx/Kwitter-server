@@ -597,7 +597,7 @@ class DatabaseMediaStorageRepository(
 
 ```kotlin
 // 支持大文件上传进度推送
-// 媒体处理完成后通过 WebSocket 通知
+// 媒体处理完成后通过 SSE 通知
 ```
 
 ---

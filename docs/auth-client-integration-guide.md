@@ -13,7 +13,7 @@
 - [ ] 拦截 401 响应 → 自动调用 `/v1/auth/refresh` → 重试原请求
 - [ ] 刷新成功后用新的 `token` 和 `refreshToken` 替换旧值
 - [ ] 刷新失败（任何 401 错误码）→ 清除 token → 跳转登录页
-- [ ] WebSocket 监听 `auth_revoked` 消息 → 强制下线
+- [ ] SSE 监听 `auth_revoked` 事件 → 强制下线
 - [ ] Refresh Token 安全存储（Android: EncryptedSharedPreferences / iOS: Keychain）
 
 ---
@@ -243,115 +243,90 @@ val httpClient = HttpClient(engine) {
 
 ---
 
-## 4. WebSocket 监听
+## 4. SSE 监听
 
 ### 4.1 连接与认证
 
-WebSocket 连接需要在请求头中携带 JWT：
+SSE 连接需要在请求头中携带 JWT：
 
 ```
-GET ws://localhost:8080/v1/notifications/ws
+GET http://localhost:8080/v1/notifications/stream
 Authorization: Bearer <jwt>
+Accept: text/event-stream
 ```
 
 ### 4.2 处理认证事件
 
 ```kotlin
-// Android (OkHttp WebSocket)
-override fun onMessage(webSocket: WebSocket, text: String) {
-    val message = json.decodeFromString<WebSocketMessage>(text)
+// KMP (Ktor Client SSE)
+httpClient.sse(
+    urlString = "$baseUrl/v1/notifications/stream",
+    showCommentEvents = false
+) {
+    incoming.collect { event ->
+        when (event.event) {
+            "auth_revoked" -> {
+                // 服务端强制下线
+                tokenStore.clear()
+                // SSE 连接会在 scope 取消时自动断开
 
-    when (message.type) {
-        "auth_revoked" -> {
-            // 服务端强制下线
-            tokenStore.clear()
-            webSocket.close(1000, "Auth revoked")
+                // 通知 UI 跳转登录页
+                _authEvents.emit(AuthEvent.ForceLogout(event.data ?: "会话已失效"))
+            }
 
-            // 通知 UI 跳转登录页
-            _authEvents.emit(AuthEvent.ForceLogout(message.message))
+            "connected" -> {
+                // SSE 连接成功
+            }
+
+            // ... 其他通知类型
         }
-
-        "connected" -> {
-            // WebSocket 连接成功
-        }
-
-        // ... 其他通知类型
     }
 }
-
-@Serializable
-data class WebSocketMessage(
-    val type: String,
-    val message: String? = null,
-    val data: String? = null,
-    val postId: String? = null,
-    val userId: String? = null
-)
 ```
 
-### 4.3 WebSocket 重连策略
+### 4.3 SSE 重连策略
 
 ```kotlin
-class WebSocketManager(
-    private val tokenStore: TokenStore
+class SseConnectionManager(
+    private val tokenStore: TokenStore,
+    private val httpClient: HttpClient
 ) {
     private var retryCount = 0
-    private val maxRetries = 5
-    private val baseDelay = 1000L  // 1秒
+    private var connectionJob: Job? = null
 
-    fun connect() {
-        val token = tokenStore.getAccessToken() ?: return
+    fun connect(scope: CoroutineScope) {
+        disconnect()
+        connectionJob = scope.launch {
+            while (isActive) {
+                try {
+                    httpClient.sse(
+                        urlString = "$baseUrl/v1/notifications/stream",
+                        showCommentEvents = false
+                    ) {
+                        retryCount = 0  // 重置重试计数
+                        incoming.collect { event ->
+                            handleEvent(event)
+                        }
+                    }
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) { }
 
-        val request = Request.Builder()
-            .url("ws://$HOST/v1/notifications/ws")
-            .header("Authorization", "Bearer $token")
-            .build()
-
-        client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                retryCount = 0  // 重置重试计数
+                if (!isActive) break
+                // 指数退避: 1s, 2s, 4s, 8s, 16s
+                val delay = BACKOFF_DELAYS[retryCount.coerceAtMost(BACKOFF_DELAYS.lastIndex)]
+                delay(delay)
+                retryCount++
             }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                if (response?.code == 401) {
-                    // JWT 过期，先刷新 token 再重连
-                    refreshAndReconnect()
-                } else {
-                    // 网络错误，指数退避重连
-                    scheduleReconnect()
-                }
-            }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                handleMessage(text)
-            }
-        })
-    }
-
-    private fun scheduleReconnect() {
-        if (retryCount >= maxRetries) return
-
-        val delay = baseDelay * (1 shl retryCount)  // 指数退避: 1s, 2s, 4s, 8s, 16s
-        retryCount++
-
-        scope.launch {
-            delay(delay)
-            connect()
         }
     }
 
-    private fun refreshAndReconnect() {
-        scope.launch {
-            try {
-                val refreshToken = tokenStore.getRefreshToken() ?: return@launch
-                val result = authApi.refresh(RefreshRequest(refreshToken))
-                tokenStore.save(result.token, result.refreshToken, result.expiresIn)
-                connect()  // 用新 token 重连
-            } catch (e: Exception) {
-                tokenStore.clear()
-                _authEvents.emit(AuthEvent.ForceLogout("会话已过期"))
-            }
-        }
+    fun disconnect() {
+        connectionJob?.cancel()
+        connectionJob = null
+    }
+
+    companion object {
+        val BACKOFF_DELAYS = longArrayOf(1000, 2000, 4000, 8000, 16000)
     }
 }
 ```
@@ -414,7 +389,7 @@ suspend fun logout() {
     // 1. 清除本地 token
     tokenStore.clear()
 
-    // 2. 关闭 WebSocket
+    // 2. 断开 SSE 连接
     webSocketManager.disconnect()
 
     // 3. （可选）通知服务端撤销 refresh token
@@ -455,11 +430,11 @@ suspend fun logout() {
   │
   └── 500 → 显示"服务器错误，请稍后重试"
 
-收到 WebSocket 消息
+收到 SSE 事件
   │
-  ├── type: "auth_revoked" → 清除token + 跳转登录 + 显示message
-  ├── type: "connected" → 连接成功
-  └── type: 其他 → 正常通知处理
+  ├── event: "auth_revoked" → 清除token + 跳转登录 + 显示data
+  ├── event: "connected" → 连接成功
+  └── event: 其他 → 正常通知处理
 ```
 
 ---
@@ -486,7 +461,7 @@ suspend fun logout() {
 | 9 | 用随机字符串刷新 | 401 REFRESH_TOKEN_INVALID |
 | 10 | 修改密码后访问敏感路由 | 401 SESSION_REVOKED |
 | 11 | 修改密码后访问普通路由 | 200（JWT未过期期间仍可用） |
-| 12 | 修改密码后 WebSocket 收到消息 | 收到 auth_revoked |
+| 12 | 修改密码后 SSE 收到事件 | 收到 auth_revoked |
 
 ### 8.3 并发场景
 

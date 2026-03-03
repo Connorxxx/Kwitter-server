@@ -71,13 +71,13 @@
 │  - NoOpPushNotificationService (FCM stub)                   │
 │  - InMemoryNotificationRepository                           │
 │    (+notifyMessageRecalled, +notifyTypingIndicator) [MOD v2]│
-│  - WebSocketConnectionManager                               │
+│  - SseConnectionManager                                     │
 │    (+isUserOnline, +getOnlineStatus, +sendToUsers)  [MOD v2]│
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                      Transport Layer                         │
-│                 (REST + WebSocket)                           │
+│                 (REST + SSE)                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  REST:                                                      │
 │  GET    /v1/conversations                → 对话列表         │
@@ -86,15 +86,15 @@
 │  PUT    /v1/conversations/{id}/read      → 标记已读         │
 │  DELETE /v1/messages/{id}                → 删除消息 [NEW v2]│
 │  PUT    /v1/messages/{id}/recall         → 撤回消息 [NEW v2]│
+│  PUT    /v1/messaging/conversations/{id}/typing → 打字 [v3] │
 │                                                             │
-│  WebSocket 通知 (复用 /v1/notifications/ws):                │
-│    ← "new_message"              推给接收者                  │
-│    ← "messages_read"            推给发送者                  │
-│    ← "message_recalled"         推给对方           [NEW v2] │
-│    ← "typing_indicator"         推给对话伙伴       [NEW v2] │
-│    ← "user_presence_changed"    定向推对话对端     [MOD v3] │
-│    ← "presence_snapshot"        连接时必发快照     [MOD v3] │
-│    → "typing" / "stop_typing"   客户端发送         [NEW v2] │
+│  SSE 通知 (通过 /v1/notifications/stream):                   │
+│    ← event:new_message          推给接收者                  │
+│    ← event:messages_read        推给发送者                  │
+│    ← event:message_recalled     推给对方           [NEW v2] │
+│    ← event:typing_indicator     推给对话伙伴       [NEW v2] │
+│    ← event:user_presence_changed 定向推对话对端    [MOD v3] │
+│    ← event:presence_snapshot    连接时必发快照     [MOD v3] │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -121,11 +121,11 @@ fun canonicalParticipants(userId1: UserId, userId2: UserId): Pair<UserId, UserId
 
 **原因**: 发送消息时需原子更新 `Conversation.lastMessageAt` + 插入 `Message`，同一事务边界。拆分 repo 会导致跨 repo 事务协调，增加复杂度。
 
-### 3. 无独立 WebSocket 端点
+### 3. 无独立 SSE 端点
 
-**原因**: 私信通知复用现有 `/v1/notifications/ws` 通道，通过 `connectionManager.sendToUser()` 定向推送。避免客户端维护两条 WebSocket 连接。
+**原因**: 私信通知复用现有 `/v1/notifications/stream` SSE 通道，通过 `connectionManager.sendToUser()` 定向推送。避免客户端维护两条 SSE 连接。
 
-消息类型通过 `type` 字段区分。
+消息类型通过 SSE `event` 字段区分。
 
 ### 4. FCM 作为 Domain Port
 
@@ -168,23 +168,23 @@ if (recipient.dmPermission == DmPermission.MUTUAL_FOLLOW) {
 | 操作者 | 消息发送者 | 消息发送者 |
 | 时间限制 | 无 | 3 分钟内 |
 | 对方可见 | 显示「消息已删除」 | 显示「消息已撤回」 |
-| WebSocket 通知 | 无 | 推送 `message_recalled` 给对方 |
+| SSE 通知 | 无 | 推送 `message_recalled` 给对方 |
 | 字段 | `deleted_at` | `recalled_at` |
 | 语义 | 发送者不想看到 | 发送者想让双方都看不到 |
 
 ### 8. 打字状态：不持久化
 
-打字状态是短暂事件（ephemeral event），只通过 WebSocket 实时转发，不写入数据库。
+打字状态是短暂事件（ephemeral event），只通过 SSE 实时转发，不写入数据库。
 
-**流程**: 客户端发送 `{"type":"typing","conversationId":"xxx"}` → 服务端查 conversation 找到对方 → `sendToUser(partnerId)` 转发。
+**流程**: 客户端调用 `PUT /v1/messaging/conversations/{id}/typing` → 服务端查 conversation 找到对方 → `sendToUser(partnerId)` 通过 SSE 推送。
 
-**性能考量**: 每次 typing 事件需查 conversation 表获取对方 ID。如果频率过高可在 WebSocket handler 层做客户端限流（建议客户端每 3 秒发一次 typing，停止输入 3 秒后发 stop_typing）。
+**性能考量**: 每次 typing 事件需查 conversation 表获取对方 ID。如果频率过高可在客户端做限流（建议客户端每 3 秒发一次 typing，停止输入 3 秒后发 isTyping=false）。
 
 ### 9. 在线状态策略 [MOD v3]
 
-**当前方案**: Presence 不经过领域通知层，直接在 WebSocket 连接生命周期中处理。
+**当前方案**: Presence 不经过领域通知层，直接在 SSE 连接生命周期中处理。
 
-- **快照**(`presence_snapshot`)：每次 WebSocket 连接必发，包含所有对话对端的在线状态（可为空列表）。
+- **快照**(`presence_snapshot`)：每次 SSE 连接必发，包含所有对话对端的在线状态（可为空列表）。
 - **增量**(`user_presence_changed`)：定向推送给对话对端，不广播全量。
 - **上线广播**：仅首个会话建立时触发（0→1 转换）。
 - **下线广播**：仅最后一个会话断开时触发（1→0 转换）。
@@ -337,7 +337,7 @@ sealed interface MessageError {
 
 **调用方额外操作（Route 层，异步）**:
 - `appScope.launch { notifyNewMessageUseCase.notifyMessageRecalled(messageId) }`
-- 查找 conversation 的另一方，通过 WebSocket 推送 `message_recalled` 事件
+- 查找 conversation 的另一方，通过 SSE 推送 `message_recalled` 事件
 
 ### GetConversationsUseCase
 
@@ -455,22 +455,24 @@ sealed interface MessageError {
 }
 ```
 
-### 客户端 → 服务端 WebSocket 消息 [NEW v2]
+### 客户端 → 服务端 REST 命令 [v3]
 
-```json
-// 开始输入
-{"type": "typing", "conversationId": "conv-uuid"}
-
-// 停止输入
-{"type": "stop_typing", "conversationId": "conv-uuid"}
-
-// 心跳 (已有)
-{"type": "ping"}
-
-// Post 订阅 (已有)
-{"type": "subscribe_post", "postId": "post-uuid"}
-{"type": "unsubscribe_post", "postId": "post-uuid"}
 ```
+# 打字状态
+PUT /v1/messaging/conversations/{conversationId}/typing
+Content-Type: application/json
+{"isTyping": true}
+
+PUT /v1/messaging/conversations/{conversationId}/typing
+Content-Type: application/json
+{"isTyping": false}
+
+# Post 订阅 (已有)
+POST /v1/notifications/posts/{postId}/subscribe
+DELETE /v1/notifications/posts/{postId}/subscribe
+```
+
+注：Ping/pong 已消除 — SSE 心跳由服务端自动发送。
 
 ---
 
@@ -524,9 +526,10 @@ sealed interface MessageError {
 | `domain/usecase/SendMessageUseCase.kt` | DM 权限检查 + replyToMessageId 传递 |
 | `domain/usecase/NotifyNewMessageUseCase.kt` | 新增 `notifyMessageRecalled()` 方法；构造函数新增 `messageRepository` 依赖 |
 | `infrastructure/repository/InMemoryNotificationRepository.kt` | 实现 3 个新通知方法 |
-| `infrastructure/websocket/WebSocketConnectionManager.kt` | 新增 `isUserOnline()`, `getOnlineStatus()` |
-| `features/notification/NotificationSchema.kt` | WebSocketClientMessageDto 新增 `conversationId` 字段 |
-| `features/notification/NotificationWebSocket.kt` | 处理 typing/stop_typing；连接/断开时广播在线状态；注入 notificationRepository + messageRepository |
+| `infrastructure/sse/SseConnectionManager.kt` | 新增 `isUserOnline()`, `getOnlineStatus()` |
+| `features/notification/NotificationSchema.kt` | TypingRequest DTO |
+| `features/notification/NotificationSse.kt` | SSE 连接生命周期；presence 处理；注入 notificationRepository + messageRepository |
+| `features/notification/NotificationCommandRoutes.kt` | Post subscribe/unsubscribe REST 端点 |
 | `features/messaging/MessagingSchema.kt` | SendMessageRequest 新增 `replyToMessageId`；MessageResponse 新增 `replyToMessageId`, `deletedAt`, `recalledAt` |
 | `features/messaging/MessagingMappers.kt` | toResponse() 处理删除/撤回内容清空；新增 4 个错误映射 |
 | `features/messaging/MessagingRoutes.kt` | 新增 `DELETE /v1/messages/{id}` 和 `PUT /v1/messages/{id}/recall` 端点 |
@@ -566,14 +569,14 @@ sealed interface MessageError {
 → 超过 3 分钟。检查 `System.currentTimeMillis() - message.createdAt > 180000`。
 
 **Q: 对方收不到打字状态**
-→ 1) 确认双方已连接 WebSocket
-→ 2) 检查发送的 JSON 格式：`{"type":"typing","conversationId":"xxx"}`
+→ 1) 确认双方已连接 SSE 流
+→ 2) 检查 PUT 请求格式：`PUT /v1/messaging/conversations/{id}/typing` + `{"isTyping":true}`
 → 3) 确认 conversationId 有效且双方是该对话的参与者
 
 **Q: 在线状态不更新**
-→ 1) 确认目标用户的 WebSocket 连接正常
+→ 1) 确认目标用户的 SSE 连接正常
 → 2) 注意多设备场景：只有当所有设备都断开后才会广播下线
-→ 3) 查看日志 "Broadcasted user presence change"
+→ 3) 查看日志 "presence_offline_broadcast"
 
 **Q: 消息历史中已删除/撤回的消息内容仍然显示**
 → 检查客户端是否根据 `deletedAt` / `recalledAt` 字段做了 UI 处理。服务端 API 返回的 `content` 已清空为 `""`。
@@ -590,7 +593,7 @@ NotifyNewMessageUC    - "Notified new message: recipientId={}, messageId={}"
 NotifyNewMessageUC    - "Notified message recalled: recipientId={}, messageId={}"
 InMemoryNotifRepo     - "Notified typing indicator: recipientId={}, conversationId={}"
 InMemoryNotifRepo     - "Broadcasted user presence change: userId={}, isOnline={}"
-NotificationWS        - "WebSocket connected/disconnected: userId={}"
+NotificationSse        - "SSE connected/disconnected: userId={}"
 ```
 
 ---

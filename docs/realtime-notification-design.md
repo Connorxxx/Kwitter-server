@@ -15,44 +15,80 @@
 │      - PostLiked                                            │
 │      - PostCommented                                        │
 │    - NotificationTarget (订阅目标)                          │
-│    - WebSocketSession (会话抽象)                            │
 │                                                             │
 │  Repository (Port/Interface):                              │
 │    - NotificationRepository                                │
 │      - broadcastNewPost()                                  │
 │      - notifyPostLiked()                                   │
-│      - subscribeToPost()                                   │
-│      - unsubscribeFromPost()                               │
+│      - notifyNewMessage()                                  │
+│      - notifyMessagesRead()                                │
+│      - notifyMessageRecalled()                             │
+│      - notifyTypingIndicator()                             │
 │                                                             │
 │  Use Cases:                                                │
 │    - BroadcastPostCreatedUseCase                           │
 │    - BroadcastPostLikedUseCase                             │
-│    - ManageNotificationSubscriptionsUseCase                │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                   Infrastructure Layer                      │
-│              (WebSocket、内存订阅管理)                        │
+│              (SSE、内存订阅管理)                              │
 ├─────────────────────────────────────────────────────────────┤
-│  - WebSocketConnectionManager                              │
-│    - 管理客户端连接                                          │
-│    - 维护订阅关系 (userId -> sessions)                      │
-│    - 维护页面订阅 (postId -> sessions)                      │
+│  - SseConnectionManager                                    │
+│    - 管理客户端连接 (Channel<ServerSentEvent>)               │
+│    - 维护用户连接 (userId -> Set<connectionId>)             │
+│    - 维护页面订阅 (postId -> Set<userId>)                   │
 │  - InMemoryNotificationRepository                          │
 │    - 实现通知推送逻辑                                         │
-│    - 处理订阅/取消订阅                                       │
+│    - 通过 SseConnectionManager 推送类型化 SSE 事件           │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                      Transport Layer                        │
-│                   (WebSocket Endpoint)                      │
+│               (SSE + REST Endpoints)                        │
 ├─────────────────────────────────────────────────────────────┤
-│  - WebSocket /v1/notifications/ws                          │
-│    - 接受连接（需要JWT认证）                                 │
-│    - 处理客户端订阅消息                                      │
-│    - 发送实时通知                                            │
+│  SSE:                                                      │
+│  GET  /v1/notifications/stream     → 事件流（需要JWT认证）  │
+│                                                             │
+│  REST（客户端命令）:                                         │
+│  POST   /v1/notifications/posts/{postId}/subscribe          │
+│  DELETE /v1/notifications/posts/{postId}/subscribe          │
+│  PUT    /v1/messaging/conversations/{convId}/typing         │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 为什么选择 SSE 而非 WebSocket
+
+1. **Server→Client 推送是主要模式** — 仅有 4 个小型客户端→服务端命令
+2. **SSE 原生重连** — 通过 `Last-Event-ID` 消除自定义重连逻辑
+3. **SSE 是 HTTP 原生** — 通过所有代理/CDN，标准 `Authorization` 头认证
+4. **更简单的服务端模型** — 无帧协议，无 ping/pong 协商
+5. **客户端命令变为 REST** — 正确的 HTTP 语义（状态码、限流、错误处理）
+
+---
+
+## SSE 事件格式
+
+标准 SSE 协议，使用类型化事件：
+
+```
+event: new_post
+id: 42
+data: {"postId":123,"authorId":456,"content":"...","createdAt":1709000000}
+
+event: presence_snapshot
+id: 43
+data: {"users":[{"userId":789,"isOnline":true,"timestamp":1709000000}]}
+
+:heartbeat
+```
+
+- `event` 字段 → 消息类型分发（替代 `{"type":"..."}` JSON 包装）
+- `id` 字段 → 单调递增的服务端计数器（支持未来 `Last-Event-ID` 重放）
+- `data` 字段 → JSON 负载（直接数据，无包装层）
+- 注释行 (`:heartbeat`) → 每 30 秒心跳保活
 
 ---
 
@@ -65,15 +101,16 @@
 
 ### 2. Post 点赞推送
 - **触发条件**: 用户点赞某个 Post
-- **推送对象**:
-  - 当前正在查看该 Post 详情页的所有用户
-  - 当前在时间线页面且该 Post 在可见范围内的用户
+- **推送对象**: 当前正在查看该 Post 详情页的所有用户
 - **推送内容**: 更新的点赞数 + 点赞用户信息
 
 ### 3. 订阅管理
-- **页面订阅**: 客户端打开某个 Post 详情页时，发送订阅消息
-- **页面取消订阅**: 客户端离开页面时，发送取消订阅消息
-- **自动清理**: 连接断开时自动清理所有订阅
+- **页面订阅**: 客户端打开 Post 详情页时，调用 REST 端点订阅
+- **页面取消订阅**: 客户端离开页面时，调用 REST 端点取消订阅
+- **自动清理**: SSE 连接断开时自动清理该用户的所有订阅
+
+### 4. 私信推送
+- 新消息、已读回执、消息撤回、打字状态、在线状态
 
 ---
 
@@ -83,81 +120,33 @@
 
 ```kotlin
 sealed interface NotificationEvent {
-    /**
-     * 新 Post 创建事件
-     * 推送给所有在线用户
-     */
     data class NewPostCreated(
-        val postId: PostId,
-        val authorId: UserId,
-        val authorDisplayName: String,
-        val content: String,
-        val createdAt: Long
+        val postId: Long, val authorId: Long,
+        val authorDisplayName: String, val authorUsername: String,
+        val content: String, val createdAt: Long
     ) : NotificationEvent
 
-    /**
-     * Post 被点赞事件
-     * 推送给订阅该 Post 的用户
-     */
     data class PostLiked(
-        val postId: PostId,
-        val likedByUserId: UserId,
-        val likedByDisplayName: String,
-        val newLikeCount: Int
+        val postId: Long, val likedByUserId: Long,
+        val likedByDisplayName: String, val likedByUsername: String,
+        val newLikeCount: Int, val timestamp: Long
     ) : NotificationEvent
 
-    /**
-     * Post 被评论/回复事件（未来扩展）
-     */
-    data class PostCommented(
-        val postId: PostId,
-        val commentedByUserId: UserId,
-        val commentedByDisplayName: String,
-        val commentId: PostId,
-        val commentPreview: String
-    ) : NotificationEvent
+    data class PostCommented(...) : NotificationEvent
+    data class NewMessageReceived(...) : NotificationEvent
+    data class MessagesRead(...) : NotificationEvent
+    data class MessageRecalled(...) : NotificationEvent
+    data class TypingIndicator(...) : NotificationEvent
 }
 ```
 
 ### 2. NotificationTarget
 
 ```kotlin
-/**
- * 通知推送目标
- */
 sealed interface NotificationTarget {
-    /** 广播给所有在线用户 */
     data object Everyone : NotificationTarget
-
-    /** 推送给特定用户 */
     data class SpecificUser(val userId: UserId) : NotificationTarget
-
-    /** 推送给订阅特定 Post 的用户 */
     data class PostSubscribers(val postId: PostId) : NotificationTarget
-}
-```
-
-### 3. WebSocketClientMessage (客户端消息)
-
-```kotlin
-/**
- * 客户端发送的消息类型
- */
-sealed interface WebSocketClientMessage {
-    /**
-     * 订阅特定 Post 的更新（进入 Post 详情页时）
-     */
-    data class SubscribeToPost(val postId: PostId) : WebSocketClientMessage
-
-    /**
-     * 取消订阅 Post（离开 Post 详情页时）
-     */
-    data class UnsubscribeFromPost(val postId: PostId) : WebSocketClientMessage
-
-    /**
-     * 心跳包（保持连接活跃）
-     */
-    data object Ping : WebSocketClientMessage
 }
 ```
 
@@ -169,94 +158,13 @@ sealed interface WebSocketClientMessage {
 
 ```kotlin
 interface NotificationRepository {
-    /**
-     * 广播新 Post 创建事件
-     * 推送给所有在线用户
-     */
     suspend fun broadcastNewPost(event: NotificationEvent.NewPostCreated)
-
-    /**
-     * 通知 Post 被点赞
-     * 推送给订阅该 Post 的用户
-     */
     suspend fun notifyPostLiked(event: NotificationEvent.PostLiked)
-
-    /**
-     * 通知 Post 被评论
-     * 推送给 Post 作者和订阅者
-     */
     suspend fun notifyPostCommented(event: NotificationEvent.PostCommented)
-}
-```
-
----
-
-## Use Cases 设计
-
-### 1. BroadcastPostCreatedUseCase
-
-```kotlin
-class BroadcastPostCreatedUseCase(
-    private val notificationRepository: NotificationRepository
-) {
-    /**
-     * 当新的顶层 Post 创建时触发
-     *
-     * 业务规则：
-     * 1. 仅广播顶层 Post（非回复）
-     * 2. 推送给所有在线用户
-     * 3. 失败不影响 Post 创建主流程（异步推送）
-     */
-    suspend fun execute(
-        postId: PostId,
-        authorId: UserId,
-        authorDisplayName: String,
-        content: String,
-        createdAt: Long
-    ) {
-        val event = NotificationEvent.NewPostCreated(
-            postId = postId,
-            authorId = authorId,
-            authorDisplayName = authorDisplayName,
-            content = content,
-            createdAt = createdAt
-        )
-
-        // 异步推送，失败不阻塞主流程
-        notificationRepository.broadcastNewPost(event)
-    }
-}
-```
-
-### 2. BroadcastPostLikedUseCase
-
-```kotlin
-class BroadcastPostLikedUseCase(
-    private val notificationRepository: NotificationRepository
-) {
-    /**
-     * 当 Post 被点赞时触发
-     *
-     * 业务规则：
-     * 1. 推送给订阅该 Post 的用户
-     * 2. 包含最新点赞数
-     * 3. 失败不影响点赞主流程
-     */
-    suspend fun execute(
-        postId: PostId,
-        likedByUserId: UserId,
-        likedByDisplayName: String,
-        newLikeCount: Int
-    ) {
-        val event = NotificationEvent.PostLiked(
-            postId = postId,
-            likedByUserId = likedByUserId,
-            likedByDisplayName = likedByDisplayName,
-            newLikeCount = newLikeCount
-        )
-
-        notificationRepository.notifyPostLiked(event)
-    }
+    suspend fun notifyNewMessage(recipientId: UserId, event: NotificationEvent.NewMessageReceived)
+    suspend fun notifyMessagesRead(recipientId: UserId, event: NotificationEvent.MessagesRead)
+    suspend fun notifyMessageRecalled(recipientId: UserId, event: NotificationEvent.MessageRecalled)
+    suspend fun notifyTypingIndicator(recipientId: UserId, event: NotificationEvent.TypingIndicator)
 }
 ```
 
@@ -264,72 +172,53 @@ class BroadcastPostLikedUseCase(
 
 ## Infrastructure 实现设计
 
-### 1. WebSocketConnectionManager
+### 1. SseConnectionManager
 
 ```kotlin
-/**
- * 管理所有 WebSocket 连接和订阅关系
- *
- * 职责：
- * 1. 维护用户连接 Map: UserId -> Set<WebSocketSession>
- * 2. 维护 Post 订阅 Map: PostId -> Set<WebSocketSession>
- * 3. 提供订阅/取消订阅方法
- * 4. 提供广播方法
- * 5. 自动清理断开的连接
- */
-class WebSocketConnectionManager {
-    // 用户连接映射 (一个用户可能有多个设备连接)
-    private val userSessions: MutableMap<UserId, MutableSet<WebSocketServerSession>>
+class SseConnectionManager {
+    data class SseConnection(
+        val id: String,
+        val userId: UserId,
+        val channel: Channel<ServerSentEvent>
+    )
 
-    // Post 订阅映射 (一个 Post 可能被多个用户订阅)
-    private val postSubscriptions: MutableMap<PostId, MutableSet<WebSocketServerSession>>
+    // 连接映射
+    private val connections: ConcurrentHashMap<String, SseConnection>
+    private val userConnections: ConcurrentHashMap<UserId, MutableSet<String>>
 
-    // 会话到用户的反向映射 (用于连接断开时清理)
-    private val sessionToUser: MutableMap<WebSocketServerSession, UserId>
+    // Post 订阅映射（用户级而非会话级 — 支持多设备同步）
+    private val postSubscriptions: ConcurrentHashMap<PostId, MutableSet<UserId>>
 
-    fun addUserSession(userId: UserId, session: WebSocketServerSession)
-    fun removeUserSession(session: WebSocketServerSession)
+    // 单调递增事件 ID
+    private val eventIdCounter: AtomicLong
 
-    fun subscribeToPost(userId: UserId, postId: PostId, session: WebSocketServerSession)
-    fun unsubscribeFromPost(postId: PostId, session: WebSocketServerSession)
-
-    suspend fun broadcastToAll(message: String)
-    suspend fun sendToUser(userId: UserId, message: String)
-    suspend fun sendToPostSubscribers(postId: PostId, message: String)
+    fun registerConnection(userId: UserId): SseConnection
+    fun removeConnection(connectionId: String)
+    fun subscribeToPost(userId: UserId, postId: PostId)
+    fun unsubscribeFromPost(userId: UserId, postId: PostId)
+    suspend fun sendToUser(userId: UserId, event: String, data: String)
+    suspend fun sendToUsers(userIds: Collection<UserId>, event: String, data: String)
+    suspend fun broadcastToAll(event: String, data: String)
+    suspend fun sendToPostSubscribers(postId: PostId, event: String, data: String)
+    fun isUserOnline(userId: UserId): Boolean
+    fun getOnlineStatus(userIds: Collection<UserId>): Map<UserId, Boolean>
 }
 ```
+
+**关键设计决策**:
+- **Post 订阅为用户级** (`PostId → Set<UserId>`)，而非会话级 — 一个设备订阅，所有设备收到事件
+- **Channel-based 推送** — 天然背压（有界 Channel 容量），Channel 关闭即连接清理
+- **惰性清理** — 发送失败时自动移除过期连接
 
 ### 2. InMemoryNotificationRepository
 
 ```kotlin
 class InMemoryNotificationRepository(
-    private val connectionManager: WebSocketConnectionManager,
-    private val logger: Logger
+    private val connectionManager: SseConnectionManager
 ) : NotificationRepository {
-
-    override suspend fun broadcastNewPost(event: NotificationEvent.NewPostCreated) {
-        val message = Json.encodeToString(
-            NotificationMessage(
-                type = "new_post",
-                data = event
-            )
-        )
-        connectionManager.broadcastToAll(message)
-    }
-
-    override suspend fun notifyPostLiked(event: NotificationEvent.PostLiked) {
-        val message = Json.encodeToString(
-            NotificationMessage(
-                type = "post_liked",
-                data = event
-            )
-        )
-        connectionManager.sendToPostSubscribers(event.postId, message)
-    }
-
-    override suspend fun notifyPostCommented(event: NotificationEvent.PostCommented) {
-        // 未来实现
-    }
+    // 每个方法：将领域事件 JSON 序列化 → 通过 connectionManager 发送类型化 SSE 事件
+    // event 参数 = SSE event 字段（如 "new_post"、"post_liked"）
+    // data 参数 = JSON 负载（直接数据，无包装层）
 }
 ```
 
@@ -337,68 +226,64 @@ class InMemoryNotificationRepository(
 
 ## Transport Layer 设计
 
-### WebSocket Endpoint
+### SSE Stream Endpoint
 
 ```kotlin
-fun Route.notificationWebSocket(
-    connectionManager: WebSocketConnectionManager
-) {
+fun Route.notificationSse(connectionManager, notificationRepository, messageRepository) {
     authenticate("auth-jwt") {
-        webSocket("/v1/notifications/ws") {
-            val principal = call.principal<UserPrincipal>()
-                ?: return@webSocket close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Unauthorized"))
+        sse("/v1/notifications/stream") {
+            val userId = authenticate()
+            val connection = connectionManager.registerConnection(userId)
 
-            val userId = principal.userId
+            // 1. 发送 connected 确认
+            send(ServerSentEvent(data=..., event="connected", id=...))
 
-            // 注册用户连接
-            connectionManager.addUserSession(userId, this)
+            // 2. 发送 presence_snapshot（保证必发）
+            send(ServerSentEvent(data=..., event="presence_snapshot", id=...))
 
+            // 3. 首次上线广播 user_presence_changed 给对话对端
+
+            // 4. 心跳（每 30 秒发送 :heartbeat 注释）
+            val heartbeatJob = launch { heartbeatLoop() }
+
+            // 5. 从 Channel 读取事件并转发到 SSE 流
             try {
-                // 发送连接成功消息
-                send(Frame.Text("""{"type":"connected","userId":"${userId.value}"}"""))
-
-                // 处理客户端消息
-                for (frame in incoming) {
-                    if (frame is Frame.Text) {
-                        handleClientMessage(frame.readText(), userId, this, connectionManager)
-                    }
+                for (event in connection.channel) {
+                    send(event)
                 }
-            } catch (e: Exception) {
-                logger.error("WebSocket error for user ${userId.value}", e)
             } finally {
-                // 清理连接
-                connectionManager.removeUserSession(this)
+                heartbeatJob.cancel()
+                connectionManager.removeConnection(connection.id)
+                // 最后一个会话断开 → 广播下线
             }
         }
     }
 }
+```
 
-private suspend fun handleClientMessage(
-    text: String,
-    userId: UserId,
-    session: DefaultWebSocketServerSession,
-    connectionManager: WebSocketConnectionManager
-) {
-    try {
-        val message = Json.decodeFromString<WebSocketClientMessageDto>(text)
-        when (message.type) {
-            "subscribe_post" -> {
-                val postId = PostId(message.postId ?: return)
-                connectionManager.subscribeToPost(userId, postId, session)
-                session.send(Frame.Text("""{"type":"subscribed","postId":"${postId.value}"}"""))
-            }
-            "unsubscribe_post" -> {
-                val postId = PostId(message.postId ?: return)
-                connectionManager.unsubscribeFromPost(postId, session)
-                session.send(Frame.Text("""{"type":"unsubscribed","postId":"${postId.value}"}"""))
-            }
-            "ping" -> {
-                session.send(Frame.Text("""{"type":"pong"}"""))
-            }
+### REST Command Endpoints
+
+```kotlin
+// Post 订阅
+fun Route.notificationCommandRoutes(connectionManager) {
+    authenticate("auth-jwt") {
+        post("/v1/notifications/posts/{postId}/subscribe") {
+            connectionManager.subscribeToPost(userId, postId)
+            call.respond(HttpStatusCode.OK)
         }
-    } catch (e: Exception) {
-        logger.error("Failed to parse client message", e)
+
+        delete("/v1/notifications/posts/{postId}/subscribe") {
+            connectionManager.unsubscribeFromPost(userId, postId)
+            call.respond(HttpStatusCode.NoContent)
+        }
     }
+}
+
+// 打字状态（在 MessagingRoutes 中）
+put("/v1/messaging/conversations/{conversationId}/typing") {
+    val request = call.receive<TypingRequest>()  // { "isTyping": true/false }
+    // 查找对话 → 找到对方 → 通过 SSE 推送 typing_indicator
+    call.respond(HttpStatusCode.NoContent)
 }
 ```
 
@@ -406,153 +291,27 @@ private suspend fun handleClientMessage(
 
 ## 集成到现有 Use Cases
 
-### 修改 CreatePostUseCase
+### CreatePostUseCase
 
 ```kotlin
-class CreatePostUseCase(
-    private val postRepository: PostRepository,
-    private val broadcastPostCreatedUseCase: BroadcastPostCreatedUseCase
-) {
-    suspend fun execute(command: CreatePostCommand): Either<PostError, Post> {
-        // 原有创建逻辑
-        val result = postRepository.create(post)
-
-        // 如果是顶层 Post，广播通知
-        result.onRight { createdPost ->
-            if (createdPost.parentId == null) {
-                // 异步推送，不阻塞主流程
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        broadcastPostCreatedUseCase.execute(
-                            postId = createdPost.id,
-                            authorId = createdPost.authorId,
-                            authorDisplayName = "...", // 从 User 获取
-                            content = createdPost.content.value,
-                            createdAt = createdPost.createdAt
-                        )
-                    } catch (e: Exception) {
-                        logger.error("Failed to broadcast new post", e)
-                    }
-                }
-            }
+// Post 创建成功后，异步广播通知
+result.onRight { createdPost ->
+    if (createdPost.parentId == null) {
+        appScope.launch {
+            broadcastPostCreatedUseCase.execute(...)
         }
-
-        return result
     }
 }
 ```
 
-### 修改 LikePostUseCase
+### LikePostUseCase
 
 ```kotlin
-class LikePostUseCase(
-    private val postRepository: PostRepository,
-    private val broadcastPostLikedUseCase: BroadcastPostLikedUseCase
-) {
-    suspend fun execute(userId: UserId, postId: PostId): Either<LikeError, PostStats> {
-        val result = postRepository.likePost(userId, postId)
-
-        // 点赞成功后推送通知
-        result.onRight { stats ->
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    broadcastPostLikedUseCase.execute(
-                        postId = postId,
-                        likedByUserId = userId,
-                        likedByDisplayName = "...", // 从 User 获取
-                        newLikeCount = stats.likeCount
-                    )
-                } catch (e: Exception) {
-                    logger.error("Failed to broadcast post liked", e)
-                }
-            }
-        }
-
-        return result
+// 点赞成功后，异步推送给 Post 订阅者
+result.onRight { stats ->
+    appScope.launch {
+        broadcastPostLikedUseCase.execute(...)
     }
-}
-```
-
----
-
-## 客户端使用示例
-
-### 连接 WebSocket
-
-```typescript
-// 建立连接
-const ws = new WebSocket('ws://localhost:8080/v1/notifications/ws', {
-  headers: { Authorization: `Bearer ${token}` }
-});
-
-ws.onopen = () => {
-  console.log('Connected to notification server');
-};
-
-ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-
-  switch (message.type) {
-    case 'new_post':
-      handleNewPost(message.data);
-      break;
-    case 'post_liked':
-      handlePostLiked(message.data);
-      break;
-    case 'connected':
-      console.log('Connected as user:', message.userId);
-      break;
-  }
-};
-
-ws.onerror = (error) => {
-  console.error('WebSocket error:', error);
-};
-
-ws.onclose = () => {
-  console.log('Disconnected from notification server');
-  // 自动重连逻辑
-};
-```
-
-### 订阅 Post
-
-```typescript
-// 进入 Post 详情页时
-function enterPostDetailPage(postId: string) {
-  ws.send(JSON.stringify({
-    type: 'subscribe_post',
-    postId: postId
-  }));
-}
-
-// 离开页面时
-function leavePostDetailPage(postId: string) {
-  ws.send(JSON.stringify({
-    type: 'unsubscribe_post',
-    postId: postId
-  }));
-}
-```
-
-### 处理通知
-
-```typescript
-function handleNewPost(data: NewPostCreatedEvent) {
-  // 在时间线顶部显示"有新内容"提示
-  showNewPostBanner({
-    postId: data.postId,
-    author: data.authorDisplayName,
-    content: data.content
-  });
-}
-
-function handlePostLiked(data: PostLikedEvent) {
-  // 更新 UI 中的点赞数
-  updatePostLikeCount(data.postId, data.newLikeCount);
-
-  // 可选：显示点赞动画
-  showLikeAnimation(data.postId, data.likedByDisplayName);
 }
 ```
 
@@ -562,74 +321,33 @@ function handlePostLiked(data: PostLikedEvent) {
 
 ### 当前实现（单机版）
 
-- **连接管理**: 内存中维护 `Map<UserId, Set<Session>>`
-- **订阅管理**: 内存中维护 `Map<PostId, Set<Session>>`
-- **消息推送**: 直接遍历 sessions 发送
+- **连接管理**: 内存中维护 `ConcurrentHashMap<UserId, Set<connectionId>>`
+- **订阅管理**: 内存中维护 `ConcurrentHashMap<PostId, Set<UserId>>`
+- **消息推送**: 遍历用户连接的 Channel 发送
+- **背压**: Channel 有界缓冲区天然支持
 - **适用规模**: < 10,000 并发连接
 
 ### 未来扩展（分布式）
 
-当需要支持更大规模时，可扩展为：
-
-1. **Redis Pub/Sub**:
-   - 使用 Redis 作为消息总线
-   - 多个服务器实例订阅同一 channel
-   - 实现跨服务器的消息广播
-
-2. **Redis 连接管理**:
-   - 使用 Redis Set 存储 `userId -> serverInstanceId`
-   - 消息路由到正确的服务器实例
-
-3. **负载均衡**:
-   - WebSocket 连接使用 sticky session
-   - 或使用支持 WebSocket 的负载均衡器（Nginx, HAProxy）
-
----
-
-## 错误处理和可靠性
-
-### 1. 推送失败处理
-
-```kotlin
-try {
-    broadcastPostCreatedUseCase.execute(...)
-} catch (e: Exception) {
-    // 记录错误但不阻塞主流程
-    logger.error("Failed to broadcast notification", e)
-}
-```
-
-### 2. 连接断开清理
-
-```kotlin
-finally {
-    // WebSocket 连接断开时自动清理所有订阅
-    connectionManager.removeUserSession(session)
-}
-```
-
-### 3. 心跳保活
-
-客户端定期发送 ping 消息，服务器响应 pong，防止连接超时。
+1. **Redis Pub/Sub**: 多服务器实例订阅同一 channel，跨服务器广播
+2. **Redis 连接管理**: `userId -> serverInstanceId` 消息路由
+3. **负载均衡**: SSE 是标准 HTTP — 任何 HTTP 负载均衡器/CDN 均可使用
 
 ---
 
 ## 安全考虑
 
-### 1. 认证
+### 已实现
 
-- WebSocket 连接必须携带有效 JWT Token
-- 使用 Ktor 的 `authenticate("auth-jwt")` 保护 WebSocket endpoint
+- SSE 连接必须携带有效 JWT Token（标准 `Authorization` 头）
+- 使用 Ktor 的 `authenticate("auth-jwt")` 保护所有端点
+- 推送消息不包含敏感信息
 
-### 2. 授权
+### 未来增强
 
-- 用户只能订阅公开 Post（未来可扩展私密 Post 权限检查）
-- 推送消息不包含敏感信息（邮箱等）
-
-### 3. 速率限制
-
-- 限制客户端发送消息频率（防止滥用）
-- 限制单个用户订阅的 Post 数量（防止资源耗尽）
+- REST 命令端点速率限制
+- 订阅数量限制
+- 私密 Post 权限检查
 
 ---
 
@@ -637,51 +355,77 @@ finally {
 
 ### 1. 单元测试
 
-- `WebSocketConnectionManager` 的订阅管理逻辑
+- `SseConnectionManager` 的连接和订阅管理逻辑
 - `InMemoryNotificationRepository` 的推送逻辑
 
 ### 2. 集成测试
 
-- WebSocket 连接和消息收发
+- SSE 连接和事件接收
 - 多客户端订阅和广播
 
-### 3. 负载测试
+### 3. 手动验证
 
-- 模拟大量并发连接
-- 测试消息推送性能
+```bash
+# 连接 SSE 流
+curl -N -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/stream
+
+# 应收到：
+# event: connected
+# id: 1
+# data: {"userId":123}
+#
+# event: presence_snapshot
+# id: 2
+# data: {"users":[...]}
+#
+# :heartbeat  (每 30 秒)
+```
+
+```bash
+# 订阅 Post
+curl -X POST -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/posts/123/subscribe
+
+# 取消订阅
+curl -X DELETE -H "Authorization: Bearer <token>" \
+  http://localhost:8080/v1/notifications/posts/123/subscribe
+```
 
 ---
 
 ## 实现清单
 
 ### Domain Layer
-- [ ] NotificationEvent 密封接口
-- [ ] NotificationTarget 定义
-- [ ] WebSocketClientMessage 定义
-- [ ] NotificationRepository 接口
+- [x] NotificationEvent 密封接口
+- [x] NotificationTarget 定义
+- [x] NotificationRepository 接口
 
 ### Infrastructure Layer
-- [ ] WebSocketConnectionManager 实现
-- [ ] InMemoryNotificationRepository 实现
+- [x] SseConnectionManager 实现
+- [x] SseSessionNotifier 实现
+- [x] InMemoryNotificationRepository 实现
 
 ### Use Cases
-- [ ] BroadcastPostCreatedUseCase
-- [ ] BroadcastPostLikedUseCase
-- [ ] 修改 CreatePostUseCase 集成通知
-- [ ] 修改 LikePostUseCase 集成通知
+- [x] BroadcastPostCreatedUseCase
+- [x] BroadcastPostLikedUseCase
+- [x] 修改 CreatePostUseCase 集成通知
+- [x] 修改 LikePostUseCase 集成通知
 
 ### Transport Layer
-- [ ] NotificationWebSocket endpoint
-- [ ] WebSocketClientMessageDto
-- [ ] NotificationMessageDto
+- [x] SSE stream endpoint (`/v1/notifications/stream`)
+- [x] Post subscribe/unsubscribe REST endpoints
+- [x] Typing REST endpoint
+- [x] TypingRequest DTO
 
 ### Configuration
-- [ ] 添加 WebSocket 依赖
-- [ ] Koin DI 配置
-- [ ] Routing 配置
+- [x] 添加 `ktor-server-sse` 依赖
+- [x] SSE 插件安装 (`plugins/SSE.kt`)
+- [x] Koin DI 配置
+- [x] Routing 配置
 
 ---
 
-## 设计完成 🎉
+## 设计完成
 
-这个设计完全遵循现有的 Hexagonal Architecture，核心业务逻辑在 Domain 层，WebSocket 实现在 Infrastructure 层，协议转换在 Transport 层。推送功能不会阻塞主业务流程，失败时优雅降级。
+这个设计完全遵循现有的 Hexagonal Architecture，核心业务逻辑在 Domain 层，SSE 实现在 Infrastructure 层，协议转换在 Transport 层。推送功能不会阻塞主业务流程，失败时优雅降级。相比之前的 WebSocket 方案，SSE + REST 更简单、更符合 HTTP 语义。

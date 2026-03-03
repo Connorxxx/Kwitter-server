@@ -130,7 +130,7 @@ sealed interface NotificationTarget {
 
     /**
      * 推送给特定用户
-     * 用于：私信、@提及等（未来扩展）
+     * 用于：私信、@提及等
      */
     data class SpecificUser(val userId: UserId) : NotificationTarget
 
@@ -139,32 +139,4 @@ sealed interface NotificationTarget {
      * 用于：Post 被点赞、被评论等事件
      */
     data class PostSubscribers(val postId: PostId) : NotificationTarget
-}
-
-/**
- * 客户端发送的 WebSocket 消息
- *
- * 定义客户端可以发送的各种控制消息
- */
-sealed interface WebSocketClientMessage {
-    /**
-     * 订阅特定 Post 的更新
-     *
-     * 使用场景：用户进入 Post 详情页时
-     */
-    data class SubscribeToPost(val postId: PostId) : WebSocketClientMessage
-
-    /**
-     * 取消订阅 Post
-     *
-     * 使用场景：用户离开 Post 详情页时
-     */
-    data class UnsubscribeFromPost(val postId: PostId) : WebSocketClientMessage
-
-    /**
-     * 心跳包
-     *
-     * 用于保持连接活跃，防止超时断开
-     */
-    data object Ping : WebSocketClientMessage
 }

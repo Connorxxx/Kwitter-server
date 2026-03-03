@@ -10,7 +10,7 @@ import com.connor.domain.service.TokenHasher
 import com.connor.domain.service.TokenIssuer
 import com.connor.domain.usecase.*
 import com.connor.infrastructure.service.BCryptPasswordHasher
-import com.connor.infrastructure.websocket.WebSocketSessionNotifier
+import com.connor.infrastructure.sse.SseSessionNotifier
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -68,7 +68,7 @@ fun securityModule(tokenConfig: TokenConfig) = module {
     // Domain Port 绑定：将 core/infrastructure 实现适配为 domain 接口
     single<TokenIssuer> { get<TokenService>() }
     single<TokenHasher> { get<RefreshTokenService>() }
-    single<SessionNotifier> { WebSocketSessionNotifier(get()) }
+    single<SessionNotifier> { SseSessionNotifier(get()) }
     single {
         AuthTokenConfig(
             accessTokenExpiresInMs = tokenConfig.expiresIn,

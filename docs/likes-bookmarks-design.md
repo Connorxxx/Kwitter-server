@@ -900,7 +900,7 @@ class LikePostUseCase(
 
 ### 6. Like 动画和实时更新
 
-- WebSocket 推送 Like 数变化
+- SSE 推送 Like 数变化
 - 客户端实时更新 UI
 - 改进用户体验
 
